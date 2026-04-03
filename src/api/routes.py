@@ -103,6 +103,7 @@ async def get_score(request: Request, task_id: str) -> JSONResponse:
         mudra_eligible=data.get("mudra_eligible", "false") == "true",
         fraud_flag=data.get("fraud_flag", "false") == "true",
         fraud_details=json.loads(data.get("fraud_details", "null")),
+        shap_waterfall=json.loads(data.get("shap_waterfall", "null")),
         score_freshness=data.get("score_freshness", ""),
         data_maturity_months=int(data.get("data_maturity_months", 0)),
     )

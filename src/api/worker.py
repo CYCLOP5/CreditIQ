@@ -301,6 +301,7 @@ async def run_saga(
                 "mudra_eligible": "true" if score_payload["mudra_eligible"] else "false",
                 "fraud_flag": "true" if fraud_flag else "false",
                 "fraud_details": fraud_details_json,
+                "shap_waterfall": json.dumps(top_5_features),
                 "score_freshness": score_freshness,
                 "data_maturity_months": str(fv.months_active_gst),
             },

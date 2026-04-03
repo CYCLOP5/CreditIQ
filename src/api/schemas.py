@@ -69,6 +69,7 @@ class ScoreResult(BaseModel):
     mudra_eligible: bool
     fraud_flag: bool
     fraud_details: dict | None = None
+    shap_waterfall: list[dict] | None = None
     score_freshness: str
     data_maturity_months: int
     error: str | None = None

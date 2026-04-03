@@ -10,11 +10,13 @@ class MockDB:
         self.lock = threading.Lock()
         self.data = {
             "users": [
-                {"id": "user_msme", "name": "Rajesh MSME", "email": "msme@demo.com", "role": "msme", "gstin": "08UNOEW2000L4Z4", "status": "active"},
-                {"id": "user_loan_officer", "name": "HDFC Officer", "email": "officer@demo.com", "role": "loan_officer", "bank_id": "bank_hdfc", "status": "active"},
-                {"id": "user_credit_analyst", "name": "Alice Analyst", "email": "analyst@demo.com", "role": "credit_analyst", "status": "active"},
-                {"id": "user_risk_manager", "name": "Bob Risk", "email": "risk@demo.com", "role": "risk_manager", "status": "active"},
-                {"id": "user_admin", "name": "System Admin", "email": "admin@demo.com", "role": "admin", "status": "active"},
+                {"id": "usr_001", "name": "Priya Sharma",   "email": "priya@bakerycraft.in",       "role": "msme",           "gstin": "27AABFB2230J1ZX", "status": "active"},
+                {"id": "usr_002", "name": "Rahul Desai",    "email": "rahul@boltautomotive.in",    "role": "msme",           "gstin": "24AAKFD8732P1ZM", "status": "active"},
+                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "29AAHFT6543R1ZK", "status": "active"},
+                {"id": "usr_004", "name": "Anjali Mehta",   "email": "anjali@sbiloans.co.in",      "role": "loan_officer",   "bank_id": "bank_001", "status": "active"},
+                {"id": "usr_005", "name": "Vikram Nair",    "email": "vikram@analyst.platform.in", "role": "credit_analyst", "status": "active"},
+                {"id": "usr_006", "name": "Deepa Krishnan", "email": "deepa@risk.platform.in",     "role": "risk_manager",   "status": "active"},
+                {"id": "usr_007", "name": "Arjun Kapoor",   "email": "arjun@admin.platform.in",    "role": "admin",          "status": "active"},
             ],
             "loan_requests": [],
             "permissions": [],
@@ -22,7 +24,10 @@ class MockDB:
             "reminders": [],
             "notifications": [],
             "banks": [
-                {"id": "bank_hdfc", "name": "HDFC Bank", "registration_number": "REG123", "status": "active", "officer_count": 1, "api_key_count": 0, "created_at": "2026-01-01T00:00:00"}
+                {"id": "bank_001", "name": "State Bank of India", "registration_number": "RBI-SCB-0001", "status": "active", "officer_count": 1, "api_key_count": 0, "created_at": "2026-01-01T00:00:00"},
+                {"id": "bank_002", "name": "Canara Bank",          "registration_number": "RBI-SCB-0045", "status": "active", "officer_count": 0, "api_key_count": 0, "created_at": "2026-01-01T00:00:00"},
+                {"id": "bank_003", "name": "HDFC Bank",            "registration_number": "RBI-PVT-0201", "status": "active", "officer_count": 0, "api_key_count": 0, "created_at": "2026-01-01T00:00:00"},
+                {"id": "bank_004", "name": "Axis Bank",            "registration_number": "RBI-PVT-0312", "status": "suspended", "officer_count": 0, "api_key_count": 0, "created_at": "2026-01-01T00:00:00"},
             ],
             "api_keys": [],
             "audit_log": [],
@@ -50,7 +55,21 @@ class MockDB:
                 try:
                     with open(dict_path, "r") as f:
                         saved = json.load(f)
-                        self.data.update(saved)
+                    # Merge saved data but never overwrite seeded users/banks
+                    seeded_user_ids = {u["id"] for u in self.data["users"]}
+                    seeded_bank_ids = {b["id"] for b in self.data["banks"]}
+                    for key, val in saved.items():
+                        if key == "users":
+                            # Append any saved users not already seeded
+                            for u in val:
+                                if u.get("id") not in seeded_user_ids:
+                                    self.data["users"].append(u)
+                        elif key == "banks":
+                            for b in val:
+                                if b.get("id") not in seeded_bank_ids:
+                                    self.data["banks"].append(b)
+                        else:
+                            self.data[key] = val
                 except Exception as e:
                     print(f"could not load mock db: {e}")
             else:
