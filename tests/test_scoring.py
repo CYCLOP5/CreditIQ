@@ -201,8 +201,8 @@ class TestTopKFeaturesCount(unittest.TestCase):
         """
         explainer = self._make_explainer(40)
         shap_row = np.random.randn(40).astype(np.float32)
-        result = explainer.top_k_features(shap_row, k=5)
-        self.assertEqual(len(result), 5)
+        result = explainer.top_k_features(shap_row, k=6)
+        self.assertEqual(len(result), 6)
 
 
 class TestTopKFeaturesStructure(unittest.TestCase):
@@ -221,7 +221,7 @@ class TestTopKFeaturesStructure(unittest.TestCase):
         """
         explainer = self._make_explainer(40)
         shap_row = np.random.randn(40).astype(np.float32)
-        result = explainer.top_k_features(shap_row, k=5)
+        result = explainer.top_k_features(shap_row, k=6)
         required_keys = {"feature_name", "shap_value", "direction", "abs_magnitude"}
         for item in result:
             self.assertEqual(set(item.keys()), required_keys)
@@ -240,7 +240,7 @@ class TestParseLlmOutput5Lines(unittest.TestCase):
         """
         raw = "1 filing compliance was strong over 90 days\n2 cash buffer above 30 days reduced risk\n3 upi inflows exceeded outflows consistently\n4 no fraud ring involvement detected\n5 gst revenue growth was stable"
         result = parse_llm_output(raw)
-        self.assertEqual(len(result), 5)
+        self.assertEqual(len(result), 6)
         for item in result:
             self.assertIsInstance(item, str)
             self.assertGreater(len(item), 0)
@@ -257,7 +257,7 @@ class TestParseLlmOutputTooFew(unittest.TestCase):
         """
         raw = "1 good filing compliance\n2 strong cash buffer\n3 no fraud detected"
         result = parse_llm_output(raw)
-        self.assertEqual(len(result), 5)
+        self.assertEqual(len(result), 6)
         self.assertEqual(result[3], "insufficient signal data for this factor")
         self.assertEqual(result[4], "insufficient signal data for this factor")
 

@@ -254,7 +254,7 @@ E-Way bills are legally mandatory for movements above ₹50,000. Fraudsters freq
 feature: `ewb_smurfing_index`
 
 ### Hub-and-Spoke Fraud & PageRank
-Circular rings (A -> B -> C -> A) are common, but sophisticated fraud also leverages Bipartite Hub-and-Spoke models where many disconnected mules funnel money to a central shell node. We calculate `nx.pagerank` on the UPI graph. A node with massive PageRank but zero GST compliance is flagged as a mule hub.
+Circular rings (A -> B -> C -> A) are common, but sophisticated fraud also leverages Bipartite Hub-and-Spoke models where many disconnected mules funnel money to a central shell node. We calculate `nx.pagerank` on the UPI graph. If a node traps cash with `pagerank_score > 0.1` but has absolutely zero GST footprint (`months_active_gst == 0`), the graph instantly forces `fraud_ring_flag = True` and locks `fraud_confidence = 0.95`. This deterministically catches massive mule hubs.
 feature: `pagerank_score`
 
 ### Cross-Signal Reconciliation (Cash vs Accrual)

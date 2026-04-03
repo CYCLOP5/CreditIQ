@@ -314,8 +314,8 @@ redis hashes store all values as strings. the api routes.py handler casts numeri
 | msme_category | classification based on declared turnover: micro up to rs.5 crore, small up to rs.50 crore, medium up to rs.250 crore |
 | cgtmse_eligible | true if the borrower qualifies for credit guarantee fund trust for micro and small enterprises coverage — requires mse classification and no fraud flag |
 | mudra_eligible | true if the borrower is in the high_risk band and micro category — refers to pradhan mantri mudra yojana shishu or kishor tier |
-| fraud_flag | true if the gstin was detected as part of a circular upi fund rotation ring of 3 or more entities |
-| fraud_details | when fraud_flag is true, contains the list of gstins in the cycle and a confidence score 0.0 to 1.0 |
+| fraud_flag | true if the gstin was detected as part of a circular upi fund rotation ring OR a high-centrality (PageRank > 0.1) bipartite shell mule |
+| fraud_details | when fraud_flag is true, contains the list of gstins in the cycle, hub-and-spoke mule status, and a confidence score up to 0.95 |
 | shap_waterfall | array of all 43 feature contributions sorted by absolute magnitude, each entry has feature name, shap value, and direction label |
 | score_freshness | iso8601 timestamp of when this score was computed by the worker |
 | data_maturity_months | how many months of transaction history were available — lower values mean the score is less reliable |

@@ -59,6 +59,9 @@ FEATURE_COLUMNS: list[str] = [
     "data_maturity_flag",
     "gst_30d_unique_buyers",
     "upi_30d_unique_counterparties",
+    "gst_upi_receivables_gap",
+    "ewb_smurfing_index",
+    "pagerank_score",
 ]
 
 LABEL_ENCODER: dict = {
@@ -190,6 +193,23 @@ def generate_proxy_labels(df: pl.DataFrame) -> np.ndarray:
 
     good_stat_mask = stat_reg > 0.7
     scores = np.where(good_stat_mask, scores - 0.08, scores)
+
+    # Extract the new columns (with defaults if missing)
+    receivables_gap = df.get_column("gst_upi_receivables_gap").to_numpy() if "gst_upi_receivables_gap" in df.columns else np.zeros(n)
+    smurfing = df.get_column("ewb_smurfing_index").to_numpy() if "ewb_smurfing_index" in df.columns else np.zeros(n)
+    pagerank = df.get_column("pagerank_score").to_numpy() if "pagerank_score" in df.columns else np.zeros(n)
+
+    # Penalize massive reconciliation gaps (GST claimed is way higher than UPI received)
+    high_gap_mask = receivables_gap > 0.6 
+    scores = np.where(high_gap_mask, scores + 0.15, scores)
+
+    # Penalize E-Way Bill smurfing (dodging the 50k limit)
+    high_smurfing_mask = smurfing > 0.4
+    scores = np.where(high_smurfing_mask, scores + 0.20, scores)
+
+    # Penalize high PageRank mule hubs
+    high_pr_mask = pagerank > 0.1
+    scores = np.where(high_pr_mask, scores + 0.25, scores)
 
     noise = np.random.normal(0, 0.05, n)
     scores = scores + noise

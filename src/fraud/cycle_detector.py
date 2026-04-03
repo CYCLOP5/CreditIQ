@@ -35,6 +35,7 @@ class FraudResult(BaseModel):
     cycle_velocity: float
     cycle_recurrence: float
     participating_cycles: list[list[str]]
+    pagerank_score: float = 0.0
 
 
 def is_temporal_cycle(cycle_nodes: list[str], graph: nx.MultiDiGraph) -> bool:
@@ -104,6 +105,22 @@ class CycleDetector:
                 all_metrics.append(metrics)
             self._cleanup_subgraph(scc_graph)
         results = self._flag_participants(all_cycles, all_metrics)
+        
+        pr_scores = nx.pagerank(graph, weight="amount")
+        for node, pr_value in pr_scores.items():
+            if node not in results:
+                results[node] = FraudResult(
+                    gstin=node,
+                    fraud_ring_flag=False,
+                    fraud_confidence=0.0,
+                    cycle_velocity=0.0,
+                    cycle_recurrence=0.0,
+                    participating_cycles=[],
+                    pagerank_score=pr_value
+                )
+            else:
+                results[node].pagerank_score = pr_value
+
         total_nodes = graph.number_of_nodes()
         total_cycles = len(all_cycles)
         total_flagged = len(results)
@@ -254,4 +271,10 @@ def merge_fraud_into_features(
             fv.fraud_confidence = result.fraud_confidence
             fv.cycle_velocity = result.cycle_velocity
             fv.cycle_recurrence = float(result.cycle_recurrence)
+            fv.pagerank_score = result.pagerank_score
+
+            # Hub-and-Spoke Shell Hub identification
+            if fv.pagerank_score > 0.1 and getattr(fv, "months_active_gst", 1) == 0:
+                fv.fraud_ring_flag = True
+                fv.fraud_confidence = max(fv.fraud_confidence, 0.95)
     return features

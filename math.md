@@ -95,3 +95,7 @@ $$\text{Smurfing Index} = \frac{|\text{EWBs where } 45000 \leq \text{value} < 50
 
 ### Hub-and-Spoke Bipartite Topology (PageRank)
 Beyond simple cycles, we calculate Eigenvector Centrality (PageRank) across the directed UPI network to flag high-centrality money mules with zero GST footprint.
+
+### Hub-and-Spoke Shell Hub Identification
+If an MSME exhibits highly centralized cash inflows via Eigenvector Centrality but lacks a fundamental tax accrued footprint, it is deterministically trapped:
+$$ \text{Fraud Flag} = \text{True}, \quad \text{Confidence} \to 0.95 \quad \text{if } (\text{PageRank} > 0.1 \land \text{months\_active\_gst} = 0) $$
