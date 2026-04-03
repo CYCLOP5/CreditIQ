@@ -57,6 +57,7 @@ export default function App() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [transitionDirection, setTransitionDirection] = useState('forward');
   const [toastMessage] = useState('');
+  const [workflowScoreResult, setWorkflowScoreResult] = useState(null);
 
   // ---------- Dashboard state (lifted so all 4 tabs can share it) ----------
   const [dashboardTab, setDashboardTab] = useState('score-lookup');
@@ -136,7 +137,7 @@ export default function App() {
       <GstinSubmissionPage
         userName={displayName}
         selectedRole={selectedRole}
-        onSuccess={() => setScreen('score-report')}
+        onSuccess={(result) => { setWorkflowScoreResult(result); setScreen('score-report'); }}
       />
     );
   }
@@ -146,6 +147,7 @@ export default function App() {
       <ScoreReportPage
         userName={displayName}
         selectedRole={selectedRole}
+        result={workflowScoreResult}
         onNext={() => setScreen('score-history')}
       />
     );

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { postScore, getScore } from '../lib/api';
 import { AppShell } from '../components/shell';
 import {
   Card,
@@ -24,22 +25,14 @@ export function GstinSubmissionPage({ userName, selectedRole, onSuccess }) {
   const [error, setError] = useState('');
   const [fetched, setFetched] = useState(false);
   const isValid = /^[0-9]{2}[A-Z0-9]{13}$/.test(gstin);
+  const intervalRef = useRef(null);
 
-  useEffect(() => {
-    if (!loading) {
-      return undefined;
-    }
+  // clean up polling interval on unmount
+  useEffect(() => () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }, []);
 
-    const timeout = window.setTimeout(() => {
-      setLoading(false);
-      setFetched(true);
-      onSuccess();
-    }, 2400);
-
-    return () => window.clearTimeout(timeout);
-  }, [loading, onSuccess]);
-
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     if (!isValid) {
       setError('Enter a valid GSTIN format.');
@@ -47,6 +40,29 @@ export function GstinSubmissionPage({ userName, selectedRole, onSuccess }) {
     }
     setError('');
     setLoading(true);
+
+    try {
+      const { task_id } = await postScore(gstin);
+
+      intervalRef.current = setInterval(async () => {
+        try {
+          const data = await getScore(task_id);
+          if (data.status === 'complete' || data.status === 'failed') {
+            clearInterval(intervalRef.current);
+            setLoading(false);
+            setFetched(true);
+            onSuccess(data);
+          }
+        } catch (pollErr) {
+          clearInterval(intervalRef.current);
+          setLoading(false);
+          setError('Failed to fetch score. Please try again.');
+        }
+      }, 2000);
+    } catch (submitErr) {
+      setLoading(false);
+      setError('Could not submit scoring request. Is the API running?');
+    }
   }
 
   return (
@@ -113,21 +129,43 @@ export function ScoreHeroCard({ score, gstin, businessName, timestamp, recommend
   );
 }
 
-export function ScoreReportPage({ userName, selectedRole, onNext }) {
+export function ScoreReportPage({ userName, selectedRole, onNext, result }) {
   const history = [540, 560, 575, 610, 645, 680];
   const data = history.map((value, index) => ({ label: `W${index + 1}`, value }));
-  const reasons = [
-    ['GST filings are consistent', 'High impact', 'var(--color-success)'],
-    ['UPI collections remain steady', 'High impact', 'var(--color-success)'],
-    ['E-way bill volume grew recently', 'Medium', 'var(--color-success)'],
-    ['A few payment delays appeared', 'Medium', 'var(--color-danger)'],
-    ['Recent activity is improving', 'Low', 'var(--color-success)'],
-  ];
+
+  // use real API result when available, fall back to demo values
+  const score        = result?.credit_score         ?? 678;
+  const displayGstin = result?.gstin                ?? '22AAAAA0000A1Z5';
+  const businessName = result                       ? displayGstin : 'Aaradhya Traders';
+  const recommendLoan= result?.recommended_wc_amount ?? 2500000;
+  const fraudState   = result?.fraud_flag           ? 'fraud' : 'clean';
+
+  const reasons = result?.top_reasons
+    ? result.top_reasons.map((text, i) => [
+        text,
+        i < 2 ? 'High impact' : i < 4 ? 'Medium' : 'Low',
+        'var(--color-success)',
+      ])
+    : [
+        ['GST filings are consistent',    'High impact', 'var(--color-success)'],
+        ['UPI collections remain steady', 'High impact', 'var(--color-success)'],
+        ['E-way bill volume grew recently','Medium',      'var(--color-success)'],
+        ['A few payment delays appeared', 'Medium',      'var(--color-danger)'],
+        ['Recent activity is improving',  'Low',         'var(--color-success)'],
+      ];
 
   return (
     <AppShell breadcrumb="My credit score" userName={userName} userRole={selectedRole}>
       <div className="page-stack">
-        <ScoreHeroCard score={678} gstin="22AAAAA0000A1Z5" businessName="Aaradhya Traders" timestamp={formatDateTime(new Date())} recommendLoan={2500000} tenure="Recommended tenure: 24 months" />
+        <ScoreHeroCard
+          score={score}
+          gstin={displayGstin}
+          businessName={businessName}
+          timestamp={formatDateTime(new Date())}
+          recommendLoan={recommendLoan}
+          tenure={result ? `Working capital ceiling · ${(recommendLoan / 100000).toFixed(0)} lakh` : 'Recommended tenure: 24 months'}
+          fraudState={fraudState}
+        />
         <Card>
           <SectionLabel>Why this score</SectionLabel>
           <div className="reason-list">
