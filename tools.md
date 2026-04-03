@@ -22,7 +22,7 @@ this document details the complete technology stack, algorithmic tools, and arch
   > **why ONLY redis and no other database?** 
   > for this hackathon architecture, introducing a traditional rdbms (like postgresql or mysql) or a document store (like mongodb) would violate our strict constraints (12gb ram total). redis alone handles three crucial layers simultaneously without disk i/o bottlenecks:
   > 1. **pub/sub streaming:** real-time server-sent events (sse) pipeline.
-  > 2. **time-series data retention:** redis streams (`xadd`, `xreadgroup`) naturally buffer gst/upi/ewb data.
+  > 2. **time-series data retention:** redis streams buffer gst/upi/ewb data natively. (`xadd` appends new timestamped records instantly to an immutable log, while `xreadgroup` enables our distributed workers to consume these records exactly once, functioning as a lightweight kafka replacement without the overhead).
   > 3. **state-store:** fast key-value lookups for the generated feature vectors and graph states.
   > using a single purely in-memory engine achieves sub-millisecond data routing, keeps the architecture incredibly lean, and avoids the heavy ram tax of maintaining multiple database connections/indices alongside our xgboost and phi-3 models.
 
