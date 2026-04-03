@@ -16,6 +16,11 @@
 | Architecture deep-dive | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Mathematical foundations | [MATH.md](MATH.md) |
 | Tools, libraries & alternatives | [TOOLS.md](TOOLS.md) |
+| Data generation & profiles | [DATA_GENERATION.md](DATA_GENERATION.md) |
+| Database & redis schemas | [SCHEMA.md](SCHEMA.md) |
+| System bootstrapping | [markdownstochat/bootstrap.md](markdownstochat/bootstrap.md) |
+| API service architecture | [markdownstochat/mmmmapimusic.md](markdownstochat/mmmmapimusic.md) |
+| Core msme behaviors | [markdownstochat/howdoesthismsmeevenworkman.md](markdownstochat/howdoesthismsmeevenworkman.md) |
 
 ---
 
