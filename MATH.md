@@ -1,0 +1,64 @@
+# Mathematical Foundations & Algorithms
+
+This document outlines the mathematical formulas and algorithms used in the CreditIQ MSME Credit Scoring Engine.
+
+## 1. Feature Engineering Formulas
+
+### Rolling Velocity (e.g., GST 30-day value)
+Measures the total taxable value of GST invoices for a given GSTIN over a rolling time window.
+$$V_{30d}^{GST}(g) = \sum_{i : t_i \geq t_{now} - 30d} \text{taxable\_value}_i \quad \forall \text{invoice } i \text{ where } \text{gstin} = g$$
+
+### Cadence & Filing Intervals
+To measure the consistency of filings and transactions:
+- **Mean Filing Interval**: $\mu = E\left[\frac{t_{i+1} - t_i}{86400}\right]$ across timestamps.
+- **Standard Deviation of Intervals**: $\sigma = \sqrt{\text{Var}\left[\frac{t_{i+1} - t_i}{86400}\right]}$
+- **Filing Delay Trend**: $\Delta = \text{delay}_{t-3} - \text{delay}_{t}$
+
+### Herfindahl-Hirschman Index (HHI)
+Measures the counterparty concentration for UPI transactions. A high HHI indicates reliance on a small number of counterparties.
+$$HHI_{30d}^{UPI}(g) = \sum_{j=1}^{N} s_j^2 \quad \text{where } s_j = \frac{n_j}{\sum_k n_k}$$
+
+### Revenue Coefficient of Variation
+Measures revenue stability using the ratio of standard deviation to the mean.
+$$CV = \frac{\sigma(\text{monthly revenue})}{\max(\mu(\text{monthly revenue}), 1.0)}$$
+
+### Shannon Entropy
+Captures the diversity of HSN (Harmonized System of Nomenclature) codes in E-Way Bills over a 90-day period. High entropy means trading across diverse product sectors.
+$$H_{90d}^{HSN}(g) = -\sum_{h=1}^{M} p_h \ln(p_h)$$
+
+### Cash Buffer Days
+Estimates the MSME's runway using daily outflow. Computed under RBI/working-capital evaluation norms.
+$$\text{Daily Outflow} = \frac{\text{Outbound 30-day Amount}}{30}$$
+$$\text{Cash Buffer Days} = \min\left(\frac{\text{Inbound 30-day Amount}}{\text{Daily Outflow}}, 90.0\right)$$
+
+### Statutory Payment Regularity Score
+Measures compliance behavior scaled backwards towards 1.0.
+$$\text{Score} = \max\left(0.0, 1.0 - \min\left(\frac{\text{Avg Delay in Days}}{30.0}, 1.0\right)\right)$$
+
+## 2. Fraud Detection Metrics
+
+### Cycle Velocity
+Calculates the rate at which funds circulate within a detected fraudulent ring (cycle).
+$$\text{Cycle Velocity} = \frac{\text{Total Flow in Cycle}}{\max(\text{Window Days}, 1)}$$
+
+### Fraud Confidence Score
+A blended 0-1 score indicating the probability that a GSTIN is participating in a circular trading fraud ring. It combines the normalized maximum velocity and recurrence metrics.
+$$C_f(g) = \min\!\left(1.0,\; \frac{v_{max}}{\theta_v} \cdot 0.5 + \min\!\left(\frac{r_{max}}{\theta_r},\, 1.0\right) \cdot 0.5\right)$$
+*(where $\theta_v$ and $\theta_r$ are the velocity and recurrence thresholds respectively)*
+
+## 3. Credit Scoring Model
+
+### Risk Probability to CIBIL-Aligned Score
+The XGBoost model outputs a default probability $P(\text{default})$. This is linearly mapped to the standard 300–900 CIBIL-like credit score scale.
+$$S = \text{clip}(900 - 600 \times P_{\text{default}},\; 300,\; 900)$$
+
+### Proxy Label Generation Algorithm
+To bootstrap the scoring engine without historical ground-truth defaults, a synthetic rule-based expert framework creates proxy labels with base probability 0.5:
+1. **Fraud Flag**: Score +0.45.
+2. **Positive Compliance**: Filing rate > 0.8 reduces score by 0.15.
+3. **Negative Compliance**: Filing rate < 0.3 increases score by 0.20.
+4. **Concentration Risk**: UPI HHI > 0.6 increases score by 0.15.
+5. **Cash Buffer**: Buffer > 30 days (-0.10); Buffer < 5 days (+0.15).
+6. **Maturity Level**: > 18 months (-0.08); < 3 months (+0.12).
+7. **Transaction Health**: Demerit points for high debit failure rates (+0.12) and statutory payment delays (-0.08 if highly regular).
+8. Gaussian noise $N(0, 0.05)$ is added to ensure continuity. All values are clipped safely between $[0.05, 0.95]$.

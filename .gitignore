@@ -8,13 +8,9 @@ __pycache__/
 # Ignore all PDFs
 *.pdf
 data/raw/*.parquet
-# Ignore all markdown files
-*.md
 data/features
 data/models
-!markdownstochat/mmmmapimusic.md
-# BUT keep architecture file
-!markdownstochat/archi.md
+unneeded/
 # Distribution / packaging
 .Python
 build/
