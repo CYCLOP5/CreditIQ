@@ -48,9 +48,27 @@ export default function SignalTrendsPage() {
     new Set(AVAILABLE_FEATURES),
   );
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "credit_analyst") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "credit_analyst") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleSearch = async () => {

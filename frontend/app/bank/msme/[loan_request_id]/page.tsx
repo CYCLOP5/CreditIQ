@@ -61,9 +61,27 @@ export default function BankMsmePage() {
       .finally(() => setLoading(false));
   }, [lrId]);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "loan_officer") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "loan_officer") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleDecisionSubmit = async () => {

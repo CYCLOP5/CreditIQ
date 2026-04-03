@@ -34,9 +34,27 @@ export default function MsmeRemindersPage() {
     reminderApi.list(gstin).then(setReminders).catch(() => {});
   }, [gstin]);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "msme") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "msme") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const markComplete = async (id: string) => {

@@ -14,15 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Play, Search, ShieldAlert, Cpu } from "lucide-react";
 
 const ACTION_COLORS: Record<string, string> = {
   dispute_assigned: "bg-blue-50 text-blue-700 border border-blue-200",
@@ -61,10 +53,37 @@ export default function AuditLogPage() {
     adminApi.getUsers().then((data) => setUsers(data as any[])).catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "admin") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "admin") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
+
+  const handleReplay = async (e: any) => {
+    try {
+      await adminApi.replayAudit(e);
+      alert("Replay triggered successfully.");
+    } catch {
+      alert("Failed to replay event.");
+    }
+  };
 
   const allActions = [...new Set(auditLog.map((e: any) => e.action).filter(Boolean))];
 
@@ -82,21 +101,32 @@ export default function AuditLogPage() {
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const groupedEvents = paged.reduce((acc: Record<string, any[]>, event: any) => {
+    const d = new Date(event.timestamp);
+    const dateStr = d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    if (!acc[dateStr]) acc[dateStr] = [];
+    acc[dateStr].push(event);
+    return acc;
+  }, {});
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
       <PageHeader
         title="Audit Log"
-        description="Immutable event log of all state-changing actions in the system"
+        description="Immutable chronological flow of state-changing transactions."
       />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-5">
+      <div className="flex flex-wrap gap-3 mb-8 bg-muted/30 p-4 rounded-xl border border-border/50">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            className="pl-9"
-            placeholder="Search user, action, target..."
+            className="pl-9 h-9 bg-background/50"
+            placeholder="Search payload, user, target..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -104,14 +134,8 @@ export default function AuditLogPage() {
             }}
           />
         </div>
-        <Select
-          value={actionFilter}
-          onValueChange={(v) => {
-            setActionFilter(v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-48">
+        <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-48 h-9 bg-background/50 border-border/50">
             <SelectValue placeholder="Filter by action" />
           </SelectTrigger>
           <SelectContent>
@@ -123,14 +147,8 @@ export default function AuditLogPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select
-          value={userFilter}
-          onValueChange={(v) => {
-            setUserFilter(v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-48">
+        <Select value={userFilter} onValueChange={(v) => { setUserFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-48 h-9 bg-background/50 border-border/50">
             <SelectValue placeholder="Filter by user" />
           </SelectTrigger>
           <SelectContent>
@@ -143,111 +161,86 @@ export default function AuditLogPage() {
           </SelectContent>
         </Select>
         {(search || actionFilter !== "all" || userFilter !== "all") && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSearch("");
-              setActionFilter("all");
-              setUserFilter("all");
-              setPage(1);
-            }}
-          >
+          <Button variant="ghost" size="sm" className="h-9" onClick={() => { setSearch(""); setActionFilter("all"); setUserFilter("all"); setPage(1); }}>
             Clear filters
           </Button>
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground mb-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-6">
         Showing {paged.length} of {filtered.length} events
       </p>
 
-      <Card className="border-border shadow-sm">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 border-border">
-                <TableHead className="text-xs">Timestamp</TableHead>
-                <TableHead className="text-xs">User</TableHead>
-                <TableHead className="text-xs">Role</TableHead>
-                <TableHead className="text-xs">Action</TableHead>
-                <TableHead className="text-xs">Target</TableHead>
-                <TableHead className="text-xs">Metadata</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paged.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-muted-foreground py-10"
-                  >
-                    No audit events match the current filters.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paged.map((e: any) => (
-                  <TableRow
-                    key={e.id}
-                    className="border-border hover:bg-muted/30 align-top"
-                  >
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(e.timestamp).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                      <br />
-                      <span className="text-[10px]">
-                        {new Date(e.timestamp).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
-                          {(e.user_name ?? "?").charAt(0)}
+      {paged.length === 0 ? (
+        <div className="text-center text-muted-foreground py-20 bg-muted/10 rounded-2xl border border-dashed border-border">
+          <ShieldAlert className="w-10 h-10 mx-auto mb-3 opacity-20" />
+          <p>No audit events match the current timeline constraints.</p>
+        </div>
+      ) : (
+        <div className="relative border-l-2 border-primary/20 ml-2 md:ml-4 pl-6 pb-6 space-y-10 group">
+          {Object.entries(groupedEvents).map(([dateStr, events]: [string, any]) => (
+            <div key={dateStr} className="relative">
+              {/* Node Date */}
+              <div className="absolute -left-[31px] md:-left-[39px] top-0 w-3 h-3 rounded-full bg-primary ring-4 ring-background shadow-sm" />
+              <h3 className="text-sm font-bold text-foreground mb-4 -mt-1 tracking-tight">{dateStr}</h3>
+              
+              <div className="space-y-4">
+                {events.map((e: any) => (
+                  <Card key={e.id} className="relative shadow-none transition-all hover:shadow-md border-border/50 overflow-hidden bg-card/60 backdrop-blur-sm">
+                    {/* Time indicator pill on edge */}
+                    <div className="absolute top-0 right-0 rounded-bl-xl bg-muted/80 px-3 py-1 font-mono text-[10px] text-muted-foreground border-l border-b border-border/50">
+                      {new Date(e.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </div>
+
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4 justify-between">
+                        <div className="space-y-3 flex-1 min-w-0">
+                          {/* Header Line */}
+                          <div className="flex items-center gap-2 flex-wrap max-w-full pr-16">
+                            <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider whitespace-nowrap ${ACTION_COLORS[e.action] || "bg-muted text-muted-foreground"}`}>
+                              {(e.action ?? "").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-muted-foreground text-sm flex items-center gap-1.5 whitespace-nowrap">
+                              by <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[9px] font-bold text-primary">{(e.user_name ?? "?").charAt(0)}</div> <span className="font-medium text-foreground">{e.user_name}</span>
+                            </span>
+                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-muted/50 border border-border/50 whitespace-nowrap">
+                              {ROLE_LABELS[e.role] || e.role}
+                            </span>
+                          </div>
+
+                          {/* Target */}
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                             <Cpu className="w-3.5 h-3.5" />
+                             Targeting <span className="font-medium text-foreground capitalize truncate max-w-[120px]">{e.target_type?.replace(/_/g, " ")}</span>
+                             <span className="font-mono text-xs px-1.5 py-0.5 bg-muted rounded border truncate">{e.target_id}</span>
+                          </div>
+
+                          {/* Metadata */}
+                          {e.metadata && Object.keys(e.metadata).length > 0 && (
+                            <div className="mt-3 bg-muted/30 rounded-lg p-3 border border-border/50 overflow-x-auto">
+                              <pre className="text-[11px] font-mono text-muted-foreground whitespace-pre-wrap break-all leading-tight">
+                                {JSON.stringify(e.metadata, null, 2)}
+                              </pre>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-xs font-medium text-foreground">
-                          {e.user_name}
-                        </span>
+
+                        {/* Replay Action */}
+                        <div className="shrink-0 mt-2 sm:mt-0 sm:self-center">
+                          <Button size="sm" variant="outline" className="gap-2 h-9 text-xs transition-colors hover:bg-primary hover:text-primary-foreground border-primary/20" onClick={() => handleReplay(e)}>
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                            Replay Event
+                          </Button>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs text-muted-foreground">
-                        {ROLE_LABELS[e.role] || e.role}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`text-[11px] px-2 py-0.5 rounded font-medium whitespace-nowrap ${ACTION_COLORS[e.action] || "bg-muted text-muted-foreground"}`}
-                      >
-                        {(e.action ?? "").replace(/_/g, " ")}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      <span className="capitalize">
-                        {(e.target_type ?? "").replace(/_/g, " ")}
-                      </span>
-                      <br />
-                      <span className="font-mono text-[10px]">
-                        {e.target_id}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-[10px] text-muted-foreground font-mono max-w-xs">
-                      <pre className="whitespace-pre-wrap break-all">
-                        {JSON.stringify(e.metadata, null, 2)}
-                      </pre>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

@@ -24,6 +24,7 @@
 | database & redis schemas | [schema.md](schema.md) |
 | system bootstrapping | [bootstrap.md](bootstrap.md) |
 | api service architecture | [api.md](api.md) |
+| frontend architecture & apps | [frontend.md](frontend.md) |
 | core msme behaviors | [theorymsme.md](theoryMSME.md) |
 
 ---
@@ -86,7 +87,7 @@ phi-3 mini llm (plain-language reasons + path to prime action)
         ↓
 fastapi rest api (async saga worker pattern)
         ↓
-react + vite dashboard (4 interactive pages)
+react + next.js ui dashboard (multiple interactive portals)
 ```
 
 ---
@@ -118,7 +119,7 @@ flowchart td
     g -->|top 5 shap vectors| h[phi-3-mini int4 via llama.cpp cpu-only]
     h -->|plain language reasons| i[redis state store]
     i -->|result payload| j[fastapi rest endpoint]
-    j -->|json response| k[react + vite dashboard]
+    j -->|json response| k[react + next.js app router]
     d -->|parquet spill| l[disk cache]
     l -->|historical read| d
 ```
@@ -134,7 +135,7 @@ flowchart td
 | **5. ml scoring** | gradient boosted trees, 300–900 scale | xgboost hist | [`src/scoring/model.py`](src/scoring/model.py) |
 | **6. explainability** | shap treeexplainer + llm translation | shap + llama-cpp-python | [`src/scoring/explainer.py`](src/scoring/explainer.py) |
 | **7. api** | async rest with saga pattern | fastapi + uvicorn | [`src/api/main.py`](src/api/main.py) |
-| **8. dashboard** | 4-page interactive ui | react 18 + vite 5 | [`frontend/src/app.jsx`](frontend/src/App.jsx) |
+| **8. dashboard** | next.js app router interactive portals | react 18 + next 14 | [`frontend/app/layout.tsx`](frontend/app/layout.tsx) |
 
 ### redis streams as message bus
 
@@ -185,7 +186,7 @@ a comprehensive breakdown of every library used, why it was chosen, and what alt
 | httpx | async http test client | [`tests/test_api.py`](tests/test_api.py) |
 | sdv | gaussian copula profile synthesis | [`src/ingestion/generator.py`](src/ingestion/generator.py) |
 | react 18 | frontend ui library | [`frontend/package.json`](frontend/package.json) |
-| vite 5 | frontend build tool and dev server | [`frontend/vite.config.js`](frontend/vite.config.js) |
+| next 14 | frontend framework (app router) | [`frontend/next.config.mjs`](frontend/next.config.mjs) |
 
 ---
 
@@ -632,26 +633,17 @@ the frontend uses **zero external ui component libraries**. all charts, data viz
 
 ### application architecture ([`frontend/src/app.jsx`](frontend/src/App.jsx))
 
-the app uses a **screen-state router** — no react router. the `screen` state variable drives which page renders. the dashboard phase uses a **tab model** with shared `scoreresult` state lifted to the app root.
+the app uses **next.js app router**. the `app` directory drives which page renders. the dashboards are divided by intent (`/msme`, `/analyst`, `/admin`, `/risk`). all features operate via live api endpoints, with no critical data hardcoded on the client-side. see [frontend.md](frontend.md) for details.
 
 ### pages
 
-#### 1. score lookup ([`frontend/src/pages/scorelookup.jsx`](frontend/src/pages/ScoreLookup.jsx))
+#### 1. score report ([`frontend/app/msme/score-report/page.tsx`](frontend/app/msme/score-report/page.tsx))
 
-- gstin input with real-time validation (`/^[a-z0-9]{15}$/`)
-- calls `post /score` then polls `get /score/{task_id}` every 2 seconds
-- displays: credit score (64px monospace), risk band, msme category, data maturity, cgtmse/mudra eligibility badges
-- loan recommendations (working capital + term loan)
-- top 5 reasons as bullet list
-- fraud alert banner when `fraud_flag === true`
+- live status polling via `get /score/{task_id}`
+- displays: credit score, risk band, msme category, data maturity, cgtmse/mudra eligibility badges
+- shap waterfall visualizing the top impactful features
 
-#### 2. feature contributions ([`frontend/src/pages/featurecontributions.jsx`](frontend/src/pages/FeatureContributions.jsx))
-
-- **svg diverging bar chart** — positive shap values extend right (red, increases risk), negative extend left (green, decreases risk)
-- top 15 features sorted by absolute shap magnitude
-- zero external charting library — pure svg with vite-compatible inline styles
-
-#### 3. fraud topology ([`frontend/src/pages/fraudtopology.jsx`](frontend/src/pages/FraudTopology.jsx))
+#### 2. fraud queue & topology ([`frontend/app/risk/fraud-queue/page.tsx`](frontend/app/risk/fraud-queue/page.tsx))
 
 - **circular svg graph layout** — nodes placed on a regular polygon inscribed in a circle
 - directed edges with arrowhead markers
@@ -675,9 +667,11 @@ three fetch wrappers targeting `http://localhost:8000`:
 
 | function | method | endpoint |
 |---|---|---|
-| `postscore(gstin)` | post | `/score` |
-| `getscore(taskid)` | get | `/score/{taskid}` |
-| `gethealth()` | get | `/health` |
+| `scoreApi.submit(gstin)` | post | `/score` |
+| `scoreApi.get(taskid)` | get | `/score/{taskid}` |
+| `scoreApi.health()` | get | `/health` |
+
+detailed mappings for other portals are in `frontend/dib/api.ts` and documentated in [frontend.md](frontend.md).
 
 all throw on non-ok responses for consistent error handling.
 
@@ -724,7 +718,7 @@ all throw on non-ok responses for consistent error handling.
 | xgboost model training and inference |  works |
 | shap explainability |  works |
 | rest api with async scoring |  works |
-| react dashboard with live polling |  works |
+| react dashboard completely wired to live backend via `frontend/dib/api.ts` |  works |
 | llm translation |  works (requires gguf download) |
 
 ### ease of use
@@ -754,11 +748,10 @@ src/
 └── dashboard/          # (streamlit stubs — replaced by react)
 
 frontend/
-├── src/
-│   ├── components/     # appshell, ui primitives
-│   ├── pages/          # 4 dashboard pages + workflow pages
-│   └── lib/            # api wrappers, constants, utilities
-└── styles.css          # complete design system
+├── app/              # next.js app router pages (/msme, /admin, etc.)
+├── components/       # shadcn primitives + shared blocks
+├── dib/              # api wrappers (api.ts) & auth contexts
+└── hooks/            # async data hooks (useScore)
 
 config/                 # settings + redis configuration
 scripts/                # phase scripts + orchestration
@@ -817,7 +810,7 @@ conda activate credit-scoring
 pip install -e .
 
 # install frontend dependencies
-cd frontend && npm install && cd ..
+cd frontend && pnpm install && cd ..
 ```
 
 ### optional: download phi-3 llm
@@ -860,7 +853,7 @@ open `http://localhost:5173` to access the dashboard.
 | [`scripts/phase4_train.sh`](scripts/phase4_train.sh) | 4 | train xgboost model, save to `data/models/` |
 | [`scripts/phase5_tests.sh`](scripts/phase5_tests.sh) | 5 | run full pytest suite |
 | [`scripts/phase6_api.sh`](scripts/phase6_api.sh) | 6 | start fastapi server on port 8000 |
-| [`scripts/phase7_frontend.sh`](scripts/phase7_frontend.sh) | 7 | install npm deps + start vite dev server on port 5173 |
+| [`scripts/phase7_frontend.sh`](scripts/phase7_frontend.sh) | 7 | install pnpm deps + start frontend dev server on port 3000 |
 
 ### environment variables
 

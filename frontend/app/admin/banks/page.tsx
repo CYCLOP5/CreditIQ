@@ -36,9 +36,27 @@ export default function AdminBanksPage() {
     bankApi.list().then((data) => setBanks(data as any[])).catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "admin") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "admin") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleToggleStatus = async (id: string) => {

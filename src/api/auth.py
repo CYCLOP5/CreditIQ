@@ -8,8 +8,7 @@ from src.api.mock_db import db
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
-
-SECRET_KEY = "hackathon_super_secret"
+SECRET_KEY = "hackathon_super_secret_that_is_long_enough_now_i_guess_bro"
 
 class LoginRequest(BaseModel):
     email: str

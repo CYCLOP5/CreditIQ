@@ -42,9 +42,27 @@ export default function DisputeQueuePage() {
       .catch(() => setGraphData({ nodes: [], edges: [] }));
   }, [selected?.gstin]);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "credit_analyst") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "credit_analyst") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleResolve = async () => {
@@ -61,6 +79,17 @@ export default function DisputeQueuePage() {
       setSelectedId(null);
       setResNote("");
       setUnflag(false);
+    } catch {}
+  };
+
+  const handleAssign = async (id: string) => {
+    try {
+      await disputeApi.assign(id);
+      setDisputes((prev) =>
+        prev.map((d: any) =>
+          d.id === id ? { ...d, analyst_id: user.id, analyst_name: user.name } : d,
+        ),
+      );
     } catch {}
   };
 
@@ -142,9 +171,21 @@ export default function DisputeQueuePage() {
                         Analyst: {d.analyst_name}
                       </span>
                     )}
-                    <Button size="sm" variant="outline" className="text-xs h-7">
-                      Review
-                    </Button>
+                    <div className="flex gap-2">
+                      {!d.analyst_id && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="text-xs h-7 text-primary"
+                          onClick={(e) => { e.stopPropagation(); handleAssign(d.id); }}
+                        >
+                          Assign to Me
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" className="text-xs h-7">
+                        Review
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

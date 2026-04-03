@@ -14,20 +14,60 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Shield, AlertTriangle, Users, TrendingUp } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Shield, AlertTriangle, Users, TrendingUp, Loader2 } from "lucide-react";
 
 export default function FraudQueuePage() {
   const { user } = useAuth();
   const router = useRouter();
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  const handleViewDetails = async (gstin: string) => {
+    setLoadingDetails(true);
+    setSelectedAlert({}); // Open empty dialog to show loading
+    try {
+      const resp = await adminApi.getFraudAlert(gstin);
+      setSelectedAlert(resp);
+    } catch {
+      alert("Failed to load details");
+      setSelectedAlert(null);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   useEffect(() => {
     adminApi.getFraudAlerts().then((data) => setAlerts(data as any[])).catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "risk_manager") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "risk_manager") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const highConf = alerts.filter(
@@ -88,6 +128,40 @@ export default function FraudQueuePage() {
           </Card>
         ))}
       </div>
+
+      {/* Fraud Details Dialog */}
+      <Dialog open={!!selectedAlert} onOpenChange={(o) => (!o ? setSelectedAlert(null) : null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Fraud Alert Detail</DialogTitle>
+          </DialogHeader>
+          <div className="pt-2">
+            {loadingDetails ? (
+              <div className="flex items-center justify-center p-8 text-muted-foreground">
+                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                Loading details...
+              </div>
+            ) : selectedAlert && Object.keys(selectedAlert).length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedAlert.gstin}</h3>
+                    <p className="text-muted-foreground text-sm">{selectedAlert.msme_name || "Unknown Business"}</p>
+                  </div>
+                  {selectedAlert.fraud_details?.confidence && (
+                    <div className="px-3 py-1 bg-red-100 text-red-800 font-bold rounded text-sm">
+                      {(selectedAlert.fraud_details.confidence * 100).toFixed(0)}% Confidence
+                    </div>
+                  )}
+                </div>
+                <div className="bg-muted p-3 rounded-md border text-xs font-mono overflow-auto max-h-64">
+                  <pre>{JSON.stringify(selectedAlert, null, 2)}</pre>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Fraud alerts table */}
       <Card className="border-border shadow-sm">
@@ -178,14 +252,24 @@ export default function FraudQueuePage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs h-7"
-                          onClick={() => router.push("/risk/fraud-topology")}
-                        >
-                          View Graph
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs h-7 text-primary"
+                            onClick={() => handleViewDetails(alert.gstin)}
+                          >
+                            Details
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7"
+                            onClick={() => router.push("/risk/fraud-topology")}
+                          >
+                            Graph
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

@@ -71,9 +71,27 @@ export default function ThresholdsPage() {
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "risk_manager") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "risk_manager") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleSave = async () => {

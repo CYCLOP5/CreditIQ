@@ -15,6 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Search, UserCheck, UserX, Key } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -40,15 +46,34 @@ export default function AdminUsersPage() {
   const [banks, setBanks] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [resetAlert, setResetAlert] = useState<{ id: string, email: string, password?: string } | null>(null);
 
   useEffect(() => {
     adminApi.getUsers().then((data) => setUsers(data as any[])).catch(() => {});
     bankApi.list().then((data) => setBanks(data as any[])).catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "admin") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "admin") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleToggleStatus = async (id: string) => {
@@ -61,6 +86,15 @@ export default function AdminUsersPage() {
         prev.map((u: any) => (u.id === id ? { ...u, status: newStatus } : u)),
       );
     } catch {}
+  };
+
+  const handleResetPassword = async (id: string, email: string) => {
+    try {
+      const res = await adminApi.resetUserPassword(id) as any;
+      setResetAlert({ id, email, password: res.new_password || "Password reset successful." });
+    } catch {
+      alert("Failed to reset password.");
+    }
   };
 
   const filtered = users.filter((u: any) => {
@@ -117,6 +151,29 @@ export default function AdminUsersPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      <Dialog open={!!resetAlert} onOpenChange={(o) => (!o ? setResetAlert(null) : null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password Reset</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-md mt-4">
+            <p className="text-sm font-semibold text-emerald-800">
+              The password for {resetAlert?.email} has been reset.
+            </p>
+            {resetAlert?.password && (
+              <div className="mt-3">
+                <p className="text-xs text-emerald-700 font-medium mb-1">New Password (copy now):</p>
+                <p className="font-mono text-sm bg-white p-2 rounded border border-emerald-200">{resetAlert.password}</p>
+              </div>
+            )}
+            <p className="text-xs text-emerald-700 mt-3">
+              Please share this securely with the user.
+            </p>
+          </div>
+          <Button onClick={() => setResetAlert(null)} className="mt-4">Close</Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Table */}
       <Card className="border-border shadow-sm">
@@ -209,6 +266,7 @@ export default function AdminUsersPage() {
                           variant="ghost"
                           className="h-7 w-7 p-0"
                           title="Reset password"
+                          onClick={() => handleResetPassword(u.id, u.email)}
                         >
                           <Key className="w-3.5 h-3.5" />
                         </Button>

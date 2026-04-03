@@ -32,9 +32,27 @@ export default function BankDecisionsPage() {
     loanApi.list({ bank_id: bankId }).then(setLoans).catch(() => {});
   }, [bankId]);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "loan_officer") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "loan_officer") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const decided = loans.filter(

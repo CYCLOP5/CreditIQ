@@ -27,33 +27,7 @@ const GUIDE_TOPICS = [
   { id: "dispute", title: "How to Raise a Dispute", duration: "3 min", videoId: "G77sSlaA2i8" },
 ];
 
-const CANNED_REPLIES: Record<string, string> = {
-  score:
-    "Your credit score is calculated using 43 features from your GST filing history, UPI transaction patterns, e-way bill data and more. A score above 700 is considered low risk.",
-  gst: "GST filing compliance is one of the strongest positive signals. Ensure you file GSTR-1 by the 11th and GSTR-3B by the 20th each month.",
-  loan: "To apply for a loan, go to Loans → Send Request. Select a bank, choose working capital or term loan, enter the amount and purpose, then submit.",
-  cgtmse:
-    "CGTMSE (Credit Guarantee Fund Trust for Micro and Small Enterprises) provides guarantee coverage for collateral-free loans up to ₹2 Crore.",
-  mudra:
-    "MUDRA loans under the Pradhan Mantri MUDRA Yojana (PMMY) are available up to ₹10 Lakh for micro enterprises.",
-  dispute:
-    "If your GSTIN has been fraud-flagged, go to Disputes and click 'Raise Dispute'. A credit analyst will review your case.",
-  default:
-    "I'm here to help! You can ask me about your credit score, GST filing, loan products, CGTMSE, MUDRA schemes, or how to navigate the platform.",
-};
-
-function getReply(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes("score") || m.includes("credit")) return CANNED_REPLIES.score;
-  if (m.includes("gst") || m.includes("filing")) return CANNED_REPLIES.gst;
-  if (m.includes("loan") || m.includes("apply")) return CANNED_REPLIES.loan;
-  if (m.includes("cgtmse") || m.includes("guarantee"))
-    return CANNED_REPLIES.cgtmse;
-  if (m.includes("mudra")) return CANNED_REPLIES.mudra;
-  if (m.includes("dispute") || m.includes("flag"))
-    return CANNED_REPLIES.dispute;
-  return CANNED_REPLIES.default;
-}
+import { msmeApi } from "@/dib/api";
 
 const LANGUAGES = ["English", "Hindi", "Marathi", "Tamil", "Telugu", "Kannada"];
 
@@ -71,7 +45,21 @@ export default function MsmeGuidePage() {
   const [input, setInput] = useState("");
   const [language, setLanguage] = useState("English");
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [topics, setTopics] = useState<any[]>(GUIDE_TOPICS);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    msmeApi.getGuideTopics().then((res) => {
+      if (res && res.length > 0) {
+        const mapped = res.map((t: any, i: number) => ({
+          ...t,
+          videoId: t.video_url ? t.video_url.split('v=')[1] : GUIDE_TOPICS[i % GUIDE_TOPICS.length].videoId,
+          duration: "3 min"
+        }));
+        setTopics(mapped);
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -86,28 +74,46 @@ export default function MsmeGuidePage() {
     if (!user || user.role !== "msme") {
       router.push("/unauthorized");
     }
-
   }, [user, router]);
 
   if (!user || user.role !== "msme") {
-    router.push("/login");
     return null;
   }
 
-  const sendMessage = () => {
+  if (!user || user.role !== "msme") {
+    return null;
+  }
+
+  const sendMessage = async () => {
     if (!input.trim()) return;
     const userMsg = {
       role: "user",
       content: input,
       timestamp: new Date().toISOString(),
     };
-    const botMsg = {
-      role: "assistant",
-      content: getReply(input),
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMsg, botMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
+
+    try {
+      const res = await msmeApi.chat({ message: input, language }) as any;
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: res.reply || "I am sorry, I do not understand.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I am currently offline.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
   };
 
   return (
@@ -210,7 +216,7 @@ export default function MsmeGuidePage() {
                </div>
              </div>
              <Badge className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 tracking-widest px-3 py-1 text-[10px] uppercase font-black">
-               {GUIDE_TOPICS.length} MODULES
+               {topics.length} MODULES
              </Badge>
           </CardHeader>
           <div className="p-8 space-y-8">
@@ -224,7 +230,7 @@ export default function MsmeGuidePage() {
                       <iframe
                         width="100%"
                         height="100%"
-                        src={`https://www.youtube.com/embed/${GUIDE_TOPICS.find((t) => t.id === selectedTopic)?.videoId}?autoplay=1&rel=0`}
+                        src={`https://www.youtube.com/embed/${topics.find((t) => t.id === selectedTopic)?.videoId}?autoplay=1&rel=0`}
                         title="YouTube video player"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -238,17 +244,17 @@ export default function MsmeGuidePage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-3">
                          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-extrabold px-3 py-1">
-                            LESSON {GUIDE_TOPICS.findIndex(t => t.id === selectedTopic) + 1}
+                            LESSON {topics.findIndex(t => t.id === selectedTopic) + 1}
                          </Badge>
                          <span className="text-xs text-muted-foreground bg-muted/30 px-3 py-1 rounded-full border border-border/50">
-                            Duraton: {GUIDE_TOPICS.find((t) => t.id === selectedTopic)?.duration}
+                            Duraton: {topics.find((t) => t.id === selectedTopic)?.duration}
                          </span>
                       </div>
                       <h2 className="text-2xl font-black tracking-tight text-foreground line-clamp-2">
-                        {GUIDE_TOPICS.find((t) => t.id === selectedTopic)?.title}
+                        {topics.find((t) => t.id === selectedTopic)?.title}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-3 max-w-3xl leading-relaxed font-medium">
-                        Elevate your business strategy with our masterclass on {GUIDE_TOPICS.find((t) => t.id === selectedTopic)?.title.toLowerCase()}. Learn actionable insights to optimize your financial posture.
+                        Elevate your business strategy with our masterclass on {topics.find((t) => t.id === selectedTopic)?.title.toLowerCase()}. Learn actionable insights to optimize your financial posture.
                       </p>
                     </div>
                     <Button size="lg" className="h-12 px-8 rounded-full font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform">
@@ -279,7 +285,7 @@ export default function MsmeGuidePage() {
                 Lesson Modules
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {GUIDE_TOPICS.map((topic, index) => (
+                {topics.map((topic, index) => (
                   <button
                     key={topic.id}
                     onClick={() =>

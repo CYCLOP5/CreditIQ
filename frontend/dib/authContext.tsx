@@ -42,12 +42,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
 
+  const fetchNotifications = async (u: User) => {
+    try {
+      const data = await notifApi.list(false);
+      setNotifications(data as any[]);
+    } catch {
+      setNotifications(MOCK_NOTIFICATIONS[u.id] ?? []);
+    }
+  };
+
   useEffect(() => {
     const stored = sessionStorage.getItem("msme_user");
     if (stored) {
       const u = JSON.parse(stored) as User;
       setUser(u);
-      setNotifications(MOCK_NOTIFICATIONS[u.id] ?? []);
+      fetchNotifications(u);
     }
   }, []);
 
@@ -58,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const u = raw as unknown as User;
       setUser(u);
       sessionStorage.setItem("msme_user", JSON.stringify(u));
-      setNotifications(MOCK_NOTIFICATIONS[u.id] ?? []);
+      fetchNotifications(u);
       return { ok: true, user: u };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed";

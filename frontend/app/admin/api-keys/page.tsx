@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Ban, Copy } from "lucide-react";
+import { Plus, Ban, Copy, RefreshCw, Activity } from "lucide-react";
 
 export default function ApiKeysPage() {
   const { user } = useAuth();
@@ -41,15 +41,34 @@ export default function ApiKeysPage() {
   const [newKey, setNewKey] = useState({ bank_id: "", quota_per_day: "500" });
   const [createdKeyValue, setCreatedKeyValue] = useState<string | null>(null);
   const [showCreated, setShowCreated] = useState(false);
+  const [usageDetails, setUsageDetails] = useState<any | null>(null);
 
   useEffect(() => {
     adminApi.getApiKeys().then((data) => setKeys(data as any[])).catch(() => {});
     bankApi.list().then((data) => setBanks(data as any[])).catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "admin") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "admin") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleRevoke = async (id: string) => {
@@ -62,6 +81,22 @@ export default function ApiKeysPage() {
             : k,
         ),
       );
+    } catch {}
+  };
+
+  const handleRotate = async (id: string) => {
+    try {
+      const result = await adminApi.rotateApiKey(id) as any;
+      setCreatedKeyValue(result.key ?? null);
+      setShowCreated(true);
+      adminApi.getApiKeys().then((data) => setKeys(data as any[])).catch(() => {});
+    } catch {}
+  };
+
+  const handleUsage = async (id: string) => {
+    try {
+      const result = await adminApi.getApiKeyUsage(id);
+      setUsageDetails(result);
     } catch {}
   };
 
@@ -147,6 +182,21 @@ export default function ApiKeysPage() {
           </Dialog>
         }
       />
+
+      {/* Usage Modal */}
+      <Dialog open={!!usageDetails} onOpenChange={(o) => (!o ? setUsageDetails(null) : null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>API Key Usage Details</DialogTitle>
+          </DialogHeader>
+          <div className="pt-2">
+            <pre className="p-4 bg-muted text-xs rounded-md overflow-x-auto border">
+              {JSON.stringify(usageDetails, null, 2)}
+            </pre>
+          </div>
+          <Button onClick={() => setUsageDetails(null)}>Close</Button>
+        </DialogContent>
+      </Dialog>
 
       {/* One-time key reveal */}
       {showCreated && createdKeyValue && (
@@ -247,17 +297,39 @@ export default function ApiKeysPage() {
                         : "—"}
                     </TableCell>
                     <TableCell>
-                      {k.status === "active" && (
+                      <div className="flex items-center gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Revoke key"
-                          onClick={() => handleRevoke(k.id)}
+                          className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          title="View Usage"
+                          onClick={() => handleUsage(k.id)}
                         >
-                          <Ban className="w-3.5 h-3.5" />
+                          <Activity className="w-3.5 h-3.5" />
                         </Button>
-                      )}
+                        {k.status === "active" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              title="Rotate key"
+                              onClick={() => handleRotate(k.id)}
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Revoke key"
+                              onClick={() => handleRevoke(k.id)}
+                            >
+                              <Ban className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

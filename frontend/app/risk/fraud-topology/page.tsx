@@ -30,9 +30,27 @@ export default function FraudTopologyPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "risk_manager") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "risk_manager") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const filteredAlerts = fraudAlerts.filter(

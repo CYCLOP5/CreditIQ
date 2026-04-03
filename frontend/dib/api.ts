@@ -48,6 +48,11 @@ export const scoreApi = {
       body: JSON.stringify({ gstin }),
     }),
   get: (taskId: string) => apiFetch<Record<string, unknown>>(`/score/${taskId}`),
+  chat: (taskId: string, body: Record<string, unknown>) =>
+    apiFetch<Record<string, unknown>>(`/score/${taskId}/chat`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   health: () => apiFetch<Record<string, unknown>>("/health"),
 };
 
@@ -158,6 +163,10 @@ export const adminApi = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  resetUserPassword: (uid: string) =>
+    apiFetch<Record<string, unknown>>(`/users/${uid}/reset-password`, {
+      method: "POST",
+    }),
   getApiKeys: () => apiFetch<unknown[]>("/api-keys"),
   createApiKey: (body: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>("/api-keys", {
@@ -168,8 +177,20 @@ export const adminApi = {
     apiFetch<Record<string, unknown>>(`/api-keys/${kid}/revoke`, {
       method: "PUT",
     }),
+  rotateApiKey: (kid: string) =>
+    apiFetch<Record<string, unknown>>(`/api-keys/${kid}/rotate`, {
+      method: "PUT",
+    }),
+  getApiKeyUsage: (kid: string) =>
+    apiFetch<Record<string, unknown>>(`/api-keys/${kid}/usage`),
   getAuditLog: () => apiFetch<unknown[]>("/audit-log"),
+  replayAudit: (body: Record<string, unknown>) =>
+    apiFetch<Record<string, unknown>>("/audit/replay", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   getFraudAlerts: () => apiFetch<unknown[]>("/fraud-alerts"),
+  getFraudAlert: (gstin: string) => apiFetch<Record<string, unknown>>(`/fraud-alerts/${gstin}`),
   getRiskThresholds: () => apiFetch<Record<string, unknown>>("/risk-thresholds"),
   updateRiskThresholds: (body: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>("/risk-thresholds", {
@@ -196,3 +217,19 @@ export const notifApi = {
       method: "PUT",
     }),
 };
+
+// ── MSME ──────────────────────────────────────────────────────────────────────
+export const msmeApi = {
+  chat: (body: Record<string, unknown>) =>
+    apiFetch<Record<string, unknown>>("/chat", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getGuideTopics: () => apiFetch<unknown[]>("/guide-topics"),
+};
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+export const analyticsApi = {
+  getCohortMedian: () => apiFetch<Record<string, unknown>>("/analytics/cohort-median"),
+};
+

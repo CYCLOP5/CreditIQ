@@ -31,9 +31,27 @@ export default function MsmeDisputesPage() {
     disputeApi.list({ gstin }).then(setDisputes).catch(() => {});
   }, [gstin]);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "msme") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "msme") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const openDispute = disputes.find(

@@ -71,9 +71,27 @@ export default function AdminOverviewPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "admin") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "admin") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const ramUsedGb = health.system_ram_used_gb ?? 0;

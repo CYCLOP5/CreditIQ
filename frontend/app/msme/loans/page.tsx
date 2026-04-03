@@ -56,9 +56,27 @@ export default function MsmeLoans() {
     bankApi.list().then(setBanks).catch(() => {});
   }, [gstin]);
 
+  useEffect(() => {
+
+
+    if (!user || user.role !== "msme") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
+
   if (!user || user.role !== "msme") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const myLoans = loans;

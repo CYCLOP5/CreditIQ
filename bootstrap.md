@@ -183,13 +183,13 @@ curl http://localhost:8000/score/TASK_ID
 
 ## phase 7 — frontend dev server
 
-requires node 18+ and npm
+requires node 18+ and pnpm
 
 ```bash
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm run dev
 ```
 
-dashboard available at http://localhost:5173
+dashboard available at http://localhost:3000
 
 ---
 
@@ -252,7 +252,8 @@ python -m src.features.engine
 python -m src.scoring.trainer
 python -m src.api.main &
 python -m src.api.worker &
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm run dev
+# dashboard on http://localhost:3000
 ```
 
 ---

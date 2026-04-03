@@ -38,8 +38,13 @@ export default function MsmeDashboard() {
     loanApi.list({ gstin: user.gstin }).then(setLoans).catch(() => {});
   }, [user?.gstin]);
 
+  useEffect(() => {
+    if (!user || user.role !== "msme") {
+      router.push("/login");
+    }
+  }, [user, router]);
+
   if (!user || user.role !== "msme") {
-    router.push("/login");
     return null;
   }
 

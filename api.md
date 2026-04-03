@@ -375,9 +375,7 @@ a queue_depth that grows continuously indicates the worker process has crashed o
 
 ## section 7 — frontend api integration
 
-### api.js fetch wrappers
-
-[`frontend/src/lib/api.js`](../frontend/src/lib/api.js) exports three functions. all target `http://localhost:8000` as the base url.
+[`frontend/dib/api.ts`](../frontend/dib/api.ts) exports functions grouped by feature (e.g. `scoreApi`, `msmeApi`). all target `http://localhost:8000` as the base url.
 
 | function | method | endpoint | description |
 |---|---|---|---|
@@ -389,14 +387,16 @@ all three functions throw on non-ok http responses so callers can catch and disp
 
 ### polling strategy
 
-[`frontend/src/pages/ScoreLookup.jsx`](../frontend/src/pages/ScoreLookup.jsx) implements client-side polling:
+[`frontend/hooks/useScore.ts`](../frontend/hooks/useScore.ts) implements client-side polling:
 
+```typescript
 1. user enters a 15-character gstin and submits the form
 2. input is validated against `/^[A-Z0-9]{15}$/` before submission
 3. postScore is called, the returned task_id is stored in component state
 4. setInterval is started with a 2-second period, calling getScore(taskId) on each tick
 5. when the response status transitions to complete or failed the interval is cleared
 6. useEffect cleanup also clears the interval on component unmount to prevent memory leaks
+```
 
 ### cors configuration
 
@@ -409,7 +409,7 @@ http://localhost:5173
 
 port 5173 is the vite dev server default. port 3000 is the legacy next.js dev server port retained for compatibility. all methods and headers are allowed. credentials are not required because the api is stateless (no cookies, no sessions).
 
-if the frontend is served on a different port (for example a custom vite --port flag), add that origin to the allow_origins list in [`src/api/main.py`](../src/api/main.py) and restart the fastapi server.
+if the frontend is served on a different port (for example a custom next dev --port flag), add that origin to the allow_origins list in [`src/api/main.py`](../src/api/main.py) and restart the fastapi server.
 
 ---
 
@@ -430,13 +430,13 @@ defines rest interfaces exposed by fastapi application for orchestration and rea
 
 ## section 9 — ui proxy endpoints 
 
-the following frontend-specific proxies are exposed. they are fully stateful but write to `data/frontend_db.json`.
+the following frontend-specific proxies are exposed. they are fully stateful and interact actively with the python backend.
 
-| module | endpoints | purpose | authentication |
+| workflow | endpoints | purpose | required role |
 |---|---|---|---|
-| auth | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | injects local jwt and grants mock access for rbac testing | none |
+| auth | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | injects local jwt and grants session access for rbac testing | none |
 | msme | `POST /loan-requests`, `PUT /permissions/{id}`, `POST /disputes` | msme user lifecycle creating scopes | requires `msme` role |
 | bank | `GET /loan-requests`, `GET /loan-requests/{id}/score`, `PUT /loan-requests/{id}/decision` | loan officer queues. score fetches directly access redis if permission is granted | requires `loan_officer` |
-| analyst | `GET /score-history`, `GET /transactions/{gstin}/graph`, `PUT /disputes/{id}/resolve` | analyst tools querying mock topology | requires `credit_analyst` |
+| analyst | `GET /score-history`, `GET /transactions/{gstin}/graph`, `PUT /disputes/{id}/resolve` | analyst tools querying data topology | requires `credit_analyst` |
 | risk | `GET /fraud-alerts`, `GET /risk-thresholds`, `GET /transactions/graph` | systemic risk review covering parameters and topology | requires `risk_manager` |
 | admin | `GET /banks`, `GET /api-keys`, `GET /users`, `GET /audit-log` | simulated tenant administration endpoints | requires `admin` |

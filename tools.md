@@ -48,10 +48,10 @@ this document details the complete technology stack, algorithmic tools, and arch
 * **psutil**: **what is it?** a cross-platform library for retrieving system utilization traits (cpu, memory, disks). **how we use it:** system-level cross-platform library to monitor memory pressure (rss) during polars pipeline execution and prevent oom crashes.
 
 ## frontend dashboard
-* **react 18** (core & dom): **what is it?** a declarative, component-based javascript ui library focused on building single-page applications. **how we use it:** the ui library powering the interactive dashboard.
-* **vite 5**: **what is it?** a next-generation lightning-fast frontend build tool and local dev server relying heavily on native es modules and rollup. **how we use it:** fast build tool and development server for the react app.
-* **plotly**: **what is it?** a graphing library delivering interactive, publish-quality graphs directly formatted. **how we use it:** available as a project dependency for advanced charting. the primary dashboard uses custom svg visualizations in react.
-* **streamlit**: **what is it?** an open-source python framework for easily transforming analytics scripts into interactive web apps quickly. **how we use it:** stub pages exist at `src/dashboard/` as an alternative to the react frontend. the primary dashboard is the react+vite app at `frontend/`.
+
+* **next.js 14 (app router)**: **what is it?** a react framework for production-grade applications that supports hybrid static & server rendering. **how we use it:** powers our primary dashboards, workflows, and routing via the `frontend/app` directory. We strictly use client-side rendering where data fetching is tied to `apiFetch` in `api.ts`.
+* **tailwind css**: **what is it?** a utility-first css framework. **how we use it:** speeds up and standardizes all visual styling.
+* **shadcn/ui**: **what is it?** beautifully designed, accessible components built on top of radix ui and tailwind css. **how we use it:** serves as the foundational design system avoiding lock-in, since we control the component source code.
 
 ### `joblib`
 Used to serialize and persist `scikit-learn` artifacts (like `KNNImputer` and `IsolationForest`) generated during offline batch training. Available as a project dependency for future model persistence needs.

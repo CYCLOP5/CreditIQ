@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/dib/authContext";
 import { useRouter } from "next/navigation";
 import { FEATURE_LABELS, GSTIN_TASK_MAP } from "@/dib/mockData";
-import { scoreApi } from "@/dib/api";
+import { scoreApi, analyticsApi } from "@/dib/api";
 import { PageHeader, RiskBadge, ScoreGauge } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,10 +34,33 @@ export default function ShapExplorerPage() {
   const [loading, setLoading] = useState(false);
   const [score, setScore] = useState<any>(null);
   const [error, setError] = useState("");
+  const [medians, setMedians] = useState<any>(null);
+
+  useEffect(() => {
+    analyticsApi.getCohortMedian().then(setMedians).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+
+
+    if (!user || user.role !== "credit_analyst") {
+
+
+      router.push("/unauthorized");
+
+
+    }
+
+
+  }, [user, router]);
+
 
   if (!user || user.role !== "credit_analyst") {
-    router.push("/unauthorized");
+
+
     return null;
+
+
   }
 
   const handleLookup = async () => {
@@ -135,6 +158,29 @@ export default function ShapExplorerPage() {
             <AlertTriangle className="w-5 h-5 shrink-0" />
             <p className="text-sm">{error}</p>
           </div>
+        )}
+
+        {medians && !score && (
+          <Card className="border-border shadow-sm mb-6">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Global Cohort Medians
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {Object.entries(medians).map(([k, v]) => {
+                if (typeof v !== 'object') {
+                   return (
+                    <div key={k} className="bg-muted/50 rounded-lg p-3 border border-border/50">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{k.replace(/_/g, " ")}</p>
+                      <p className="text-sm font-semibold text-foreground">{typeof v === "number" && v % 1 !== 0 ? v.toFixed(2) : String(v)}</p>
+                    </div>
+                  );
+                }
+                return null;
+              })}
+            </CardContent>
+          </Card>
         )}
 
         {score && (
