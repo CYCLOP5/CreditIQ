@@ -23,6 +23,7 @@ class GSTInvoiceRecord(BaseModel):
     buyer_gstin: str
     filing_status: Literal["ontime", "delayed", "missing"]
     filing_delay_days: int
+    synthetic_batch_id: str | None = None
 
 
 class UPITransactionRecord(BaseModel):
@@ -39,6 +40,7 @@ class UPITransactionRecord(BaseModel):
     counterparty_vpa: str
     txn_type: Literal["p2p", "p2m"]
     status: Literal["success", "failed_technical", "failed_funds"]
+    synthetic_batch_id: str | None = None
 
 
 class EWayBillRecord(BaseModel):

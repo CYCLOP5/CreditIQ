@@ -19,6 +19,12 @@ this document details the complete technology stack, algorithmic tools, and arch
 
 ## message bus & data streaming
 * **redis**: **what is it?** an open-source, in-memory key-value data store frequently used as a distributed database, message broker, caching layer, and streaming engine. **how we use it:** used as an in-memory message bus via redis streams (`redis-py` async). it handles the flow of gst invoices, upi transactions, and e-way bills, as well as scoring job requests.
+  > **why ONLY redis and no other database?** 
+  > for this hackathon architecture, introducing a traditional rdbms (like postgresql or mysql) or a document store (like mongodb) would violate our strict constraints (12gb ram total). redis alone handles three crucial layers simultaneously without disk i/o bottlenecks:
+  > 1. **pub/sub streaming:** real-time server-sent events (sse) pipeline.
+  > 2. **time-series data retention:** redis streams (`xadd`, `xreadgroup`) naturally buffer gst/upi/ewb data.
+  > 3. **state-store:** fast key-value lookups for the generated feature vectors and graph states.
+  > using a single purely in-memory engine achieves sub-millisecond data routing, keeps the architecture incredibly lean, and avoids the heavy ram tax of maintaining multiple database connections/indices alongside our xgboost and phi-3 models.
 
 ## machine learning & ai
 * **xgboost classifier**: **what is it?** an optimized distributed gradient boosting library representing the industry standard for creating non-neural network decision trees on tabular data using the histogram method. **how we use it:** gradient boosted tree classifier utilizing the `hist` tree method, providing memory-efficient histogram-based node splitting designed for large-scale categorical continuous inputs (ideal for processing the `to_sparse_if_needed` inputs efficiently when >50% data sparsity happens).

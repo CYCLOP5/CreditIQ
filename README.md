@@ -11,11 +11,16 @@
  └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Domain Knowledge Architecture:** The core logic is explicitly split between regulatory and technical domains:
+> * [theoryMSME.md](theoryMSME.md): Defines strategic limits, Bank of India MSME guidelines, and CGTMSE boundaries.
+> * [signals.md](signals.md): Details the technical ML engineering features (P2M vs P2P velocity, temporal SCC detection, HSN entropy).
+
 | Resource | Link |
 |---|---|
 | Architecture deep-dive | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Mathematical foundations | [math.md](math.md) |
 | Tools, libraries & alternatives | [tools.md](tools.md) |
+| ML Feature Intent & Signals | [signals.md](signals.md) |
 | Data generation & profiles | [howisthedatamade.md](howisthedatamade.md) |
 | Database & redis schemas | [schema.md](schema.md) |
 | System bootstrapping | [bootstrap.md](bootstrap.md) |

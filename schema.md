@@ -56,33 +56,33 @@ nic v1.0.0621 json specification implementation mapping physical distributions.
 ### core transport constraints
 | field | type | constraint & purpose |
 |---|---|---|
-| `eway_id` | `int(12)` | mandatory nic unique numeric sequence |
-| `usergstin` | `string(15)` | identity of the mechanical entity hitting the portal |
-| `supplytype` | `char(1)` | outward `o` / inward `i` vector logic |
-| `doctype` | `enum` | allowable subset: `[inv, chl, bil]` |
-| `docno` | `string` | explicit foreign-key mapped back to the upstream `invoice_id` |
+| `eway_id` | `string` | mandatory nic unique numeric sequence |
+| `gstin` | `string(15)` | identity of the mechanical entity hitting the portal |
+| `supply_type` | `char(1)` | outward `o` / inward `i` vector logic |
+| `doc_type` | `enum` | allowable subset: `[inv, chl, bil]` |
+| `doc_no` | `string` | explicit foreign-key mapped back to the upstream `invoice_id` |
 
 ### topographical tracers
 | field | type | constraint & purpose |
 |---|---|---|
-| `fromgstin` / `togstin` | `string(15)` | origin/destination identifiers tracking scc cycle rings |
-| `fromstatecode` / `tostatecode` | `int(2)` | bounded 2-digit indian routing identifier rules |
-| `fromaddr1` / `toaddr1` | `string` | physical synthetic geo-location anchors |
-| `transdistance` | `integer` | physical trajectory calculation; hard-enforced `1-5` km boundaries detect extreme `paper_trader` anomalies |
+| `from_gstin` / `to_gstin` | `string(15)` | origin/destination identifiers tracking scc cycle rings |
+| `from_state_code` / `to_state_code` | `int(2)` | bounded 2-digit indian routing identifier rules |
+| `actual_from_state_code` / `actual_to_state_code` | `int(2)` | original dispatch and destination state codes |
+| `trans_distance` | `integer` | physical trajectory calculation; hard-enforced `1-5` km boundaries detect extreme `paper_trader` anomalies |
 
 ### commodity tracers
 | field | type | constraint & purpose |
 |---|---|---|
-| `mainhsncode` | `string(4-8)` | product identifiers utilized in shannon entropy matrix mappings |
-| `itemlist_productname` | `string` | text-generated product representations corresponding to the hsn code |
-| `itemlist_taxableamount` | `float` | base listing values passed along without taxation modifiers |
-| `totinvvalue` | `float` | hard total reconciling mathematically back to `stream:gst_invoices` |
+| `main_hsn_code` | `string(4-8)` | product identifiers utilized in shannon entropy matrix mappings |
+| `item_hsn_code` | `string` | text-generated product representations corresponding to the hsn code |
+| `taxable_amount` | `float` | base listing values passed along without taxation modifiers |
+| `tot_inv_value` | `float` | hard total reconciling mathematically back to `stream:gst_invoices` |
 
 ### vehicle & distribution modifiers
 | field | type | constraint & purpose |
 |---|---|---|
-| `transmode` | `enum[1-4]` | constrains routing behavior (e.g., road `1`) |
-| `vehicleno` | `string` | synthetic automotive validation |
+| `trans_mode` | `enum[1-4]` | constrains routing behavior (e.g., road `1`) |
+| `vehicle_type` | `string` | synthetic automotive validation |
 
 
 
