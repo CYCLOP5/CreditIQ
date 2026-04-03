@@ -248,3 +248,18 @@ in the synthetic pipeline, bank statement data is simulated via the sdv gaussian
 ### sandbox access
 
 sahamati provides sandbox access for development and testing. for this hackathon prototype, the synthetic generator replaces real aa data entirely. no live aa integration is implemented or required. the architecture is designed to swap in a real aa client by replacing the generator's bank statement output with aa api responses without modifying the feature engine.
+
+### E-Way Bill Smurfing (Structuring)
+E-Way bills are legally mandatory for movements above ₹50,000. Fraudsters frequently execute "smurfing" (structuring) by generating multiple bills between ₹45,000 and ₹49,999 to avoid closer scrutiny while staying under reporting limits.
+feature: `ewb_smurfing_index`
+
+### Hub-and-Spoke Fraud & PageRank
+Circular rings (A -> B -> C -> A) are common, but sophisticated fraud also leverages Bipartite Hub-and-Spoke models where many disconnected mules funnel money to a central shell node. We calculate `nx.pagerank` on the UPI graph. A node with massive PageRank but zero GST compliance is flagged as a mule hub.
+feature: `pagerank_score`
+
+### Cross-Signal Reconciliation (Cash vs Accrual)
+Comparing 30-day GST value against 30-day UPI inbound volume exposes massive Accounts Receivable bottlenecks or unaccounted cash flows. If GST is ₹50L and UPI is ₹5L, the business is starving for liquidity despite looking healthy on paper.
+feature: `gst_upi_receivables_gap`
+
+### Path to Prime Counterfactuals
+By examining the most negative SHAP value, our GenAI module acts as an automated advisory bot. It generates a "Path to Prime" prescriptive action, telling the specific MSME exactly what business behavior to change (e.g., "increase cash buffer to >10 days") to climb into the Prime scoring band.

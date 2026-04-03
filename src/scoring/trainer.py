@@ -296,9 +296,11 @@ def train_model(
     X_train_input = to_sparse_if_needed(X_train_dense)
 
     if sp.issparse(X_val):
-        X_val_arr = X_val.toarray()
+        X_val_dense = X_val.toarray()
     else:
-        X_val_arr = X_val
+        X_val_dense = X_val
+
+    X_val_input = to_sparse_if_needed(X_val_dense)
 
     model = xgb.XGBClassifier(
         tree_method="hist",
@@ -316,11 +318,11 @@ def train_model(
     model.fit(
         X_train_input,
         y_train,
-        eval_set=[(X_val_arr, y_val)],
+        eval_set=[(X_val_input, y_val)],
         verbose=False,
     )
 
-    val_probs = model.predict_proba(X_val_arr)[:, 1]
+    val_probs = model.predict_proba(X_val_input)[:, 1]
     val_auc = roc_auc_score(y_val, val_probs)
     print(f"validation auc {val_auc:.4f}")
 

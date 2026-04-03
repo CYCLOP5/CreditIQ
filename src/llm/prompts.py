@@ -68,7 +68,7 @@ def format_shap_prompt(
         f"risk_band: {risk_band}\n"
         f"top_5_signal_attributions:\n"
         f"{feature_lines}\n"
-        f"translate these 5 attributions into 5 plain language bullet points<|end|>\n"
+        f"translate these 5 attributions into 5 plain language bullet points. Then add a 6th bullet point starting with 'Path to Prime: ' that generates one actionable step the MSME can take to improve their score based on the highest negative feature.<|end|>\n"
         f"<|assistant|>\n"
     )
     return prompt
@@ -92,7 +92,10 @@ def parse_llm_output(raw_output: str) -> list[str]:
         if ln:
             cleaned.append(ln)
 
-    while len(cleaned) < 5:
-        cleaned.append("insufficient signal data for this factor")
+    while len(cleaned) < 6:
+        if len(cleaned) == 5:
+            cleaned.append("Path to Prime: maintain healthy cash buffers and consistent gst filing to improve your score")
+        else:
+            cleaned.append("insufficient signal data for this factor")
 
-    return cleaned[:5]
+    return cleaned[:6]

@@ -117,6 +117,8 @@ class EngineeredFeatureVector(BaseModel):
     invoice_to_ewb_lag_hours_median: float
     upi_p2m_ratio_30d: float
     upi_outbound_failure_rate: float
+    gst_upi_receivables_gap: float = 0.0
+    ewb_smurfing_index: float = 0.0
 
     upi_daily_avg_throughput: float = 0.0
     upi_top3_concentration: float = 0.0
@@ -138,6 +140,7 @@ class EngineeredFeatureVector(BaseModel):
     cycle_recurrence: float = 0.0
     counterparty_compliance_avg: float = 0.0
     counterparty_fraud_exposure: float = 0.0
+    pagerank_score: float = 0.0
     
     temporal_anomaly_flag: float = 0.0
 

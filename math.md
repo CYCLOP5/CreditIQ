@@ -4,9 +4,9 @@ This document outlines the mathematical formulas and algorithms used in the Cred
 
 ## 1. Feature Engineering Formulas
 
-### Rolling Velocity (e.g., GST 30-day value)
-Measures the total taxable value of GST invoices for a given GSTIN over a rolling time window.
-$$V_{30d}^{GST}(g) = \sum_{i : t_i \geq t_{now} - 30d} \text{taxable\_value}_i \quad \forall \text{invoice } i \text{ where } \text{gstin} = g$$
+### Temporal Decay EMAs (Exponential Moving Averages)
+We replaced static rolling sums with continuously updating Exponential Moving Averages (EMA). This mathematically allows the score to bleed down or spike up with literal daily precision.
+$$V_{EMA}^{GST}(g) = \sum_{i} \text{taxable\_value}_i \cdot e^{-\lambda (t_{now} - t_i)} \quad \text{where } \lambda = \frac{\ln(2)}{\text{half\_life}}$$
 
 ### Cadence & Filing Intervals
 To measure the consistency of filings and transactions:
@@ -64,12 +64,13 @@ To bootstrap the scoring engine without historical ground-truth defaults, a synt
 8. Gaussian noise $N(0, 0.05)$ is added to ensure continuity. All values are clipped safely between $[0.05, 0.95]$.
 
 
-### Dynamic Algorithmic Risk Pricing (Expected Loss)
-Instead of static rules, the core engine dynamically bounds recommendations. 
-We establish that Expected Loss (EL) must not exceed a predefined risk threshold. 
+### Regulatory-Constrained Expected Loss (EL) Based Loan Sizing
+Instead of purely static rule-based limits, the core engine calculates the algorithmic exposure capacity using Expected Loss:
 $$EL = P(\text{default}) \times \text{LGD} \times \text{Exposure}$$
-The maximum allowed limits (Working Capital & Term Loan limits) are solved via iterative expansion to find the optimal $\text{Exposure}$ satisfying:
-$$EL \leq \text{Risk Appetite}$$
+$$\text{Max Algorithmic Loan} = \frac{\text{Risk Appetite}}{P(\text{default}) \times \text{LGD}}$$
+
+To ensure complete banking compliance, this algorithmic capacity is then policy-gated and clamped to the MSME bounds (e.g., CGTMSE 50 Lakh limit):
+$$\text{Final Recommended Loan} = \min(\text{Max Algorithmic Loan}, \text{Regulatory Cap})$$
 
 ### Multidimensional Nearest-Neighbor Imputation
 To alleviate penalties on newly incorporated MSMEs displaying sparse GST filing history, the system performs a localized k-nearest-neighbor (KNN) imputation:
@@ -82,3 +83,15 @@ Given interval deviations across streams (e.g. $\sigma_{GST\_interval}$, $\sigma
 The `IsolationForest` splits the data via random thresholds across normal standard deviation boundaries. Anomalously short or highly rigid intervals (low variance) require fewer splits to be isolated.
 $$s(\mathbf{x}, n) = 2^{-\frac{E(h(\mathbf{x}))}{c(n)}}$$
 If $s(\mathbf{x}, n) > 0.5$ threshold, $x$ is flagged as a temporal anomaly.
+
+
+### Cross-Signal Reconciliation Engine
+Checks for Accounts Receivable bottlenecks by computing the discrepancy between accrued ledger value (GST) and actual cash realization (UPI):
+$$\text{Receivables Gap} = \frac{\text{GST 30d Value} - \text{UPI 30d Inbound}}{\max(\text{GST 30d Value}, 1.0)}$$
+
+### E-Way Bill Smurfing Index
+Models intentional transaction structuring to evade the strict ₹50,000 regulatory mandate for e-way bills:
+$$\text{Smurfing Index} = \frac{|\text{EWBs where } 45000 \leq \text{value} < 50000|}{|\text{Total EWBs}|}$$
+
+### Hub-and-Spoke Bipartite Topology (PageRank)
+Beyond simple cycles, we calculate Eigenvector Centrality (PageRank) across the directed UPI network to flag high-centrality money mules with zero GST footprint.

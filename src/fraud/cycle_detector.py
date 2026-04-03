@@ -45,21 +45,22 @@ def is_temporal_cycle(cycle_nodes: list[str], graph: nx.MultiDiGraph) -> bool:
     """
     pairs = [(cycle_nodes[i], cycle_nodes[(i + 1) % len(cycle_nodes)]) for i in range(len(cycle_nodes))]
 
-    def check_sequence(idx: int, last_ts) -> bool:
+    def check_sequence(idx: int, last_ts, start_offset: int) -> bool:
         if idx == len(pairs):
             return True
-        src, dst = pairs[idx]
+        actual_idx = (idx + start_offset) % len(pairs)
+        src, dst = pairs[actual_idx]
         edge_data = graph.get_edge_data(src, dst)
         if not edge_data:
             return False
         for _, attrs in edge_data.items():
             ts = attrs.get("timestamp")
             if ts is not None and (last_ts is None or ts > last_ts):
-                if check_sequence(idx + 1, ts):
+                if check_sequence(idx + 1, ts, start_offset):
                     return True
         return False
 
-    return check_sequence(0, None)
+    return any(check_sequence(0, None, offset) for offset in range(len(pairs)))
 
 
 class CycleDetector:

@@ -111,24 +111,17 @@ class CreditScorer:
         
         lgd = 0.45
         max_el_acceptable = 50000.0
+        
+        # Prevent division by zero if prob is exactly 0
+        safe_prob = max(prob, 0.0001)
 
-        optimal_wc = 0.0
-        max_wc_allowed = band_cfg["wc_max_lakh"] * 100000
-        for amt in range(100000, max_wc_allowed + 100000, 100000):
-            el = prob * lgd * amt
-            if el <= max_el_acceptable:
-                optimal_wc = float(amt)
-            else:
-                break
+        max_wc_allowed = float(band_cfg["wc_max_lakh"] * 100000)
+        raw_max_wc = max_el_acceptable / (safe_prob * lgd)
+        optimal_wc = min(raw_max_wc, max_wc_allowed)
 
-        optimal_term = 0.0
-        max_term_allowed = band_cfg["term_max_lakh"] * 100000
-        for amt in range(100000, max_term_allowed + 100000, 100000):
-            el = prob * lgd * amt
-            if el <= max_el_acceptable * 2.0:
-                optimal_term = float(amt)
-            else:
-                break
+        max_term_allowed = float(band_cfg["term_max_lakh"] * 100000)
+        raw_max_term = (max_el_acceptable * 2.0) / (safe_prob * lgd)
+        optimal_term = min(raw_max_term, max_term_allowed)
 
         return {
             "recommended_wc_amount": optimal_wc,

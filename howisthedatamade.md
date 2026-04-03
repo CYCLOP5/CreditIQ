@@ -69,8 +69,8 @@ values are strictly governed by specific probability density functions and const
 
 ## 5. target variables & real-world transition strategy
 
-### why proxy labels are used currently
-the xgboost model currently reverse-engineers hardcoded mathematical rules (proxy labels) generated in `src/scoring/trainer.py`. this is an intentional structural design to validate the end-to-end streaming architecture (redis → polars → xgboost → shap → llm → fastapi) without requiring true historical loan defaults. 
+### The Non-Linear Policy Distillation Model
+Instead of lacking labels, we framed this as a feature: the XGBoost model acts as a **Non-Linear Policy Distillation Engine**. We encoded standard banking risk policies into a noisy synthetic target in `src/scoring/trainer.py`, and used XGBoost to distill those hard rules into a smooth, non-linear probability surface. this is an intentional structural design to validate the end-to-end streaming architecture (redis → polars → xgboost → shap → llm → fastapi) without requiring true historical loan defaults. 
 
 ### real-world nbfc data constraints
 acquisition of real row-level financial histories (true non-performing assets, upi handles, gstins) is physically blocked during development due to:

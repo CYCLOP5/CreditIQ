@@ -117,6 +117,9 @@ computed dynamically in `src/features/engine.py`. these form the final 43-dimens
 | field | type | constraint & purpose |
 |---|---|---|
 | `fraud_ring_flag` | `boolean` | output of the tarjan scc decomposition indicating direct cycle membership |
+| `gst_upi_receivables_gap` | `float` | cross-signal mismatch between GST booked revenue and actual UPI cash realization |
+| `ewb_smurfing_index` | `float` | ratio of EWB transactions deliberately sized just below the ₹50,000 legal threshold |
+| `pagerank_score` | `float` | Hub-and-Spoke indicator calculating node centrality in the global UPI directed multigraph |
 | `temporal_anomaly_flag` | `float` | binary `1.0`/`0.0` output from the isolation forest identifying robotic chronological cadence |
 | `fraud_confidence` | `float` | weighted severity metric bounded `[0.0, 1.0]` combining cycle volumes and graph edges |
 | `cycle_velocity` | `float` | speed at which capital traverses the isolated graph loop |

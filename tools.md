@@ -52,3 +52,9 @@ this document details the complete technology stack, algorithmic tools, and arch
 * **vite 5**: **what is it?** a next-generation lightning-fast frontend build tool and local dev server relying heavily on native es modules and rollup. **how we use it:** fast build tool and development server for the react app.
 * **plotly**: **what is it?** a graphing library delivering interactive, publish-quality graphs directly formatted. **how we use it:** for advanced and interactive charting.
 * **streamlit**: **what is it?** an open-source python framework for easily transforming analytics scripts into interactive web apps quickly. **how we use it:** as an alternative dashboard and visualization engine.
+
+### `joblib`
+Used to serialize and persist `scikit-learn` artifacts (like `KNNImputer` and `IsolationForest`) generated during offline batch training so they can be loaded instantly in the real-time scoring worker to perfectly eliminate train-serve skew.
+
+### `NetworkX (PageRank)`
+Used for topological fraud detection (Hub-and-Spoke bipartite models) on the multi-directed UPI transfer graphs.

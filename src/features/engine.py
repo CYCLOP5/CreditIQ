@@ -5,6 +5,7 @@ parquet spill cache keyed gstin partition path datafeaturesgstinstinfeaturesparq
 """
 
 import glob
+import joblib
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -233,6 +234,7 @@ class FeatureEngine:
 
         if upi_g.height == 0:
             upi_inbound_outbound_ratio_30d = 0.0
+            inbound_amt = 0.0
             upi_hhi_30d = 0.0
             upi_p2m_ratio_30d = 0.0
             upi_outbound_failure_rate = 0.0
@@ -270,6 +272,7 @@ class FeatureEngine:
         if gst_g.height == 0:
             gst_revenue_cv_90d = 0.0
             filing_compliance_rate = 0.0
+            gst_upi_receivables_gap = 0.0
         else:
             gst_now = gst_g["timestamp"].max()
             gst_90d = gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=90))
@@ -290,11 +293,16 @@ class FeatureEngine:
 
             ontime_count = gst_g.filter(pl.col("filing_status") == "ontime").height
             filing_compliance_rate = ontime_count / max(gst_g.height, 1)
+            gst_30d_value = float(
+                gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=30))["taxable_value"].sum() or 0.0
+            )
+            gst_upi_receivables_gap = (gst_30d_value - inbound_amt) / max(gst_30d_value, 1.0)
 
         if ewb_g.height == 0:
             ewb_volume_growth_mom = 0.0
             ewb_distance_per_value_ratio = 0.0
             invoice_to_ewb_lag_hours_median = 0.0
+            ewb_smurfing_index = 0.0
         else:
             ewb_now = ewb_g["timestamp"].max()
             this_month_start = ewb_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -316,6 +324,8 @@ class FeatureEngine:
             total_dist = float(ewb_g["trans_distance"].sum() or 0)
             total_val = float(ewb_g["tot_inv_value"].sum() or 0.0)
             ewb_distance_per_value_ratio = total_dist / max(total_val, 1.0)
+
+            ewb_smurfing_index = float(ewb_g.filter((pl.col("tot_inv_value") >= 45000) & (pl.col("tot_inv_value") < 50000)).height) / max(ewb_g.height, 1.0)
 
             try:
                 ewb_with_lag = (
@@ -349,6 +359,8 @@ class FeatureEngine:
             "invoice_to_ewb_lag_hours_median": invoice_to_ewb_lag_hours_median,
             "upi_p2m_ratio_30d": upi_p2m_ratio_30d,
             "upi_outbound_failure_rate": upi_outbound_failure_rate,
+            "gst_upi_receivables_gap": gst_upi_receivables_gap,
+            "ewb_smurfing_index": ewb_smurfing_index,
         }
 
     def _compute_sparsity_features(
