@@ -582,7 +582,7 @@ class FeatureEngine:
         upi_df: pl.DataFrame,
         ewb_df: pl.DataFrame,
         skip_cache: bool = False,
-    ) -> dict:
+    ) -> EngineeredFeatureVector | dict:
         """
         full feature vector computation single gstin
         merges velocity cadence ratio sparsity extended dicts into raw dict
@@ -617,7 +617,7 @@ class FeatureEngine:
             cache_row = {k: [v] for k, v in all_features.items()}
             feature_df = pl.DataFrame(cache_row)
             self._save_cached_features(gstin, feature_df)
-            return vector.model_dump()
+            return vector
             
         return all_features
 

@@ -1,0 +1,332 @@
+starting synthetic msme data generation
+building msme profiles
+generating gst invoice stream
+generating gst invoices for genuine healthy profiles
+generating upi transaction stream
+generating upi transactions for all profiles
+generating eway bill stream
+generating eway bills for all profiles
+writing profile metadata
+profiles generated 250
+gst invoices 16687 records in 2 chunks
+upi transactions 133325 records in 14 chunks
+eway bills 15891 records in 2 chunks
+generation complete
+gst chunks 2 upi chunks 14 ewb chunks 2
+loaded gst 16687 upi 133325 ewb 15891 rows
+starting batch feature computation for 250 gstins
+computing features for gstin 19WDWGS8764S5Z6
+computing features for gstin 22UITCT0861L8Z9
+computing features for gstin 08QPCQP5169K1Z0
+computing features for gstin 08PQKLI4094H1Z4
+computing features for gstin 29BTFWW4267L9Z9
+computing features for gstin 06YBYLS4343F5Z4
+computing features for gstin 22GKJKO9268U1Z1
+computing features for gstin 06WFVLH7201K5Z1
+computing features for gstin 19RKTAC2178A9Z7
+computing features for gstin 09CCTPJ9312C4Z8
+computing features for gstin 07NXEUZ9042J6Z1
+computing features for gstin 29WKPSG3328E7Z9
+computing features for gstin 19LNVCX8894M9Z5
+computing features for gstin 07TSCEH0303N3Z3
+computing features for gstin 29LOVQP1039R6Z2
+computing features for gstin 06DZGXO5782E9Z3
+computing features for gstin 24RMXBC6026R6Z6
+computing features for gstin 08YXKFS1751L1Z6
+computing features for gstin 22PFDDT6454R4Z3
+computing features for gstin 29WSYQF6236W3Z8
+computing features for gstin 33BGBBU5654W7Z1
+computing features for gstin 33CNRVJ6621C6Z4
+computing features for gstin 08JTWTD8345I2Z7
+computing features for gstin 08WUFFF2658Y1Z7
+computing features for gstin 24DIXUW8221Y9Z6
+computing features for gstin 19XAVHH4608E5Z7
+computing features for gstin 27QTHHB7627B3Z6
+computing features for gstin 07PDJZS3593M6Z2
+computing features for gstin 09RUWLC5797U2Z2
+computing features for gstin 22RYCPX0916Z3Z1
+computing features for gstin 33QGHKO0211Z9Z3
+computing features for gstin 33YCTQG0251N8Z9
+computing features for gstin 24SIIGY6400N2Z5
+computing features for gstin 07RKNTE0864E2Z3
+computing features for gstin 07LIPQL2813P2Z3
+computing features for gstin 08ZVWAT3988Z4Z4
+computing features for gstin 22JBFLO6467D2Z3
+computing features for gstin 29HBWDF4594K3Z1
+computing features for gstin 33ZRQAR4354E4Z0
+computing features for gstin 33UFPYS7288O5Z3
+computing features for gstin 08BJFIT3782C8Z0
+computing features for gstin 27LTGWV0824T7Z5
+computing features for gstin 24WBAXW5574D7Z0
+computing features for gstin 08WMFCE4217Z5Z9
+computing features for gstin 27JMRRD9429C2Z2
+computing features for gstin 33GVKXI7197Q6Z0
+computing features for gstin 06CGFNA9217Z6Z0
+computing features for gstin 06UQNKK1579D2Z4
+computing features for gstin 19JNJGN4094K4Z5
+computing features for gstin 08EPJRM5264V1Z7
+processed 50 of 250 gstins
+computing features for gstin 19BYCYR7282R5Z2
+computing features for gstin 22DHESN4131U9Z2
+computing features for gstin 07XIKFU8352F5Z7
+computing features for gstin 29GERAA7231B3Z6
+computing features for gstin 33NQOSH0351V2Z8
+computing features for gstin 09OQSAI7373G9Z3
+computing features for gstin 07JXEKH6267A4Z7
+computing features for gstin 36BADQB1240U8Z7
+computing features for gstin 24XEYAU7622X6Z4
+computing features for gstin 07UKZVM3251P6Z0
+computing features for gstin 08LNORW6824H5Z8
+computing features for gstin 08SCXXN7390D9Z2
+computing features for gstin 07FPYJR2201P8Z5
+computing features for gstin 06ESIIA8541U1Z1
+computing features for gstin 06NBYVM5915X3Z1
+computing features for gstin 19HFIRW5290U7Z4
+computing features for gstin 27JTGJQ3646R6Z9
+computing features for gstin 36WECDG8716K2Z3
+computing features for gstin 33YORKW9490J5Z5
+computing features for gstin 08UNOEW2000L4Z4
+computing features for gstin 08LMFPI7789E6Z8
+computing features for gstin 27ZGOJX5882Z7Z5
+computing features for gstin 22FICSI1094E8Z7
+computing features for gstin 08YUBSX6492B2Z2
+computing features for gstin 19NWLWS7345G6Z8
+computing features for gstin 29VNSHV3695Z1Z9
+computing features for gstin 36SLAHK2635L7Z8
+computing features for gstin 24USOZG5612I8Z2
+computing features for gstin 07WWYJY3131F7Z7
+computing features for gstin 33WTAOP7212S4Z7
+computing features for gstin 19TMSTL7315F9Z0
+computing features for gstin 08CXMOL6768X3Z7
+computing features for gstin 36ZHNSB1177D5Z9
+computing features for gstin 22OPYSR8584A9Z1
+computing features for gstin 06PEQQV1609D4Z0
+computing features for gstin 09OGUBT7836U3Z7
+computing features for gstin 24CVQMC2694D5Z6
+computing features for gstin 36ITDJE8781O1Z6
+computing features for gstin 29JTQTF5946D1Z9
+computing features for gstin 09QQRSR8696J8Z0
+computing features for gstin 36RKEMD6035A2Z6
+computing features for gstin 19SRMMO9725R7Z6
+computing features for gstin 19OOCZX4184W5Z8
+computing features for gstin 24MGRAT7141W9Z7
+computing features for gstin 06WRHNN7208H8Z6
+computing features for gstin 27FXHXF1777H4Z6
+computing features for gstin 19HFSIT9617I9Z9
+computing features for gstin 22YNZOG7137U6Z4
+computing features for gstin 19MAJHQ9053S9Z0
+computing features for gstin 27PTUGG9791V8Z7
+processed 100 of 250 gstins
+computing features for gstin 19DILBJ0189Q8Z6
+computing features for gstin 29SYUFP1361X1Z9
+computing features for gstin 07RLXPQ9639D7Z4
+computing features for gstin 08UPEEM4592J8Z4
+computing features for gstin 06XVJUL0815D3Z8
+computing features for gstin 27IZTAK0587T5Z8
+computing features for gstin 27LJPLF6796J8Z0
+computing features for gstin 27AFSJU7044F7Z7
+computing features for gstin 29LSCOB5551K9Z7
+computing features for gstin 09HHWBG2758G7Z1
+computing features for gstin 06OPTER5036M9Z5
+computing features for gstin 08TOXCP6409F7Z2
+computing features for gstin 27GGQTN6202I6Z5
+computing features for gstin 24WBKJT3026D6Z2
+computing features for gstin 29MQSCV6399Q1Z3
+computing features for gstin 08KFNPM8775R6Z7
+computing features for gstin 24UJOMX5313H1Z4
+computing features for gstin 08BMGZB2642O8Z9
+computing features for gstin 07UHGBG3713L2Z1
+computing features for gstin 07BOKOC2772U9Z2
+computing features for gstin 33TEKCM4903O8Z3
+computing features for gstin 06GYDPB6610E1Z2
+computing features for gstin 36FOQAX5632Z7Z4
+computing features for gstin 27UNJCS4007A6Z1
+computing features for gstin 08QBZRK7940I4Z8
+computing features for gstin 22HKXVN7784I7Z7
+computing features for gstin 24RGIRK8590U3Z8
+computing features for gstin 08MJGHP8551H7Z7
+computing features for gstin 36LZQVG9903M9Z5
+computing features for gstin 24UETWH0269K5Z7
+computing features for gstin 08MKOGG4929P4Z1
+computing features for gstin 22TCCLO5105T6Z6
+computing features for gstin 08XLCRV3305J3Z2
+computing features for gstin 33RQCUW6197L9Z6
+computing features for gstin 08UFVOP8277T1Z4
+computing features for gstin 08QGTOL0089R1Z5
+computing features for gstin 29QXEPQ4033V2Z2
+computing features for gstin 19GKKAS5172R8Z5
+computing features for gstin 19FEANH9561Y8Z1
+computing features for gstin 29ASBTB8352V5Z9
+computing features for gstin 33UIHUJ9191Y9Z0
+computing features for gstin 19JVLZU2853W7Z2
+computing features for gstin 19BBYXO0939S3Z6
+computing features for gstin 33BLSOB8942F3Z6
+computing features for gstin 09GICLJ5803T1Z1
+computing features for gstin 22FOHQM5471R4Z2
+computing features for gstin 24AFHSU5753G8Z1
+computing features for gstin 08MNMIA9592L1Z0
+computing features for gstin 06DWLAY2616F5Z1
+computing features for gstin 06ASNHN6491D9Z2
+processed 150 of 250 gstins
+computing features for gstin 09HFDGI0713W4Z8
+computing features for gstin 29QAKML3841F9Z4
+computing features for gstin 19UVJVB7591U4Z4
+computing features for gstin 07MBTFR6385C7Z0
+computing features for gstin 07ITYKU0294L9Z6
+computing features for gstin 29BBSUN1819K3Z6
+computing features for gstin 29RASVZ4103X2Z1
+computing features for gstin 06RFTEH2862Y9Z0
+computing features for gstin 09NOILM7616M1Z9
+computing features for gstin 33KNXRO7385U2Z1
+computing features for gstin 07QKJJE0428S1Z2
+computing features for gstin 19CCXZE3576U2Z4
+computing features for gstin 29HCIHL7144X6Z9
+computing features for gstin 27BGISR7559V6Z8
+computing features for gstin 07ZUGMJ5491C2Z4
+computing features for gstin 33ZZCRG8909H7Z5
+computing features for gstin 27PKFNI1655J1Z3
+computing features for gstin 06GVOSN1230N8Z1
+computing features for gstin 27WXJRR5631R7Z8
+computing features for gstin 36UTKTS8445Y2Z7
+computing features for gstin 29ZIKKC3416Z5Z9
+computing features for gstin 24FVEIT0661O8Z9
+computing features for gstin 29NZVUD2685D9Z1
+computing features for gstin 24PCLXK4530Z3Z1
+computing features for gstin 33HSAVK0879T8Z4
+computing features for gstin 29KKODI0451Y9Z9
+computing features for gstin 22FBYBA2862P2Z9
+computing features for gstin 09UONPE9259Q2Z2
+computing features for gstin 24GROME4664M6Z3
+computing features for gstin 08AKLTG4810Y4Z2
+computing features for gstin 36EUMSQ8074J4Z0
+computing features for gstin 09ZKOYO6203R8Z2
+computing features for gstin 29ZJKEO9642A2Z1
+computing features for gstin 24ANSYX7500X4Z3
+computing features for gstin 22LLVQP3664F7Z5
+computing features for gstin 06DIBYQ6453Z6Z8
+computing features for gstin 22EPTCV9103V7Z6
+computing features for gstin 22WWJIS7800U5Z3
+computing features for gstin 07LURZP9867Q7Z8
+computing features for gstin 27MIZGW1045V1Z2
+computing features for gstin 22CVGPN3333F2Z8
+computing features for gstin 36PNZZY1853V3Z7
+computing features for gstin 27UVBWU6132E7Z6
+computing features for gstin 36IOZPO8845P4Z7
+computing features for gstin 27MCATH2514X8Z8
+computing features for gstin 22VEKZH3876Z3Z1
+computing features for gstin 33IWSHI4421N7Z2
+computing features for gstin 27CBLIG0985A5Z9
+computing features for gstin 09MGGCH3628F6Z9
+computing features for gstin 19LZBZT1022F5Z0
+processed 200 of 250 gstins
+computing features for gstin 22YYAQO0551L2Z3
+computing features for gstin 22JHKIP7600V7Z4
+computing features for gstin 29BNKNC2233G9Z7
+computing features for gstin 19RYQEN2088M6Z2
+computing features for gstin 24KIJSU5001T1Z1
+computing features for gstin 07WLNLS4614I6Z9
+computing features for gstin 09BXFGC3461R3Z6
+computing features for gstin 36RNAIY3719E2Z4
+computing features for gstin 33VFEUW8994R2Z4
+computing features for gstin 24UIGHW4859C8Z3
+computing features for gstin 07ZDTPU2544S7Z4
+computing features for gstin 08HENGF8140N7Z8
+computing features for gstin 08RFCVJ7588Y9Z0
+computing features for gstin 08PXZFO9172K3Z1
+computing features for gstin 36NQSKX5627P4Z9
+computing features for gstin 33OLZGG3877K8Z4
+computing features for gstin 33WTWTO2772V1Z6
+computing features for gstin 06MOJGC5725B1Z3
+computing features for gstin 29XBDDE3739J2Z4
+computing features for gstin 24TXKZM4958X7Z1
+computing features for gstin 36YOQQW6104J5Z9
+computing features for gstin 19VBEHT5216W7Z4
+computing features for gstin 22PNYLV8906B4Z7
+computing features for gstin 22QAHTE7470T7Z6
+computing features for gstin 27NLUCR8584H7Z5
+computing features for gstin 24PNKOG7095X4Z5
+computing features for gstin 36VXHKD9340R3Z6
+computing features for gstin 24KRMND3759E5Z5
+computing features for gstin 07VTRFF0248C8Z6
+computing features for gstin 07VUPTF4700I2Z1
+computing features for gstin 08CNHBB9455N3Z5
+computing features for gstin 36JXQBH9980G1Z0
+computing features for gstin 06HHPZM1535R7Z7
+computing features for gstin 24OAHLP6442P3Z1
+computing features for gstin 08GSSBK5424Y1Z9
+computing features for gstin 36NRVIA8259B2Z9
+computing features for gstin 22JYQDC2117C3Z7
+computing features for gstin 19YHSAQ6013M9Z4
+computing features for gstin 06CBUOO2236N6Z0
+computing features for gstin 06NXURQ1719G4Z2
+computing features for gstin 33TWAFC0570X1Z6
+computing features for gstin 22JOPRY3755M6Z4
+computing features for gstin 08JVWQR0561L4Z2
+computing features for gstin 27VSPZR0826E5Z1
+computing features for gstin 08UHSPF8179M9Z0
+computing features for gstin 07XLBDK5563A7Z4
+computing features for gstin 08GITJP7351G8Z8
+computing features for gstin 06TZMSL3241G2Z0
+computing features for gstin 19KMBGG6511J1Z6
+computing features for gstin 36XRGML9453I2Z4
+batch complete 250 feature vectors computed imputed cached
+feature pipeline complete
+loading feature parquets
+feature parquets found 250
+loaded 250 rows
+label distribution positive 30 negative 220
+feature matrix shape (250, 43)
+training model a full data
+validation auc 0.9200
+model saved
+building upi-heavy feature matrix for model b
+training model b upi heavy no gst
+validation auc 0.8844
+model saved
+training complete
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.0.2, pluggy-1.6.0 -- /home/cyclops/miniforge3/envs/credit-scoring/bin/python
+cachedir: .pytest_cache
+rootdir: /home/cyclops/Documents/GitHub/HEREhackathon/miku-miku-rabbit-beam
+configfile: pyproject.toml
+plugins: asyncio-1.3.0, anyio-4.13.0, Faker-40.12.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 35 items
+
+tests/test_api.py::test_health_returns_200 PASSED                        [  2%]
+tests/test_api.py::test_submit_score_returns_202_for_valid_gstin PASSED  [  5%]
+tests/test_api.py::test_submit_score_rejects_invalid_gstin PASSED        [  8%]
+tests/test_api.py::test_get_score_nonexistent_task_returns_404 PASSED    [ 11%]
+tests/test_api.py::test_get_score_pending_task_returns_200_pending PASSED [ 14%]
+tests/test_api.py::test_get_score_complete_task_returns_full_result PASSED [ 17%]
+tests/test_features.py::test_feature_engine_returns_vector_for_known_gstin PASSED [ 20%]
+tests/test_features.py::test_feature_engine_empty_data_returns_zeros PASSED [ 22%]
+tests/test_features.py::test_upi_hhi_high_concentration PASSED           [ 25%]
+tests/test_features.py::test_upi_hhi_low_concentration PASSED            [ 28%]
+tests/test_features.py::test_filing_compliance_rate_all_ontime PASSED    [ 31%]
+tests/test_features.py::test_filing_compliance_rate_all_late PASSED      [ 34%]
+tests/test_features.py::test_upi_outbound_failure_rate PASSED            [ 37%]
+tests/test_features.py::test_data_maturity_flag_below_threshold PASSED   [ 40%]
+tests/test_fraud.py::test_cycle_detection_finds_simple_ring PASSED       [ 42%]
+tests/test_fraud.py::test_cycle_detection_no_cycle_in_dag PASSED         [ 45%]
+tests/test_fraud.py::test_cycle_detection_4_node_ring PASSED             [ 48%]
+tests/test_fraud.py::test_upi_edges_from_transactions_filters_correctly PASSED [ 51%]
+tests/test_fraud.py::test_graph_builder_incremental_add PASSED           [ 54%]
+tests/test_fraud.py::test_merge_fraud_into_features PASSED               [ 57%]
+tests/test_fraud.py::test_cycle_detector_confidence_high_velocity PASSED [ 60%]
+tests/test_fraud.py::test_partition_by_time_window PASSED                [ 62%]
+tests/test_scoring.py::TestProxyLabelFraudFlag::test_proxy_label_fraud_flag PASSED [ 65%]
+tests/test_scoring.py::TestProxyLabelCompliant::test_proxy_label_compliant PASSED [ 68%]
+tests/test_scoring.py::TestProbToScoreRange::test_prob_one_is_min_score PASSED [ 71%]
+tests/test_scoring.py::TestProbToScoreRange::test_prob_to_score_range PASSED [ 74%]
+tests/test_scoring.py::TestProbToScoreRange::test_prob_zero_is_max_score PASSED [ 77%]
+tests/test_scoring.py::TestScoreToBandBoundaries::test_score_to_band_boundaries PASSED [ 80%]
+tests/test_scoring.py::TestTopKFeaturesCount::test_top_k_features_count PASSED [ 82%]
+tests/test_scoring.py::TestTopKFeaturesStructure::test_top_k_features_structure PASSED [ 85%]
+tests/test_scoring.py::TestParseLlmOutput5Lines::test_parse_llm_output_5_lines PASSED [ 88%]
+tests/test_scoring.py::TestParseLlmOutputTooFew::test_parse_llm_output_too_few PASSED [ 91%]
+tests/test_scoring.py::TestWaterfallDataStructure::test_waterfall_data_structure PASSED [ 94%]
+tests/test_scoring.py::TestBandThresholdsCorrect::test_band_thresholds_correct PASSED [ 97%]
+tests/test_scoring.py::TestBandThresholdsCorrect::test_no_gap_between_bands PASSED [100%]
+
+============================== 35 passed in 1.97s ==============================
