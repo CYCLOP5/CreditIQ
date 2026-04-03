@@ -138,6 +138,8 @@ class EngineeredFeatureVector(BaseModel):
     cycle_recurrence: float = 0.0
     counterparty_compliance_avg: float = 0.0
     counterparty_fraud_exposure: float = 0.0
+    
+    temporal_anomaly_flag: float = 0.0
 
 
 class FeatureBatch(BaseModel):

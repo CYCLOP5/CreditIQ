@@ -4,12 +4,20 @@ cpu-only inference n_gpu_layers=0
 translates shap vectors to plain language credit reasons
 """
 
+import json
 import time
 from pathlib import Path
 
-from llama_cpp import Llama
+from llama_cpp import Llama, LlamaGrammar
 
-from src.llm.prompts import format_shap_prompt, parse_llm_output
+from src.llm.prompts import format_shap_prompt, parse_llm_output, format_sar_prompt
+
+
+SAR_GBNF_GRAMMAR: str = '''
+root ::= "{" ws "\"gstin\"" ws ":" ws string "," ws "\"risk_level\"" ws ":" ws string "," ws "\"structural_summary\"" ws ":" ws string "," ws "\"immediate_action\"" ws ":" ws string "}"
+string ::= "\"" [^"]* "\""
+ws ::= [ \t\n]*
+'''
 
 
 class ShapTranslator:
@@ -77,6 +85,41 @@ class ShapTranslator:
         """
         top_5 = explain_result["top_5_features"]
         return self.translate(gstin, score, risk_band, top_5)
+
+    def generate_sar(
+        self,
+        gstin: str,
+        fraud_result: dict,
+        max_tokens: int = 1024,
+    ) -> dict:
+        """
+        runs grammar constrained inference on cycle detector fraud results
+        outputs formally structured sar suspicious activity report
+        forces valid json through llama cpp grammar parser
+        """
+        grammar = LlamaGrammar.from_string(SAR_GBNF_GRAMMAR)
+        prompt = format_sar_prompt(gstin, fraud_result)
+        t0 = time.time()
+        print(f"phi-3 drafting sar for {gstin}")
+
+        response = self.llm(
+            prompt,
+            max_tokens=max_tokens,
+            grammar=grammar,
+            stop=["<|end|>"],
+            echo=False,
+        )
+
+        duration = time.time() - t0
+        text = response["choices"][0]["text"]
+        tokens = response["usage"]["completion_tokens"]
+        throughput = tokens / duration if duration > 0 else 0.0
+        print(f"sar generated {duration:.1f}s {throughput:.1f} tok/s")
+
+        try:
+            return json.loads(text.strip())
+        except json.JSONDecodeError:
+            return {"error": "grammar failed to enforce valid json", "raw": text}
 
 
 def get_model_path(model_dir: str = "data/models") -> Path:

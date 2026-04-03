@@ -93,12 +93,15 @@ React + Vite Dashboard (4 interactive pages)
 
 
 
-### 🚀 Next-Gen Hackathon Flex Features
-This platform implements advanced features to stand out to the judges:
-* **Server-Sent Events (SSE) Real-Time Streaming:** The API provides `GET /score/{task_id}/stream` to push pipeline status updates to the client without polling.
+### Next-Gen Hackathon Flex Features
+This platform implements advanced algorithmic features specifically engineered to dominate hackathon criteria (see [pitch.md](pitch.md)):
+
+* **Deterministic Grammar-Constrained GenAI:** Using GBNF grammars, the LLM outputs strict JSON Suspicious Activity Reports (SAR) based on cycle metrics, fundamentally preventing text hallucination.
+* **Dynamic Algorithmic Risk Pricing:** Beyond static rule bands, Expected Loss (PD × LGD × Exposure) mathematically bounds the maximum safe loan amount to stay strictly under the portfolio risk appetite.
+* **Multidimensional Nearest-Neighbor Imputation:** Elegantly solves the "cold-start" sparse data problem via `sklearn.impute.KNNImputer`, projecting expected GST features using rich UPI telemetry neighbors.
+* **Temporal Cadence Anomaly Detection:** An Isolation Forest mathematically isolates synthetic/robotic transaction velocities, flagging shell company bots based entirely on non-human cadence variance.
+* **Event-Sourced Audit Trail:** Provides a `/audit/replay` endpoint for strict regulatory review, literally rewinding the temporal stream to logically rebuild exact historical decision contexts.
 * **Temporal Graph Validation:** Circular transaction rings are only flagged if the cashflows actually move sequentially forward in time (`is_temporal_cycle`), significantly reducing false positives vs strict simple cycle detection.
-* **Sparse Data Dynamic Routing (Cold-Start Handling):** A `data_maturity_flag` intelligently routes new-to-credit MSMEs with < 3 months of GST to a specialized UPI-Heavy XGBoost model, protecting them from missing data penalty.
-* **RAG-based Credit Analyst Chat:** After scoring, `/score/{task_id}/chat` exposes an interactive, purely local CPU-bound GenAI assistant that retrieves the MSME feature context, allowing loan officers to ask follow-up questions to understand the 'why' behind the score.
 
 ## 2. System Architecture
 
@@ -231,13 +234,13 @@ The system uses the **official EWB JSON schema** (version 1.0.0621) documented i
 
 | Field | Type | Fraud-Indicative | Why |
 |---|---|---|---|
-| `fromGstin` / `toGstin` | Text(15) | ✅ **High** | Cycle detection — same GSTINs appearing as both buyer/seller |
-| `totInvValue` | Number(18) | ✅ **High** | Inflated values in circular rings |
-| `transDistance` | Number(4) | ✅ **High** | Paper traders show suspiciously low distances (1–5 km) |
-| `mainHsnCode` | Text(8) | ✅ **Medium** | HSN code shifts indicate non-genuine trading |
-| `docDate` vs generation timestamp | Text(10) | ✅ **Medium** | Large lags between invoice and EWB generation |
-| `transMode` | Number(1) | ⚠ **Low** | Road (1) is 70% of traffic; unusual modes may indicate fraud |
-| `supplyType` | Char(1) | ⚠ **Low** | Outward (O) vs inward (I) pattern analysis |
+| `fromGstin` / `toGstin` | Text(15) |  **High** | Cycle detection — same GSTINs appearing as both buyer/seller |
+| `totInvValue` | Number(18) |  **High** | Inflated values in circular rings |
+| `transDistance` | Number(4) |  **High** | Paper traders show suspiciously low distances (1–5 km) |
+| `mainHsnCode` | Text(8) |  **Medium** | HSN code shifts indicate non-genuine trading |
+| `docDate` vs generation timestamp | Text(10) |  **Medium** | Large lags between invoice and EWB generation |
+| `transMode` | Number(1) |  **Low** | Road (1) is 70% of traffic; unusual modes may indicate fraud |
+| `supplyType` | Char(1) |  **Low** | Outward (O) vs inward (I) pattern analysis |
 
 ### Fraud Patterns Detected
 
@@ -504,10 +507,10 @@ $$S = \text{clip}(900 - 600 \times P_{default},\; 300,\; 900)$$
 
 | Band | Score Range | Working Capital | Term Loan | CGTMSE |
 |---|---|---|---|---|
-| **Very Low Risk** | 750–900 | Up to ₹50 lakh | Up to ₹1 crore | ✅ Eligible |
-| **Low Risk** | 650–749 | Up to ₹25 lakh | Up to ₹50 lakh | ✅ Eligible |
-| **Medium Risk** | 550–649 | Up to ₹10 lakh | Up to ₹25 lakh | ✅ Eligible |
-| **High Risk** | 300–549 | Up to ₹5 lakh | Not recommended | ❌ (Mudra eligible) |
+| **Very Low Risk** | 750–900 | Up to ₹50 lakh | Up to ₹1 crore |  Eligible |
+| **Low Risk** | 650–749 | Up to ₹25 lakh | Up to ₹50 lakh |  Eligible |
+| **Medium Risk** | 550–649 | Up to ₹10 lakh | Up to ₹25 lakh |  Eligible |
+| **High Risk** | 300–549 | Up to ₹5 lakh | Not recommended |  (Mudra eligible) |
 
 ### SHAP Explainability
 
@@ -645,7 +648,7 @@ The app uses a **screen-state router** — no React Router. The `screen` state v
 
 - **Circular SVG graph layout** — nodes placed on a regular polygon inscribed in a circle
 - Directed edges with arrowhead markers
-- Fraudulent nodes colored red with ⚠ badge
+- Fraudulent nodes colored red with  badge
 - Falls back to single-node display when only the flagged GSTIN is available
 
 #### 4. System Health ([`frontend/src/pages/SystemHealth.jsx`](frontend/src/pages/SystemHealth.jsx))
@@ -708,14 +711,14 @@ All throw on non-OK responses for consistent error handling.
 
 | What Can Be Demonstrated Live | Status |
 |---|---|
-| Synthetic data generation for 250 MSMEs | ✅ Works |
-| Feature engineering across 43 dimensions | ✅ Works |
-| Fraud detection with cycle enumeration | ✅ Works |
-| XGBoost model training and inference | ✅ Works |
-| SHAP explainability | ✅ Works |
-| REST API with async scoring | ✅ Works |
-| React dashboard with live polling | ✅ Works |
-| LLM translation | ✅ Works (requires GGUF download) |
+| Synthetic data generation for 250 MSMEs |  Works |
+| Feature engineering across 43 dimensions |  Works |
+| Fraud detection with cycle enumeration |  Works |
+| XGBoost model training and inference |  Works |
+| SHAP explainability |  Works |
+| REST API with async scoring |  Works |
+| React dashboard with live polling |  Works |
+| LLM translation |  Works (requires GGUF download) |
 
 ### Ease of Use
 

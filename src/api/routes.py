@@ -17,7 +17,10 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from config.settings import settings
-from src.api.schemas import HealthResponse, ScoreRequest, ScoreResult, ScoreSubmitResponse
+from src.api.schemas import HealthResponse, ScoreRequest, ScoreResult, ScoreSubmitResponse, AuditReplayRequest
+import polars as pl
+from src.features.engine import FeatureEngine
+import glob
 
 router = APIRouter()
 
@@ -220,3 +223,47 @@ Fraud Details: {data.get('fraud_details', 'null')}
             yield chunk["choices"][0]["text"]
             
     return EventSourceResponse(stream_generator())
+
+
+@router.post("/audit/replay")
+async def audit_replay(request: Request, body: AuditReplayRequest) -> JSONResponse:
+    """
+    event sourced replay of msme profile to specific point in time
+    demonstrates regulatory auditability of the feature engine
+    reads features only up to target timestamp
+    """
+    target = body.target_timestamp.replace(tzinfo=None)
+    gst_files = sorted(glob.glob("data/raw/gst_invoices_chunk_*.parquet"))
+    upi_files = sorted(glob.glob("data/raw/upi_transactions_chunk_*.parquet"))
+    ewb_files = sorted(glob.glob("data/raw/eway_bills_chunk_*.parquet"))
+
+    if not gst_files:
+        raise HTTPException(status_code=404, detail="raw data not available for replay")
+
+    gst_df = pl.read_parquet(gst_files).filter(pl.col("gstin") == body.gstin).with_columns(
+        pl.col("timestamp").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%.f", strict=False)
+    ).filter(pl.col("timestamp") <= target)
+
+    upi_df = pl.read_parquet(upi_files).filter(pl.col("gstin") == body.gstin).with_columns(
+        pl.col("timestamp").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%.f", strict=False)
+    ).filter(pl.col("timestamp") <= target)
+
+    ewb_df = pl.read_parquet(ewb_files).filter(pl.col("gstin") == body.gstin).rename({
+        "totInvValue": "tot_inv_value",
+        "transDistance": "trans_distance",
+        "docDate": "doc_date",
+        "mainHsnCode": "main_hsn_code",
+    }).with_columns(
+        pl.col("timestamp").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%.f", strict=False)
+    ).filter(pl.col("timestamp") <= target)
+
+    engine = FeatureEngine()
+    features = engine.compute_features(body.gstin, gst_df, upi_df, ewb_df, skip_cache=True)
+    features["computed_at"] = features["computed_at"].isoformat()
+
+    return JSONResponse(status_code=200, content={
+        "gstin": body.gstin,
+        "target_timestamp": target.isoformat(),
+        "replayed_events_count": gst_df.height + upi_df.height + ewb_df.height,
+        "state": features,
+    })

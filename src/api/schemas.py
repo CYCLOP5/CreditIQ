@@ -83,6 +83,18 @@ class ChatRequest(BaseModel):
     query: str
 
 
+class AuditReplayRequest(BaseModel):
+    """
+    inbound request for event sourcing audit
+    rebuilds historical state of feature vector
+    """
+    
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
+    gstin: str
+    target_timestamp: datetime
+
+
 class HealthResponse(BaseModel):
     """
     system health snapshot returned by get health endpoint

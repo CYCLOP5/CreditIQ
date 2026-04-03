@@ -113,10 +113,11 @@ computed dynamically in `src/features/engine.py`. these form the final 43-dimens
 | `upi_dormancy_periods` | `integer` | gaps in activity separating high burst-mode washing cycles |
 | `filing_compliance_rate` | `float` | long-term consistency of `ontime` vs `missing` filings |
 
-### graph topology & fraud exposure
+### graph topology & anomaly flags
 | field | type | constraint & purpose |
 |---|---|---|
 | `fraud_ring_flag` | `boolean` | output of the tarjan scc decomposition indicating direct cycle membership |
+| `temporal_anomaly_flag` | `float` | binary `1.0`/`0.0` output from the isolation forest identifying robotic chronological cadence |
 | `fraud_confidence` | `float` | weighted severity metric bounded `[0.0, 1.0]` combining cycle volumes and graph edges |
 | `cycle_velocity` | `float` | speed at which capital traverses the isolated graph loop |
 | `counterparty_fraud_exposure` | `float` | proximity penalty for doing business with identified `shell_circular` networks |

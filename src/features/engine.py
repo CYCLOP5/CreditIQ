@@ -11,6 +11,8 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 import psutil
+from sklearn.impute import KNNImputer
+from sklearn.ensemble import IsolationForest
 
 from src.features.schemas import EngineeredFeatureVector
 
@@ -73,10 +75,10 @@ class FeatureEngine:
         ewb_g = ewb_df.filter(pl.col("gstin") == gstin)
 
         if gst_g.height == 0:
-            gst_7d_value = 0.0
-            gst_30d_value = 0.0
-            gst_90d_value = 0.0
-            gst_30d_unique_buyers = 0.0
+            gst_7d_value = np.nan
+            gst_30d_value = np.nan
+            gst_90d_value = np.nan
+            gst_30d_unique_buyers = np.nan
         else:
             gst_now = gst_g["timestamp"].max()
             gst_7d_value = float(
@@ -160,8 +162,8 @@ class FeatureEngine:
         ewb_g = ewb_df.filter(pl.col("gstin") == gstin).sort("timestamp")
 
         if gst_g.height < 2:
-            gst_mean_filing_interval_days = 0.0
-            gst_std_filing_interval_days = 0.0
+            gst_mean_filing_interval_days = np.nan
+            gst_std_filing_interval_days = np.nan
         else:
             gst_diffs = (
                 gst_g["timestamp"]
@@ -579,11 +581,12 @@ class FeatureEngine:
         gst_df: pl.DataFrame,
         upi_df: pl.DataFrame,
         ewb_df: pl.DataFrame,
-    ) -> EngineeredFeatureVector:
+        skip_cache: bool = False,
+    ) -> dict:
         """
         full feature vector computation single gstin
-        merges velocity cadence ratio sparsity extended dicts into engineered vector
-        persists onerow parquet partitioned cache after computation
+        merges velocity cadence ratio sparsity extended dicts into raw dict
+        persists onerow parquet partitioned cache if skip_cache false
         """
         print(f"computing features for gstin {gstin}")
 
@@ -609,13 +612,14 @@ class FeatureEngine:
             "counterparty_fraud_exposure": 0.0,
         }
 
-        vector = EngineeredFeatureVector(**all_features)
-
-        cache_row = {k: [v] for k, v in all_features.items()}
-        feature_df = pl.DataFrame(cache_row)
-        self._save_cached_features(gstin, feature_df)
-
-        return vector
+        if not skip_cache:
+            vector = EngineeredFeatureVector(**all_features)
+            cache_row = {k: [v] for k, v in all_features.items()}
+            feature_df = pl.DataFrame(cache_row)
+            self._save_cached_features(gstin, feature_df)
+            return vector.model_dump()
+            
+        return all_features
 
     def compute_batch(
         self,
@@ -625,14 +629,14 @@ class FeatureEngine:
     ) -> list[EngineeredFeatureVector]:
         """
         batch feature computation over unique gstins found gst_df
-        logs progress every 50 gstins warns memory pressure near spill
-        returns list engineered feature vectors gstin iteration order
+        applies knn imputation missing gst values based on upi metrics
+        runs isolation forest detecting temporal cadence anomalies
         """
         unique_gstins: list[str] = gst_df["gstin"].unique().to_list()
         total = len(unique_gstins)
         print(f"starting batch feature computation for {total} gstins")
 
-        results: list[EngineeredFeatureVector] = []
+        raw_results: list[dict] = []
 
         for idx, gstin in enumerate(unique_gstins):
             if self._check_memory_pressure():
@@ -641,10 +645,52 @@ class FeatureEngine:
             if idx > 0 and idx % 50 == 0:
                 print(f"processed {idx} of {total} gstins")
 
-            vec = self.compute_features(gstin, gst_df, upi_df, ewb_df)
-            results.append(vec)
+            raw_dict = self.compute_features(gstin, gst_df, upi_df, ewb_df, skip_cache=True)
+            raw_results.append(raw_dict)
 
-        print(f"batch complete {total} feature vectors computed")
+        if not raw_results:
+            return []
+
+        df_pl = pl.DataFrame(raw_results)
+        
+        impute_cols = [
+            "gst_7d_value", "gst_30d_value", "gst_90d_value", 
+            "gst_30d_unique_buyers", "gst_mean_filing_interval_days", 
+            "gst_std_filing_interval_days"
+        ]
+        ref_cols = [
+            "upi_7d_inbound_count", "upi_30d_inbound_count", 
+            "upi_90d_inbound_count", "upi_30d_unique_counterparties"
+        ]
+
+        if df_pl.height > 1:
+            matrix = df_pl.select(impute_cols + ref_cols).to_numpy()
+            imputer = KNNImputer(n_neighbors=min(5, df_pl.height))
+            imputed_matrix = imputer.fit_transform(matrix)
+            
+            for i, col in enumerate(impute_cols):
+                s = pl.Series(col, imputed_matrix[:, i])
+                df_pl = df_pl.with_columns(s)
+                
+            iso_cols = ["gst_mean_filing_interval_days", "upi_inbound_std_interval_days"]
+            iso_matrix = df_pl.select(iso_cols).fill_null(0.0).to_numpy()
+            iso = IsolationForest(contamination=0.05, random_state=42)
+            preds = iso.fit_predict(iso_matrix)
+            flags = (preds == -1).astype(float)
+            df_pl = df_pl.with_columns(pl.Series("temporal_anomaly_flag", flags))
+        else:
+            for col in impute_cols:
+                df_pl = df_pl.with_columns(pl.Series(col, [0.0]).fill_null(0.0))
+            df_pl = df_pl.with_columns(pl.lit(0.0).alias("temporal_anomaly_flag"))
+
+        results: list[EngineeredFeatureVector] = []
+        for row in df_pl.to_dicts():
+            vector = EngineeredFeatureVector(**row)
+            cache_row = {k: [v] for k, v in row.items()}
+            self._save_cached_features(row["gstin"], pl.DataFrame(cache_row))
+            results.append(vector)
+
+        print(f"batch complete {total} feature vectors computed imputed cached")
         return results
 
 

@@ -15,6 +15,36 @@ SYSTEM_PROMPT: str = (
 )
 
 
+def format_sar_prompt(
+    gstin: str,
+    fraud_result: dict,
+) -> str:
+    """
+    format phi-3 chat prompt for automated suspicious activity report
+    takes cycle velocity recurrence metrics from networkx result
+    """
+    fraud_conf = fraud_result.get("fraud_confidence", 0.0)
+    velocity = fraud_result.get("cycle_velocity", 0.0)
+    recurrence = fraud_result.get("cycle_recurrence", 0.0)
+    cycles = fraud_result.get("participating_cycles", [])
+
+    prompt = (
+        f"<|system|>\n"
+        f"you are an aml compliance engine for msme lending\n"
+        f"your only task is to generate a suspicious activity report sar detailing potential fraud rings\n"
+        f"output the report natively in strict json format\n<|end|>\n"
+        f"<|user|>\n"
+        f"gstin: {gstin}\n"
+        f"fraud_confidence: {fraud_conf:.4f}\n"
+        f"cycle_velocity_inr: {velocity:.2f}\n"
+        f"cycle_recurrence_days: {recurrence:.1f}\n"
+        f"participating_cycle_paths: {cycles}\n"
+        f"generate the sar output mapping to these keys: gstin, risk_level, structural_summary, immediate_action<|end|>\n"
+        f"<|assistant|>\n"
+    )
+    return prompt
+
+
 def format_shap_prompt(
     gstin: str,
     score: int,

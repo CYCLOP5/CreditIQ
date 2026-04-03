@@ -214,8 +214,15 @@ if the gguf file is absent the worker uses feature names as fallback explanation
 
 ## full offline training sequence (no api, no redis)
 
+you can run the steps manually or execute the offline bash script:
+
 ```bash
 mamba activate credit-scoring
+bash scripts/run_offline.sh
+```
+
+manual sequence:
+```bash
 python -m src.ingestion.generator
 python -m src.features.engine
 python -m src.scoring.trainer
@@ -226,8 +233,15 @@ python -m pytest tests/ -v
 
 ## full online sequence (api + dashboard)
 
+you can fire up the entire real-time stack via the online script:
+
 ```bash
 mamba activate credit-scoring
+bash scripts/run_online.sh
+```
+
+manual sequence:
+```bash
 redis-server config/redis.conf --daemonize yes
 python -m src.ingestion.generator
 python -m src.ingestion.redis_producer

@@ -63,3 +63,22 @@ To bootstrap the scoring engine without historical ground-truth defaults, a synt
 7. **Transaction Health**: Demerit points for high debit failure rates (+0.12) and statutory payment delays (-0.08 if highly regular).
 8. Gaussian noise $N(0, 0.05)$ is added to ensure continuity. All values are clipped safely between $[0.05, 0.95]$.
 
+
+### Dynamic Algorithmic Risk Pricing (Expected Loss)
+Instead of static rules, the core engine dynamically bounds recommendations. 
+We establish that Expected Loss (EL) must not exceed a predefined risk threshold. 
+$$EL = P(\text{default}) \times \text{LGD} \times \text{Exposure}$$
+The maximum allowed limits (Working Capital & Term Loan limits) are solved via iterative expansion to find the optimal $\text{Exposure}$ satisfying:
+$$EL \leq \text{Risk Appetite}$$
+
+### Multidimensional Nearest-Neighbor Imputation
+To alleviate penalties on newly incorporated MSMEs displaying sparse GST filing history, the system performs a localized k-nearest-neighbor (KNN) imputation:
+$$\mathbf{X}_{GST}^{(g)} = \frac{1}{k} \sum_{j \in \text{Neighbors}(g)} \mathbf{X}_{GST}^{(j)}$$
+where $\text{Neighbors}(g)$ are selected using an Euclidean distance mapped via the UPI volume features $(\mathbf{X}_{UPI})$.
+
+### Temporal Isolation Forest Anomaly Detection
+Detects statistically rigid cadence typical of programmatic robotic shell entities.
+Given interval deviations across streams (e.g. $\sigma_{GST\_interval}$, $\sigma_{UPI\_interval}$):
+The `IsolationForest` splits the data via random thresholds across normal standard deviation boundaries. Anomalously short or highly rigid intervals (low variance) require fewer splits to be isolated.
+$$s(\mathbf{x}, n) = 2^{-\frac{E(h(\mathbf{x}))}{c(n)}}$$
+If $s(\mathbf{x}, n) > 0.5$ threshold, $x$ is flagged as a temporal anomaly.

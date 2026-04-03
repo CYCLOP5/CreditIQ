@@ -127,6 +127,35 @@ curl http://localhost:8000/health
 ```json
 {
   "status": "ok",
+### post /audit/replay
+
+**Description:** Time-travel replay endpoint demonstrating event-sourced architecture. Evaluates the exact state of the Polars feature vector as it existed chronologically strictly before `target_timestamp`.
+
+**Request Body:**
+
+```json
+{
+  "gstin": "07AABCD1234E1Z1",
+  "target_timestamp": "2024-03-01T12:00:00Z"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "gstin": "07AABCD1234E1Z1",
+  "target_timestamp": "2024-03-01T12:00:00",
+  "replayed_events_count": 845,
+  "state": {
+    "gst_7d_value": 45000.0,
+    "upi_7d_inbound_count": 14.0,
+    "temporal_anomaly_flag": 0.0,
+    "computed_at": "2024-03-01T15:20:00.123456"
+  }
+}
+```
+
   "redis": "connected",
   "model_loaded": true,
   "queue_depth": 0,

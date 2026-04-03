@@ -101,23 +101,44 @@ class CreditScorer:
         return "high_risk"
 
     def _band_to_recommendation(
-        self, band: str, msme_category: str = "micro"
+        self, band: str, prob: float, msme_category: str = "micro"
     ) -> dict:
         """
-        generate loan recommendation dict from band and msme category
-        returns wc_amount term_amount cgtmse_eligible mudra_eligible
+        generate dynamic loan recommendation calculating expected loss
+        el equals pd times lgd times exposure must stay below risk appetite
         """
         band_cfg = RISK_BANDS.get(band, RISK_BANDS["high_risk"])
-        rec: dict = {
-            "recommended_wc_amount": band_cfg["wc_max_lakh"] * 100000,
-            "recommended_term_amount": band_cfg["term_max_lakh"] * 100000,
+        
+        lgd = 0.45
+        max_el_acceptable = 50000.0
+
+        optimal_wc = 0.0
+        max_wc_allowed = band_cfg["wc_max_lakh"] * 100000
+        for amt in range(100000, max_wc_allowed + 100000, 100000):
+            el = prob * lgd * amt
+            if el <= max_el_acceptable:
+                optimal_wc = float(amt)
+            else:
+                break
+
+        optimal_term = 0.0
+        max_term_allowed = band_cfg["term_max_lakh"] * 100000
+        for amt in range(100000, max_term_allowed + 100000, 100000):
+            el = prob * lgd * amt
+            if el <= max_el_acceptable * 2.0:
+                optimal_term = float(amt)
+            else:
+                break
+
+        return {
+            "recommended_wc_amount": optimal_wc,
+            "recommended_term_amount": optimal_term,
             "tenure_wc_months": band_cfg["tenure_wc_months"],
             "tenure_term_months": band_cfg["tenure_term_months"],
             "cgtmse_eligible": band_cfg["cgtmse_eligible"],
             "collateral_free": band_cfg["collateral_free"],
             "mudra_eligible": band_cfg.get("mudra_eligible", False),
         }
-        return rec
 
     def score_features(
         self,
@@ -140,7 +161,7 @@ class CreditScorer:
         prob = float(model.predict_proba(X)[0][1])
         score = self._prob_to_score(prob)
         band = self._score_to_band(score)
-        rec = self._band_to_recommendation(band, msme_category)
+        rec = self._band_to_recommendation(band, prob, msme_category)
 
         return {
             "credit_score": score,
