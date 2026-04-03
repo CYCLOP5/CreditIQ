@@ -10,6 +10,7 @@ function BellIcon() {
   );
 }
 
+/** Generic "menu / bars" icon used as sidebar nav item icon. */
 function SidebarNavIcon() {
   return (
     <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -18,7 +19,85 @@ function SidebarNavIcon() {
   );
 }
 
-export function AppShell({ breadcrumb, userName, userRole, children }) {
+// ---------------------------------------------------------------------------
+// Dashboard-specific nav icons
+// ---------------------------------------------------------------------------
+
+function SearchIcon() {
+  return (
+    <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M15 15l4.5 4.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function ChartBarIcon() {
+  return (
+    <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4.5 19.5h15" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M7.5 15v-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M12 15V9" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M16.5 15v-6" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function NetworkIcon() {
+  return (
+    <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="5" r="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <circle cx="5" cy="19" r="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <circle cx="19" cy="19" r="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M12 7v4M10.27 16.5 6.7 17.27M13.73 16.5l3.57.77" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M10 11l-3.5 6M14 11l3.5 6" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function PulseIcon() {
+  return (
+    <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 12h3l3-7 4 14 3-9 2 2h3" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+/** Returns the correct icon SVG for a dashboard nav item id. */
+function DashNavIcon({ id }) {
+  if (id === 'score-lookup') return <SearchIcon />;
+  if (id === 'feature-contributions') return <ChartBarIcon />;
+  if (id === 'fraud-topology') return <NetworkIcon />;
+  if (id === 'system-health') return <PulseIcon />;
+  return <SidebarNavIcon />;
+}
+
+// ---------------------------------------------------------------------------
+// AppShell
+//
+// Props:
+//   breadcrumb  - string shown in the topbar
+//   userName    - used for avatar initials and footer
+//   userRole    - shown in the sidebar footer
+//   children    - page content
+//
+// Optional (for dynamic nav mode):
+//   navItems    - array of { id: string, label: string }
+//   activeNav   - id of the currently active nav item
+//   onNavChange - (id: string) => void callback
+//
+// When navItems is omitted the sidebar renders the original static nav.
+// ---------------------------------------------------------------------------
+
+export function AppShell({
+  breadcrumb,
+  userName,
+  userRole,
+  children,
+  navItems,
+  activeNav,
+  onNavChange,
+}) {
   const initials = getInitials(userName);
 
   return (
@@ -26,19 +105,39 @@ export function AppShell({ breadcrumb, userName, userRole, children }) {
       <aside className="sidebar" aria-label="Primary navigation">
         <div>
           <div className="sidebar-brand">CreditIQ</div>
+
           <nav className="sidebar-nav" aria-label="Sections">
-            <button type="button" className="sidebar-nav-item is-active">
-              <SidebarNavIcon />
-              <span>Onboarding</span>
-            </button>
-            <button type="button" className="sidebar-nav-item">
-              <SidebarNavIcon />
-              <span>Dashboard</span>
-            </button>
-            <button type="button" className="sidebar-nav-item">
-              <SidebarNavIcon />
-              <span>Applications</span>
-            </button>
+            {navItems ? (
+              // Dynamic nav — used by the dashboard shell
+              navItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`sidebar-nav-item${activeNav === item.id ? ' is-active' : ''}`}
+                  onClick={() => onNavChange?.(item.id)}
+                  aria-current={activeNav === item.id ? 'page' : undefined}
+                >
+                  <DashNavIcon id={item.id} />
+                  <span>{item.label}</span>
+                </button>
+              ))
+            ) : (
+              // Static nav — preserved for existing workflow pages
+              <>
+                <button type="button" className="sidebar-nav-item is-active">
+                  <SidebarNavIcon />
+                  <span>Onboarding</span>
+                </button>
+                <button type="button" className="sidebar-nav-item">
+                  <SidebarNavIcon />
+                  <span>Dashboard</span>
+                </button>
+                <button type="button" className="sidebar-nav-item">
+                  <SidebarNavIcon />
+                  <span>Applications</span>
+                </button>
+              </>
+            )}
           </nav>
         </div>
 

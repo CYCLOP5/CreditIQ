@@ -36,3 +36,6 @@ packages = ["src"]
 [tool.hatch.envs.default.scripts]
 start-api = "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 2"
 start-worker = "python -m src.api.worker"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

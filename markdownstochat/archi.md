@@ -185,15 +185,20 @@ the proxy labels are noisy by design. the model learns the nonlinear boundaries 
 1. receive engineered feature vector as scipy sparse csr if sparsity exceeds 50 percent or dense numpy array otherwise
 2. run xgboost predict to get raw probability
 3. map probability to 300 to 900 scale via linear transformation where 0.0 maps to 900 and 1.0 maps to 300 because higher probability of default means lower score
-4. assign risk band label. 300 to 500 is high risk, 500 to 650 is medium risk, 650 to 750 is low risk, 750 to 900 is very low risk
+4. assign risk band label. 300 to 549 is high risk, 550 to 649 is medium risk, 650 to 749 is low risk, 750 to 900 is very low risk. thresholds align with cibil official poor/average/good/excellent bands where poor = 300-550.
 
 ### loan recommendation logic
 
-based on score and risk band.
-- very low risk, recommended amount up to 25 lakh, tenure up to 36 months
-- low risk, recommended amount up to 15 lakh, tenure up to 24 months
-- medium risk, recommended amount up to 5 lakh, tenure up to 12 months
-- high risk, no recommendation, manual review required
+working capital and term loan are assessed separately per rbi and bank of india lending norms. cgtmse guarantee eligibility is computed as part of the recommendation for mse-classified borrowers.
+
+| risk band | working capital | term loan | wc tenure | term tenure | cgtmse | notes |
+|---|---|---|---|---|---|---|
+| very_low_risk | up to rs.50 lakh | up to rs.1 crore | 12 months rolling | 84 months | eligible | cgtmse composite guarantee required for term >rs.25 lakh |
+| low_risk | up to rs.25 lakh | up to rs.50 lakh | 12 months rolling | 60 months | eligible | standard cgtmse coverage |
+| medium_risk | up to rs.10 lakh | up to rs.25 lakh | 12 months rolling | 36 months | eligible | rbi mandated no-collateral up to rs.10 lakh |
+| high_risk | up to rs.5 lakh | not recommended | 12 months | none | not eligible | refer to mudra shishu/kishor for micro segment; manual review required for any amount above rs.5 lakh |
+
+note: the no-collateral mandate for loans up to rs.10 lakh is an rbi directive, not a discretionary bank policy. cgtmse coverage per borrower is capped at rs.500 lakh (rs.5 crore).
 
 ### memory protocol
 model loaded once at worker startup. occupies approximately 50 to 200mb depending on tree count. inference is cpu-only.
@@ -285,10 +290,11 @@ if any step fails the worker writes status failed with error details to the redi
     "upi inbound to outbound ratio suggests net positive cash position",
     "no circular transaction patterns detected in counterparty network"
   ],
-  "recommended_loan": {
-    "amount_inr": 1500000,
-    "tenure_months": 24
-  },
+  "recommended_wc_amount": 2500000,
+  "recommended_term_amount": 5000000,
+  "msme_category": "small",
+  "cgtmse_eligible": true,
+  "mudra_eligible": false,
   "fraud_flag": false,
   "fraud_details": null,
   "score_freshness": "2026-04-03t13:12:45+05:30",

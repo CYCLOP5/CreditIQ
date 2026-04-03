@@ -1,13 +1,14 @@
 """
 feature engineering engine msme credit scoring
-computes velocity cadence ratio sparsity subvectors gst upi ewb signal
-parquet spill cache keyed gstin partition path datafeaturesgstingstinfeaturesparquet
+computes velocity cadence ratio sparsity extended subvectors gst upi ewb signal
+parquet spill cache keyed gstin partition path datafeaturesgstinstinfeaturesparquet
 """
 
-import os
+import glob
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import numpy as np
 import polars as pl
 import psutil
 
@@ -167,10 +168,8 @@ class FeatureEngine:
                 .diff()
                 .dt.total_seconds()
                 .cast(pl.Float64)
-                .truediv(86400.0)
-                .forward_fill()
-                .fill_null(0.0)
-            )
+                / 86400.0
+            ).forward_fill().fill_null(0.0)
             gst_mean_filing_interval_days = float(gst_diffs.mean() or 0.0)
             gst_std_filing_interval_days = float(gst_diffs.std() or 0.0)
 
@@ -183,10 +182,8 @@ class FeatureEngine:
                 .diff()
                 .dt.total_seconds()
                 .cast(pl.Float64)
-                .truediv(86400.0)
-                .forward_fill()
-                .fill_null(0.0)
-            )
+                / 86400.0
+            ).forward_fill().fill_null(0.0)
             upi_inbound_std_interval_days = float(upi_diffs.std() or 0.0)
 
         if ewb_g.height < 2:
@@ -197,10 +194,8 @@ class FeatureEngine:
                 .diff()
                 .dt.total_seconds()
                 .cast(pl.Float64)
-                .truediv(86400.0)
-                .forward_fill()
-                .fill_null(0.0)
-            )
+                / 86400.0
+            ).forward_fill().fill_null(0.0)
             ewb_median_interval_days = float(ewb_diffs.median() or 0.0)
 
         if gst_g.height < 3:
@@ -364,7 +359,7 @@ class FeatureEngine:
         """
         data availability gap metrics across three signal types
         longest_gap_days merges timestamps frames finds max interevent gap
-        data_maturity_flag 10 months_active_gst reaches 3 or
+        data_maturity_flag 10 months_active_gst reaches 3 or more
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin)
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
@@ -399,9 +394,8 @@ class FeatureEngine:
                 .diff()
                 .dt.total_seconds()
                 .cast(pl.Float64)
-                .truediv(86400.0)
-                .fill_null(0.0)
-            )
+                / 86400.0
+            ).fill_null(0.0)
             longest_gap_days = int(gap_series.max() or 0)
 
         data_maturity_flag = 1.0 if months_active_gst >= 3 else 0.0
@@ -413,6 +407,172 @@ class FeatureEngine:
             "data_maturity_flag": data_maturity_flag,
         }
 
+    def _compute_extended_features(
+        self,
+        gstin: str,
+        gst_df: pl.DataFrame,
+        upi_df: pl.DataFrame,
+        ewb_df: pl.DataFrame,
+    ) -> dict:
+        """
+        extended domain feature computation cash buffer debit failure hsn diversity
+        upi throughput dormancy statutory compliance from nayak committee framework
+        cash_buffer_days estimate from upi inflow outflow balance per rbi norms
+        hsn_entropy_90d shannon entropy hsn distribution indicates sector diversification
+        statutory_payment_regularity_score inverse avg filing delay normalised 30d
+        """
+        gst_g = gst_df.filter(pl.col("gstin") == gstin)
+        upi_g = upi_df.filter(pl.col("gstin") == gstin)
+        ewb_g = ewb_df.filter(pl.col("gstin") == gstin)
+
+        if upi_g.height == 0:
+            upi_daily_avg_throughput = 0.0
+            upi_top3_concentration = 0.0
+            upi_dormancy_periods = 0
+            cash_buffer_days = 0.0
+            debit_failure_rate_90d = 0.0
+        else:
+            upi_now = upi_g["timestamp"].max()
+            upi_min_ts = upi_g["timestamp"].min()
+            span_seconds = (upi_now - upi_min_ts).total_seconds()
+            active_days = max(span_seconds / 86400.0, 1.0)
+            total_amount = float(upi_g["amount"].sum() or 0.0)
+            upi_daily_avg_throughput = total_amount / active_days
+
+            cutoff_30d = upi_now - timedelta(days=30)
+            upi_30d_inbound = upi_g.filter(
+                (pl.col("timestamp") >= cutoff_30d) & (pl.col("direction") == "inbound")
+            )
+
+            if upi_30d_inbound.height == 0:
+                upi_top3_concentration = 0.0
+            else:
+                cp_agg = (
+                    upi_30d_inbound.group_by("counterparty_vpa")
+                    .agg(pl.col("amount").sum().alias("total_amt"))
+                    .sort("total_amt", descending=True)
+                )
+                total_inbound_amt = float(upi_30d_inbound["amount"].sum() or 0.0)
+                top3_amt = float(cp_agg.head(3)["total_amt"].sum() or 0.0)
+                upi_top3_concentration = top3_amt / max(total_inbound_amt, 1.0)
+
+            if upi_g.height < 2:
+                upi_dormancy_periods = 0
+            else:
+                total_possible_weeks = max(int(span_seconds / (7.0 * 86400.0)), 1)
+                active_weeks = (
+                    upi_g.select(
+                        (
+                            (pl.col("timestamp") - pl.lit(upi_min_ts))
+                            .dt.total_seconds()
+                            .cast(pl.Float64)
+                            / (7.0 * 86400.0)
+                        )
+                        .cast(pl.Int32)
+                        .alias("week_num")
+                    )
+                    .unique()
+                    .height
+                )
+                upi_dormancy_periods = max(0, total_possible_weeks - active_weeks)
+
+            upi_30d_inbound_all = upi_g.filter(
+                (pl.col("timestamp") >= cutoff_30d) & (pl.col("direction") == "inbound")
+            )
+            upi_30d_outbound_all = upi_g.filter(
+                (pl.col("timestamp") >= cutoff_30d) & (pl.col("direction") == "outbound")
+            )
+            inbound_30d_amt = float(upi_30d_inbound_all["amount"].sum() or 0.0)
+            outbound_30d_amt = float(upi_30d_outbound_all["amount"].sum() or 0.0)
+            daily_outflow = outbound_30d_amt / 30.0
+            if daily_outflow > 0:
+                cash_buffer_days = float(min(inbound_30d_amt / daily_outflow, 90.0))
+            else:
+                cash_buffer_days = 90.0 if inbound_30d_amt > 0 else 0.0
+
+            upi_90d = upi_g.filter(pl.col("timestamp") >= upi_now - timedelta(days=90))
+            upi_90d_outbound = upi_90d.filter(pl.col("direction") == "outbound")
+            failed_90d = upi_90d_outbound.filter(
+                pl.col("status").is_in(["failed_technical", "failed_funds"])
+            ).height
+            debit_failure_rate_90d = failed_90d / max(upi_90d_outbound.height, 1)
+
+        if ewb_g.height == 0:
+            hsn_entropy_90d = 0.0
+            hsn_shift_count_90d = 0
+        else:
+            ewb_now = ewb_g["timestamp"].max()
+            ewb_90d = ewb_g.filter(pl.col("timestamp") >= ewb_now - timedelta(days=90))
+
+            if ewb_90d.height == 0 or "main_hsn_code" not in ewb_90d.columns:
+                hsn_entropy_90d = 0.0
+                hsn_shift_count_90d = 0
+            else:
+                hsn_counts = (
+                    ewb_90d.group_by("main_hsn_code")
+                    .agg(pl.len().alias("cnt"))
+                )
+                shares_arr = (
+                    hsn_counts.with_columns(
+                        (pl.col("cnt").cast(pl.Float64) / float(ewb_90d.height)).alias("p")
+                    )["p"]
+                    .to_numpy()
+                )
+                shares_arr = shares_arr[shares_arr > 0]
+                if shares_arr.size == 0:
+                    hsn_entropy_90d = 0.0
+                else:
+                    hsn_entropy_90d = float(-np.sum(shares_arr * np.log(shares_arr)))
+
+                buckets = [
+                    ewb_90d.filter(pl.col("timestamp") >= ewb_now - timedelta(days=30)),
+                    ewb_90d.filter(
+                        (pl.col("timestamp") >= ewb_now - timedelta(days=60))
+                        & (pl.col("timestamp") < ewb_now - timedelta(days=30))
+                    ),
+                    ewb_90d.filter(
+                        (pl.col("timestamp") >= ewb_now - timedelta(days=90))
+                        & (pl.col("timestamp") < ewb_now - timedelta(days=60))
+                    ),
+                ]
+                dominant_hsns: list[str | None] = []
+                for bucket in buckets:
+                    if bucket.height > 0:
+                        top = (
+                            bucket.group_by("main_hsn_code")
+                            .agg(pl.len().alias("cnt"))
+                            .sort("cnt", descending=True)
+                            .head(1)["main_hsn_code"]
+                            .to_list()
+                        )
+                        dominant_hsns.append(top[0] if top else None)
+                    else:
+                        dominant_hsns.append(None)
+
+                shift_count = 0
+                for i in range(1, len(dominant_hsns)):
+                    if dominant_hsns[i] is not None and dominant_hsns[i - 1] is not None:
+                        if dominant_hsns[i] != dominant_hsns[i - 1]:
+                            shift_count += 1
+                hsn_shift_count_90d = shift_count
+
+        if gst_g.height == 0:
+            statutory_payment_regularity_score = 0.0
+        else:
+            avg_delay = float(gst_g["filing_delay_days"].mean() or 0.0)
+            statutory_payment_regularity_score = max(0.0, 1.0 - min(avg_delay / 30.0, 1.0))
+
+        return {
+            "upi_daily_avg_throughput": upi_daily_avg_throughput,
+            "upi_top3_concentration": upi_top3_concentration,
+            "upi_dormancy_periods": upi_dormancy_periods,
+            "hsn_entropy_90d": hsn_entropy_90d,
+            "hsn_shift_count_90d": hsn_shift_count_90d,
+            "cash_buffer_days": cash_buffer_days,
+            "statutory_payment_regularity_score": statutory_payment_regularity_score,
+            "debit_failure_rate_90d": debit_failure_rate_90d,
+        }
+
     def compute_features(
         self,
         gstin: str,
@@ -422,7 +582,7 @@ class FeatureEngine:
     ) -> EngineeredFeatureVector:
         """
         full feature vector computation single gstin
-        merges velocity cadence ratio sparsity dicts into engineered vector
+        merges velocity cadence ratio sparsity extended dicts into engineered vector
         persists onerow parquet partitioned cache after computation
         """
         print(f"computing features for gstin {gstin}")
@@ -431,6 +591,7 @@ class FeatureEngine:
         cadence = self._compute_cadence_features(gstin, gst_df, upi_df, ewb_df)
         ratio = self._compute_ratio_features(gstin, gst_df, upi_df, ewb_df)
         sparsity = self._compute_sparsity_features(gstin, gst_df, upi_df, ewb_df)
+        extended = self._compute_extended_features(gstin, gst_df, upi_df, ewb_df)
 
         all_features: dict = {
             "gstin": gstin,
@@ -439,6 +600,13 @@ class FeatureEngine:
             **cadence,
             **ratio,
             **sparsity,
+            **extended,
+            "fraud_ring_flag": False,
+            "fraud_confidence": 0.0,
+            "cycle_velocity": 0.0,
+            "cycle_recurrence": 0.0,
+            "counterparty_compliance_avg": 0.0,
+            "counterparty_fraud_exposure": 0.0,
         }
 
         vector = EngineeredFeatureVector(**all_features)
@@ -478,3 +646,49 @@ class FeatureEngine:
 
         print(f"batch complete {total} feature vectors computed")
         return results
+
+
+def _run_feature_pipeline(raw_dir: str = "data/raw", features_dir: str = "data/features") -> None:
+    """
+    standalone entry point batch feature computation over all raw parquets
+    loads gst upi ewb chunks scans glob calls compute_batch writes partitioned cache
+    """
+    raw = Path(raw_dir)
+    gst_files = sorted(glob.glob(str(raw / "gst_invoices_chunk_*.parquet")))
+    upi_files = sorted(glob.glob(str(raw / "upi_transactions_chunk_*.parquet")))
+    ewb_files = sorted(glob.glob(str(raw / "eway_bills_chunk_*.parquet")))
+
+    print(f"gst chunks {len(gst_files)} upi chunks {len(upi_files)} ewb chunks {len(ewb_files)}")
+
+    if not gst_files:
+        print("no raw parquets found run src.ingestion.generator first")
+        return
+
+    gst_df = pl.read_parquet(gst_files).with_columns(
+        pl.col("timestamp").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%.f", strict=False)
+    )
+    upi_df = pl.read_parquet(upi_files).with_columns(
+        pl.col("timestamp").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%.f", strict=False)
+    )
+    ewb_df = (
+        pl.read_parquet(ewb_files)
+        .rename({
+            "totInvValue": "tot_inv_value",
+            "transDistance": "trans_distance",
+            "docDate": "doc_date",
+            "mainHsnCode": "main_hsn_code",
+        })
+        .with_columns(
+            pl.col("timestamp").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%.f", strict=False)
+        )
+    )
+
+    print(f"loaded gst {gst_df.height} upi {upi_df.height} ewb {ewb_df.height} rows")
+
+    engine = FeatureEngine(cache_dir=features_dir)
+    engine.compute_batch(gst_df, upi_df, ewb_df)
+    print("feature pipeline complete")
+
+
+if __name__ == "__main__":
+    _run_feature_pipeline()

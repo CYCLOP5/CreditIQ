@@ -80,7 +80,8 @@ class EWayBillRecord(BaseModel):
 class EngineeredFeatureVector(BaseModel):
     """
     fully engineered feature vector output feature engine
-    groups velocity cadence ratio sparsity fraud subvectors
+    groups velocity cadence ratio sparsity extended fraud subvectors
+    extended fields default zero populated feature engine
     fraud fields default zero populated downstream fraud module
     """
 
@@ -115,6 +116,15 @@ class EngineeredFeatureVector(BaseModel):
     upi_p2m_ratio_30d: float
     upi_outbound_failure_rate: float
 
+    upi_daily_avg_throughput: float = 0.0
+    upi_top3_concentration: float = 0.0
+    cash_buffer_days: float = 0.0
+    statutory_payment_regularity_score: float = 0.0
+    debit_failure_rate_90d: float = 0.0
+    hsn_entropy_90d: float = 0.0
+    hsn_shift_count_90d: int = 0
+    upi_dormancy_periods: int = 0
+
     months_active_gst: int
     data_completeness_score: float
     longest_gap_days: int
@@ -125,6 +135,7 @@ class EngineeredFeatureVector(BaseModel):
     cycle_velocity: float = 0.0
     cycle_recurrence: float = 0.0
     counterparty_compliance_avg: float = 0.0
+    counterparty_fraud_exposure: float = 0.0
 
 
 class FeatureBatch(BaseModel):

@@ -7,9 +7,11 @@ __pycache__/
 *.so
 # Ignore all PDFs
 *.pdf
-
+data/raw/*.parquet
 # Ignore all markdown files
 *.md
+data/features
+data/models
 
 # BUT keep architecture file
 !markdownstochat/archi.md
