@@ -17,7 +17,6 @@
 
 | Resource | Link |
 |---|---|
-| Architecture deep-dive | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Mathematical foundations | [math.md](math.md) |
 | Tools, libraries & alternatives | [tools.md](tools.md) |
 | ML Feature Intent & Signals | [signals.md](signals.md) |
