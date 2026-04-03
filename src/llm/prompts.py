@@ -1,0 +1,3 @@
+"""
+llm prompt templates stub
+"""

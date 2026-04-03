@@ -4,7 +4,7 @@
 
 the engine is a single-machine, event-driven credit scoring pipeline. it ingests synthetic msme financial signals, engineers time-series features, detects circular fraud topologies, scores creditworthiness via gradient boosting, translates predictions to plain language via a local quantized llm, and serves results through an async rest api with a real-time dashboard.
 
-all components execute on one arch linux machine with 12gb ram and 6gb vram. zero cloud. zero paid apis.
+all components execute on one arch linux machine with 12gb ram. zero cloud. zero paid apis. zero gpu required.
 
 ## high-level data flow
 
@@ -16,10 +16,10 @@ flowchart TD
     d -->|engineered feature vector| e[networkx fraud detector]
     e -->|clean vector or fraud flag| f[xgboost scoring model]
     f -->|raw score + feature vector| g[shap treeexplainer]
-    g -->|top 5 shap vectors| h[phi-3-mini int4 via llama.cpp]
+    g -->|top 5 shap vectors| h[phi-3-mini int4 via llama.cpp cpu-only]
     h -->|plain language reasons| i[redis state store]
     i -->|result payload| j[fastapi rest endpoint]
-    j -->|json response| k[streamlit dashboard]
+    j -->|json response| k[next.js dashboard]
     d -->|parquet spill| l[disk cache]
     l -->|historical read| d
 ```
@@ -196,7 +196,7 @@ based on score and risk band.
 - high risk, no recommendation, manual review required
 
 ### memory protocol
-model loaded once at worker startup. occupies approximately 50 to 200mb depending on tree count. inference is cpu-only to avoid vram contention with the llm.
+model loaded once at worker startup. occupies approximately 50 to 200mb depending on tree count. inference is cpu-only.
 
 ## layer 6, explainability
 
@@ -214,8 +214,8 @@ the top 5 shap feature name and value pairs are formatted into a structured prom
 model specification.
 - model: phi-3-mini-128k-instruct
 - format: gguf q4_k_m quantization
-- vram usage: approximately 2.0 to 2.2gb
-- inference engine: llama-cpp-python with n_gpu_layers set to offload all layers
+- vram usage: 0gb, cpu-only inference
+- inference engine: llama-cpp-python with n_gpu_layers=0
 
 prompt structure.
 - system message instructs the model to act as a backend financial signal translator
@@ -223,9 +223,9 @@ prompt structure.
 - model must return exactly 5 short bullet points in plain language
 - model is forbidden from generating conversational filler or markdown formatting
 
-### vram sequencing protocol
+### cpu inference note
 
-the llm must not run concurrently with any other gpu workload. the saga worker serializes access. sequence is: xgboost cpu inference completes, then shap cpu computation completes, then llm gpu inference executes. this guarantees zero vram contention.
+the llm runs entirely on cpu. expected throughput is approximately 2 to 4 tokens per second on a modern multi-core x86. this is acceptable for the batch explainability use case. no vram sequencing protocol is required because no gpu is used.
 
 ## layer 7, api orchestration
 
@@ -264,7 +264,7 @@ the saga worker is a dedicated async python process separate from the fastapi se
 4. runs networkx fraud detection
 5. runs xgboost inference
 6. runs shap computation
-7. runs phi-3 llm translation
+7. runs phi-3 llm translation on cpu
 8. writes complete result to redis hash score:task_id with status complete
 9. acknowledges the stream message via xack
 
@@ -302,41 +302,24 @@ if any step fails the worker writes status failed with error details to the redi
 provide a visually compelling real-time interface for loan officers to inspect scores, feature contributions, and fraud topologies.
 
 ### framework
-streamlit with plotly for interactive charts. lightweight, zero javascript build step, runs as a separate process.
-### dashboard pages
+next.js 14 with typescript and tailwind. the user designs and implements all ui components. the backend fastapi api is the sole data source.
+
+### dashboard pages (next.js, user-designed)
 
 page 1, score lookup.
-- gstin input field
-- triggers post /score and polls get /score/task_id
-- displays credit score as a large gauge chart with color-coded risk band
-- displays the 5 plain language reasons as a styled card list
-- displays recommended loan amount and tenure
-- displays score freshness timestamp
+- gstin input triggers post /score and polls get /score/task_id
+- displays credit score, risk band, top 5 plain language reasons, loan recommendation
 
 page 2, feature contributions.
-- shap waterfall chart showing how each feature pushed the score up or down from the base value
-- horizontal bar chart of top 10 features by absolute shap magnitude
-- historical score trend line chart if multiple scores exist for the gstin
+- shap waterfall visualization
+- top 10 features by shap magnitude
 
 page 3, fraud topology viewer.
-- interactive networkx graph rendered via plotly as a node-link diagram
-- nodes colored by fraud_ring_flag status, red for flagged, green for clean
-- edges weighted by transaction volume with thickness proportional to amount
-- detected cycles highlighted with animated edge paths
-- heatmap overlay showing anomaly concentration by geographic region
+- interactive node-link diagram using d3 or react-force-graph
+- nodes colored by fraud_ring_flag
 
 page 4, system health.
-- live redis memory usage gauge
-- system ram usage gauge
-- vram usage gauge
-- worker queue depth over time
-- api response latency percentiles
-
-### visual design principles
-- dark theme for reduced eye strain in banking operations
-- high contrast color palette for accessibility
-- minimal chrome, maximum data density
-- all charts interactive with hover tooltips showing exact values
+- live redis memory, system ram, worker queue depth
 
 ## directory structure
 
@@ -364,13 +347,11 @@ project_root/
       routes.py
       schemas.py
       worker.py
-    dashboard/
-      app.py
-      pages/
-        score_lookup.py
-        feature_contributions.py
-        fraud_topology.py
-        system_health.py
+  frontend/
+    src/
+      app/
+      components/
+      lib/
   data/
     raw/
     features/
@@ -383,6 +364,8 @@ project_root/
   markdownstochat/
   pyproject.toml
 ```
+
+the frontend/ directory is the next.js app, typescript, tailwind, user-designed.
 
 ## inter-component communication map
 
@@ -398,11 +381,11 @@ flowchart LR
     xgb -->|raw score| sw
     sw -->|treeexplainer| sh[shap]
     sh -->|phi values| sw
-    sw -->|llm inference| phi[phi-3 llama.cpp]
+    sw -->|llm inference cpu| phi[phi-3 llama.cpp]
     phi -->|plain text| sw
     sw -->|hset| rc[redis cache]
     rc -->|hget| api[fastapi]
-    api -->|json| ui[streamlit dashboard]
+    api -->|json| ui[next.js dashboard]
 ```
 
 ## failure modes and recovery
@@ -412,7 +395,7 @@ flowchart LR
 | redis oom | maxmemory policy triggers eviction | application retries xread, generator replays missing window |
 | polars oom | memoryerror exception | switch to streaming collect, reduce batch size, spill to parquet |
 | networkx oom | graph node count exceeds 50000 | partition graph by time window, process sequentially |
-| llm cuda oom | cuda out of memory exception | reduce n_gpu_layers, offload remaining layers to cpu |
+| llm cpu slow | token throughput below 1 token per second | reduce context length, simplify prompt, check cpu thermal throttling |
 | xgboost inference failure | prediction returns nan | return fallback score of 500 with manual review flag |
 | saga worker crash | redis pending entry never transitions to complete | watchdog process detects stale pending entries after 60s timeout, requeues |
 | fastapi thread exhaustion | 503 responses increase | uvicorn worker count is already capped at 2, backpressure via 429 responses |

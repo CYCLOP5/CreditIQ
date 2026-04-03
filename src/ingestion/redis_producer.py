@@ -1,6 +1,6 @@
 """
-async redis stream producer for msme synthetic data pipeline.
-reads parquet chunks from data/raw and publishes records via xadd.
+async redis stream producer msme synthetic data pipeline
+reads parquet chunks dataraw publishes records via xadd
 """
 
 import asyncio
@@ -26,8 +26,8 @@ STREAM_MAP = {
 
 def row_to_redis_fields(row: dict[str, Any]) -> dict[str, str]:
     """
-    converts a row dict to redis-compatible string fields.
-    none becomes empty string, bools become 1 or 0, floats are rounded to 2dp.
+    converts row dict rediscompatible string fields
+    none becomes empty string bools become 1 or 0 floats
     """
     result: dict[str, str] = {}
     for k, v in row.items():
@@ -46,8 +46,8 @@ def row_to_redis_fields(row: dict[str, Any]) -> dict[str, str]:
 
 async def create_consumer_groups(client: aioredis.Redis) -> None:
     """
-    creates consumer groups for all streams using xgroup create with mkstream.
-    ignores busygroup error when the group already exists.
+    creates consumer groups streams xgroup create mkstream
+    ignores busygroup error group already exists
     """
     group_name = SETTINGS.consumer_group
     for stream_name in STREAM_MAP.values():
@@ -64,8 +64,8 @@ async def stream_dataframe(
     stream_name: str,
 ) -> int:
     """
-    streams all rows of a polars dataframe to the given redis stream via xadd.
-    uses pipeline batching of batch_size and prints progress every 1000 records.
+    streams rows polars dataframe given redis stream via xadd
+    pipeline batching batch_size prints progress every 1000 records
     """
     rows = df.to_dicts()
     total = 0
@@ -89,8 +89,8 @@ async def stream_dataframe(
 
 async def load_and_stream(client: aioredis.Redis, signal_type: str) -> int:
     """
-    finds all parquet chunk files for the given signal type, loads and streams each.
-    returns total records sent to the stream.
+    finds parquet chunk files given signal type loads streams each
+    returns total records sent stream
     """
     stream_name = STREAM_MAP[signal_type]
     pattern = str(RAW_DATA_PATH / f"{signal_type}_chunk_*.parquet")
@@ -105,8 +105,8 @@ async def load_and_stream(client: aioredis.Redis, signal_type: str) -> int:
 
 async def main() -> None:
     """
-    entry point for the redis producer.
-    connects, creates consumer groups, then streams all signal types.
+    entry point redis producer
+    connects creates consumer groups streams signal types
     """
     print("connecting to redis")
     client = aioredis.from_url(SETTINGS.redis_url)
