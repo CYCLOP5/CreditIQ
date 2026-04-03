@@ -12,18 +12,19 @@ import xgboost as xgb
 
 class CreditExplainer:
     """
-    wraps shap treeexplainer
+    wraps shap treeexplainer for dual models
     computes top 5 feature shap values with direction
     """
 
     def __init__(
-        self, model: xgb.XGBClassifier, feature_columns: list[str]
+        self, scorer 
     ) -> None:
-        self.explainer = shap.TreeExplainer(model)
-        self.feature_columns = feature_columns
-        print("explainer ready")
+        self.explainer_full = shap.TreeExplainer(scorer.model_full)
+        self.explainer_upi = shap.TreeExplainer(scorer.model_upi)
+        self.feature_columns = scorer.feature_columns
+        print("explainers ready for dual models")
 
-    def compute_shap(self, X: np.ndarray) -> np.ndarray:
+    def compute_shap(self, X: np.ndarray, use_upi_model: bool = False) -> np.ndarray:
         """
         compute shap values for input feature matrix
         converts sparse input to dense before passing to treeexplainer
@@ -31,7 +32,8 @@ class CreditExplainer:
         """
         if sp.issparse(X):
             X = X.toarray()
-        shap_values = self.explainer.shap_values(X)
+        explainer = self.explainer_upi if use_upi_model else self.explainer_full
+        shap_values = explainer.shap_values(X)
         if isinstance(shap_values, list):
             shap_values = shap_values[1]
         return shap_values
@@ -85,10 +87,10 @@ class CreditExplainer:
         }
 
     def explain_single(
-        self, feature_dict: dict, feature_columns: list[str]
+        self, feature_dict: dict, feature_columns: list[str], use_upi_model: bool = False
     ) -> dict:
         """
-        full explanation for single feature vector
+        full explanation for single feature vector routing to dual models
         returns top5 and waterfall data
         """
         X = np.array(
@@ -96,10 +98,11 @@ class CreditExplainer:
             dtype=np.float32,
         ).reshape(1, -1)
 
-        shap_vals = self.compute_shap(X)
+        shap_vals = self.compute_shap(X, use_upi_model)
         shap_row = shap_vals[0]
 
-        ev = self.explainer.expected_value
+        explainer = self.explainer_upi if use_upi_model else self.explainer_full
+        ev = explainer.expected_value
         if isinstance(ev, (list, np.ndarray)):
             base_value = float(ev[1])
         else:

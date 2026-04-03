@@ -218,28 +218,40 @@ async def run_saga(
     """
     executes full scoring saga for one task
     writes status=processing then complete or failed to redis hash
+    publishes realtime progress events to redis pub sub
     """
     await redis_client.hset(f"score:{task_id}", "status", "processing")
+    await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "processing", "step": "starting saga"}))
     print(f"saga start task_id={task_id} gstin={gstin}")
 
     try:
         loop = asyncio.get_running_loop()
 
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "processing", "step": "resolving features"}))
         fv = await loop.run_in_executor(None, _resolve_feature_vector, gstin)
 
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "processing", "step": "running fraud graph detection"}))
         fv = await loop.run_in_executor(None, _run_fraud_step, fv)
 
         msme_category = _infer_msme_category(fv)
+        
+        use_upi_model = fv.months_active_gst < 3
+        model_name = "upi_heavy" if use_upi_model else "full"
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "processing", "step": f"scoring features dynamic routing {model_name}"}))
+        print(f"routing to {model_name} model active gst months {fv.months_active_gst}")
+
         score_payload = await loop.run_in_executor(
-            None, scorer.score_feature_vector, fv, msme_category
+            None, scorer.score_feature_vector, fv, msme_category, use_upi_model
         )
 
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "processing", "step": "generating shap explanations"}))
         feature_dict = fv.model_dump()
         explain_result = await loop.run_in_executor(
-            None, explainer.explain_single, feature_dict, explainer.feature_columns
+            None, explainer.explain_single, feature_dict, explainer.feature_columns, use_upi_model
         )
         top_5_features: list[dict] = explain_result["top_5_features"]
 
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "processing", "step": "translating explanations to plain language"}))
         top_reasons: list[str]
         if translator is not None:
             try:
@@ -293,6 +305,7 @@ async def run_saga(
         )
 
         print(f"saga complete task_id={task_id} score={score_payload['credit_score']}")
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "complete"}))
 
     except Exception as exc:
         print(f"saga failed task_id={task_id} error={exc}")
@@ -303,6 +316,7 @@ async def run_saga(
                 "error": str(exc),
             },
         )
+        await redis_client.publish(f"updates:{task_id}", json.dumps({"status": "failed", "error": str(exc)}))
 
 
 async def _ensure_consumer_group(redis_client: aioredis.Redis) -> None:
@@ -333,12 +347,9 @@ def _load_scorer() -> CreditScorer:
 
 def _load_explainer(scorer: CreditScorer) -> CreditExplainer:
     """
-    creates credit explainer sharing model and feature columns from scorer
+    creates credit explainer sharing dual models and feature columns from scorer
     """
-    return CreditExplainer(
-        model=scorer.model,
-        feature_columns=scorer.feature_columns,
-    )
+    return CreditExplainer(scorer)
 
 
 def _load_translator() -> ShapTranslator | None:

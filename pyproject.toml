@@ -17,7 +17,7 @@ dependencies = [
     "faker",
     "sdv",
     "llama-cpp-python",
-    "streamlit",
+    "sse-starlette",
     "plotly",
     "pyarrow",
     "scipy",

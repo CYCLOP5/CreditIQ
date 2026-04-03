@@ -63,12 +63,16 @@ class CreditScorer:
     loads xgboost model and feature column list
     provides single sample and batch inference
     maps probability to 300-900 score
+    routes to upi heavy model if requested
     """
 
     def __init__(self, model_dir: str | Path = "data/models") -> None:
         model_dir = Path(model_dir)
-        self.model = xgb.XGBClassifier()
-        self.model.load_model(str(model_dir / "xgb_credit.ubj"))
+        self.model_full = xgb.XGBClassifier()
+        self.model_full.load_model(str(model_dir / "xgb_credit.ubj"))
+
+        self.model_upi = xgb.XGBClassifier()
+        self.model_upi.load_model(str(model_dir / "xgb_credit_upi_heavy.ubj"))
 
         with open(model_dir / "feature_columns.json", "r") as fh:
             self.feature_columns: list[str] = json.load(fh)
@@ -76,7 +80,7 @@ class CreditScorer:
         with open(model_dir / "label_encoder.json", "r") as fh:
             self.label_encoder: dict = json.load(fh)
 
-        print("model loaded")
+        print("dual models loaded full data and upi heavy")
 
     def _prob_to_score(self, prob: float) -> int:
         """
@@ -116,11 +120,15 @@ class CreditScorer:
         return rec
 
     def score_features(
-        self, feature_vector: dict, msme_category: str = "micro"
+        self,
+        feature_vector: dict,
+        msme_category: str = "micro",
+        use_upi_model: bool = False,
     ) -> dict:
         """
         score single feature vector dict return full scoring payload
         handles missing features with zero fill
+        routes inference to full model or upi heavy based on flag
         """
         row = np.array(
             [float(feature_vector.get(col, 0)) for col in self.feature_columns],
@@ -128,7 +136,8 @@ class CreditScorer:
         ).reshape(1, -1)
 
         X = to_sparse_if_needed(row)
-        prob = float(self.model.predict_proba(X)[0][1])
+        model = self.model_upi if use_upi_model else self.model_full
+        prob = float(model.predict_proba(X)[0][1])
         score = self._prob_to_score(prob)
         band = self._score_to_band(score)
         rec = self._band_to_recommendation(band, msme_category)

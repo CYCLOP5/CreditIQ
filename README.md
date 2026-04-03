@@ -14,13 +14,13 @@
 | Resource | Link |
 |---|---|
 | Architecture deep-dive | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Mathematical foundations | [MATH.md](MATH.md) |
-| Tools, libraries & alternatives | [TOOLS.md](TOOLS.md) |
+| Mathematical foundations | [math.md](math.md) |
+| Tools, libraries & alternatives | [tools.md](tools.md) |
 | Data generation & profiles | [DATA_GENERATION.md](DATA_GENERATION.md) |
-| Database & redis schemas | [SCHEMA.md](SCHEMA.md) |
-| System bootstrapping | [markdownstochat/bootstrap.md](markdownstochat/bootstrap.md) |
-| API service architecture | [markdownstochat/mmmmapimusic.md](markdownstochat/mmmmapimusic.md) |
-| Core msme behaviors | [markdownstochat/howdoesthismsmeevenworkman.md](markdownstochat/howdoesthismsmeevenworkman.md) |
+| Database & redis schemas | [schema.md](schema.md) |
+| System bootstrapping | [bootstrap.md](bootstrap.md) |
+| API service architecture | [api.md](api.md) |
+| Core msme behaviors | [theoryMSME.md](theoryMSME.md) |
 
 ---
 
@@ -87,6 +87,15 @@ React + Vite Dashboard (4 interactive pages)
 
 ---
 
+
+
+### 🚀 Next-Gen Hackathon Flex Features
+This platform implements advanced features to stand out to the judges:
+* **Server-Sent Events (SSE) Real-Time Streaming:** The API provides `GET /score/{task_id}/stream` to push pipeline status updates to the client without polling.
+* **Temporal Graph Validation:** Circular transaction rings are only flagged if the cashflows actually move sequentially forward in time (`is_temporal_cycle`), significantly reducing false positives vs strict simple cycle detection.
+* **Sparse Data Dynamic Routing (Cold-Start Handling):** A `data_maturity_flag` intelligently routes new-to-credit MSMEs with < 3 months of GST to a specialized UPI-Heavy XGBoost model, protecting them from missing data penalty.
+* **RAG-based Credit Analyst Chat:** After scoring, `/score/{task_id}/chat` exposes an interactive, purely local CPU-bound GenAI assistant that retrieves the MSME feature context, allowing loan officers to ask follow-up questions to understand the 'why' behind the score.
+
 ## 2. System Architecture
 
 ### End-to-End Pipeline Diagram
@@ -147,7 +156,7 @@ The offline pipeline is useful for model development and CI/CD; the online pipel
 
 ## 3. Tools, Libraries & Models
 
-A comprehensive breakdown of every library used, why it was chosen, and what alternatives were considered is in [**TOOLS.md**](TOOLS.md).
+A comprehensive breakdown of every library used, why it was chosen, and what alternatives were considered is in [**tools.md**](tools.md).
 
 ### Quick Reference
 
@@ -174,7 +183,7 @@ A comprehensive breakdown of every library used, why it was chosen, and what alt
 
 ## 4. Mathematical Equations & Algorithms
 
-Complete mathematical foundations with LaTeX notation are in [**MATH.md**](MATH.md).
+Complete mathematical foundations with LaTeX notation are in [**math.md**](math.md).
 
 ### Key Formulas at a Glance
 

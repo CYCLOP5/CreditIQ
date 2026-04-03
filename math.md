@@ -62,3 +62,4 @@ To bootstrap the scoring engine without historical ground-truth defaults, a synt
 6. **Maturity Level**: > 18 months (-0.08); < 3 months (+0.12).
 7. **Transaction Health**: Demerit points for high debit failure rates (+0.12) and statutory payment delays (-0.08 if highly regular).
 8. Gaussian noise $N(0, 0.05)$ is added to ensure continuity. All values are clipped safely between $[0.05, 0.95]$.
+

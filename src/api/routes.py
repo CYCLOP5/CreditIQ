@@ -138,3 +138,85 @@ async def health(request: Request) -> HealthResponse:
         system_ram_used_gb=ram_used_gb,
         system_ram_total_gb=ram_total_gb,
     )
+
+from sse_starlette.sse import EventSourceResponse
+from src.api.schemas import ChatRequest
+from src.llm.translator import get_model_path
+from llama_cpp import Llama
+from typing import AsyncGenerator
+import json
+
+_chat_llm_instance = None
+
+def get_chat_llm():
+    """
+    lazy loads phi-3-mini locally for chat inference
+    cpu-only n_gpu_layers=0 limits memory consumption
+    """
+    global _chat_llm_instance
+    if _chat_llm_instance is None:
+        print("loading chat llm lazily on cpu")
+        _chat_llm_instance = Llama(
+            model_path=str(get_model_path()),
+            n_gpu_layers=0,
+            n_ctx=2048,
+            n_threads=4,
+            verbose=False,
+        )
+    return _chat_llm_instance
+
+@router.get("/score/{task_id}/stream")
+async def stream_score_progress(request: Request, task_id: str) -> EventSourceResponse:
+    """
+    server sent events endpoint streams redis pub sub messages
+    replaces polling for score status showing realtime updates
+    """
+    redis_client: aioredis.Redis = request.app.state.redis
+    
+    async def event_generator() -> AsyncGenerator[dict, None]:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe(f"updates:{task_id}")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    data_str = message["data"].decode("utf-8")
+                    yield {"data": data_str}
+                    if "complete" in data_str or "failed" in data_str:
+                        break
+        finally:
+            await pubsub.unsubscribe(f"updates:{task_id}")
+            await pubsub.close()
+            
+    return EventSourceResponse(event_generator())
+
+@router.post("/score/{task_id}/chat")
+async def chat_with_score(request: Request, task_id: str, body: ChatRequest):
+    """
+    interactive credit analyst genai chat feature
+    retrieves cached score and streams inferences directly
+    """
+    redis_client: aioredis.Redis = request.app.state.redis
+    data = await redis_client.hgetall(f"score:{task_id}")
+    
+    if not data or data.get("status") not in ("complete", "failed"):
+        raise HTTPException(status_code=400, detail="score not ready for chat")
+        
+    prompt = f"""<|system|>You are an AI Credit Analyst using only this MSME data:
+Score: {data.get('credit_score', 'N/A')}
+Risk Band: {data.get('risk_band', 'N/A')}
+Fraud Flag: {data.get('fraud_flag', 'false')}
+Top Reasons: {data.get('top_reasons', '[]')}
+Fraud Details: {data.get('fraud_details', 'null')}
+<|end|>
+<|user|>
+{body.query}
+<|end|>
+<|assistant|>"""
+
+    llm = get_chat_llm()
+    
+    def stream_generator():
+        for chunk in llm(prompt, max_tokens=512, stop=["<|end|>", "<|user|>"], stream=True):
+            yield chunk["choices"][0]["text"]
+            
+    return EventSourceResponse(stream_generator())

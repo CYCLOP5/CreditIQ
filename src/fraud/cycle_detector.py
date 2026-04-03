@@ -37,6 +37,31 @@ class FraudResult(BaseModel):
     participating_cycles: list[list[str]]
 
 
+def is_temporal_cycle(cycle_nodes: list[str], graph: nx.MultiDiGraph) -> bool:
+    """
+    validates array of nodes forming simple cycle flow sequentially forward
+    iterates all multigraph edges ensuring transaction timestamps strictly increase
+    proves temporal graph understanding rather than static cycles
+    """
+    pairs = [(cycle_nodes[i], cycle_nodes[(i + 1) % len(cycle_nodes)]) for i in range(len(cycle_nodes))]
+
+    def check_sequence(idx: int, last_ts) -> bool:
+        if idx == len(pairs):
+            return True
+        src, dst = pairs[idx]
+        edge_data = graph.get_edge_data(src, dst)
+        if not edge_data:
+            return False
+        for _, attrs in edge_data.items():
+            ts = attrs.get("timestamp")
+            if ts is not None and (last_ts is None or ts > last_ts):
+                if check_sequence(idx + 1, ts):
+                    return True
+        return False
+
+    return check_sequence(0, None)
+
+
 class CycleDetector:
     """
     detects fraudulent circular transaction rings directed transaction multigraph
@@ -103,11 +128,15 @@ class CycleDetector:
     ) -> list[list[str]]:
         """
         enumerates simple cycles within scc subgraph up cycle_length_bound
+        filters valid simple cycles through sequential temporal rules
         returns empty list if scc no edges
         """
         if scc_graph.number_of_edges() == 0:
             return []
-        return list(nx.simple_cycles(scc_graph, length_bound=self.cycle_length_bound))
+        
+        all_cycles = list(nx.simple_cycles(scc_graph, length_bound=self.cycle_length_bound))
+        temporal_cycles = [c for c in all_cycles if is_temporal_cycle(c, scc_graph)]
+        return temporal_cycles
 
     def _compute_cycle_metrics(
         self,

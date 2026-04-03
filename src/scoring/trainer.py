@@ -273,6 +273,7 @@ def train_model(
     y: np.ndarray,
     feature_names: list[str],
     model_dir: Path,
+    output_name: str = "xgb_credit",
 ) -> xgb.XGBClassifier:
     """
     train xgboost hist method binary classifier
@@ -325,7 +326,7 @@ def train_model(
 
     model_dir.mkdir(parents=True, exist_ok=True)
 
-    model.save_model(str(model_dir / "xgb_credit.ubj"))
+    model.save_model(str(model_dir / f"{output_name}.ubj"))
 
     with open(model_dir / "feature_columns.json", "w") as fh:
         json.dump(feature_names, fh)
@@ -363,7 +364,17 @@ def run_training(
     X, feature_names = build_feature_matrix(df)
 
     print(f"feature matrix shape {X.shape}")
-    train_model(X, y, feature_names, model_path)
+    print("training model a full data")
+    train_model(X, y, feature_names, model_path, output_name="xgb_credit")
+
+    print("building upi-heavy feature matrix for model b")
+    X_upi = X.copy()
+    for i, col in enumerate(feature_names):
+        if col.startswith("gst_"):
+            X_upi[:, i] = 0.0
+
+    print("training model b upi heavy no gst")
+    train_model(X_upi, y, feature_names, model_path, output_name="xgb_credit_upi_heavy")
 
     print("training complete")
 

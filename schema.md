@@ -120,3 +120,6 @@ computed dynamically in `src/features/engine.py`. these form the final 43-dimens
 | `fraud_confidence` | `float` | weighted severity metric bounded `[0.0, 1.0]` combining cycle volumes and graph edges |
 | `cycle_velocity` | `float` | speed at which capital traverses the isolated graph loop |
 | `counterparty_fraud_exposure` | `float` | proximity penalty for doing business with identified `shell_circular` networks |
+
+---
+

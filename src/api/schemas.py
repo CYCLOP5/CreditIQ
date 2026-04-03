@@ -72,6 +72,17 @@ class ScoreResult(BaseModel):
     error: str | None = None
 
 
+class ChatRequest(BaseModel):
+    """
+    inbound chat request for score task context
+    used for loan officer interrogating the feature vectors
+    """
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    query: str
+
+
 class HealthResponse(BaseModel):
     """
     system health snapshot returned by get health endpoint

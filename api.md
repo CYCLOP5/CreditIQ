@@ -221,7 +221,7 @@ this ensures a failed gstin never blocks the queue.
 | producer | src/ingestion/redis_producer.py |
 | consumer | saga worker feature resolution step (optional) |
 | maxlen | ~10000 (xadd trimming) |
-| message fields | see 05_DATABASE_SCHEMA.md section 1 |
+| message fields | see schema.md section 1 |
 
 ### stream:upi_transactions
 
@@ -231,7 +231,7 @@ this ensures a failed gstin never blocks the queue.
 | producer | src/ingestion/redis_producer.py |
 | consumer | saga worker feature resolution step (optional) |
 | maxlen | ~10000 (xadd trimming) |
-| message fields | see 05_DATABASE_SCHEMA.md section 1 |
+| message fields | see schema.md section 1 |
 
 ### stream:eway_bills
 
@@ -241,7 +241,7 @@ this ensures a failed gstin never blocks the queue.
 | producer | src/ingestion/redis_producer.py |
 | consumer | saga worker feature resolution step (optional) |
 | maxlen | ~10000 (xadd trimming) |
-| message fields | see 05_DATABASE_SCHEMA.md section 1 |
+| message fields | see schema.md section 1 |
 
 ### score:{task_id}
 
@@ -378,3 +378,17 @@ http://localhost:5173
 port 5173 is the vite dev server default. port 3000 is the legacy next.js dev server port retained for compatibility. all methods and headers are allowed. credentials are not required because the api is stateless (no cookies, no sessions).
 
 if the frontend is served on a different port (for example a custom vite --port flag), add that origin to the allow_origins list in [`src/api/main.py`](../src/api/main.py) and restart the fastapi server.
+
+---
+
+## 5. api endpoints
+
+defines rest interfaces exposed by fastapi application for orchestration and real-time streaming.
+
+| method | endpoint | payload / response schema | purpose |
+|---|---|---|---|
+| `post` | `/score` | `ScoreRequest` -> `ScoreSubmitResponse` | initiates asynchronous scoring saga |
+| `get` | `/score/{task_id}` | `none` -> `ScoreResult` | polls task completion state and final payload |
+| `get` | `/health` | `none` -> `HealthResponse` | system telemetry and model residency status |
+| `get` | `/score/{task_id}/stream` | `none` -> `text/event-stream` | server-sent events for realtime pipeline progress |
+| `post` | `/score/{task_id}/chat` | `ChatRequest` -> `text/event-stream` | rag-based phi-3 credit analyst q&a |
