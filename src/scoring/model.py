@@ -170,10 +170,11 @@ class CreditScorer:
         }
 
     def score_feature_vector(
-        self, fv: FeatureVector, msme_category: str = "micro"
+        self, fv: FeatureVector, msme_category: str = "micro", use_upi_model: bool = False,
     ) -> dict:
         """
         score a featurevector pydantic instance
+        routes to upi heavy model when use_upi_model true
         """
         feature_dict = fv.model_dump()
-        return self.score_features(feature_dict, msme_category)
+        return self.score_features(feature_dict, msme_category, use_upi_model)

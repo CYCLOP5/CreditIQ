@@ -5,6 +5,8 @@ covers score submission status polling and health check payloads
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, field_validator
 
 
@@ -50,7 +52,7 @@ class ScoreResult(BaseModel):
     """
     complete scoring result returned when status equals complete
     all monetary amounts in indian rupees as integers
-    top_reasons is five plain language strings from llm or shap fallback
+    top_reasons is six plain language strings from llm or shap fallback (5 reasons + 1 path to prime)
     """
 
     model_config = ConfigDict(frozen=True)

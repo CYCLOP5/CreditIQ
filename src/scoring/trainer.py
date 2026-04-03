@@ -231,7 +231,10 @@ def load_feature_parquets(raw_dir: Path) -> pl.DataFrame:
         print("no feature parquets run src.features.engine first")
         return pl.DataFrame()
 
-    df = pl.scan_parquet(pattern).collect()
+    try:
+        df = pl.scan_parquet(pattern, missing_columns="insert").collect()
+    except (TypeError, pl.exceptions.ColumnNotFoundError):
+        df = pl.concat([pl.read_parquet(f) for f in matched_files], how="diagonal")
 
     fill_exprs = [
         pl.col(c).fill_null(0)

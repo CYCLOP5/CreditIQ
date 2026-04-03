@@ -90,7 +90,7 @@ nic v1.0.0621 json specification implementation mapping physical distributions.
 
 ## 4. engineered ml features (polars output)
 
-computed dynamically in `src/features/engine.py`. these form the final 43-dimensional vector passed into the xgboost model.
+computed dynamically in `src/features/engine.py`. these form the final 46-dimensional vector passed into the xgboost model.
 
 ### cash flow & liquidity
 | field | type | constraint & purpose |
@@ -123,7 +123,9 @@ computed dynamically in `src/features/engine.py`. these form the final 43-dimens
 | `temporal_anomaly_flag` | `float` | binary `1.0`/`0.0` output from the isolation forest identifying robotic chronological cadence |
 | `fraud_confidence` | `float` | weighted severity metric bounded `[0.0, 1.0]` combining cycle volumes and graph edges |
 | `cycle_velocity` | `float` | speed at which capital traverses the isolated graph loop |
-| `counterparty_fraud_exposure` | `float` | proximity penalty for doing business with identified `shell_circular` networks |
+| `cycle_recurrence` | `float` | secondary fraud metric evaluating the periodicity of loop execution |
+| `counterparty_compliance_avg` | `float` | reserved stub defaulting to `0.0` — intended for average compliance of tier-1 graph neighbors |
+| `counterparty_fraud_exposure` | `float` | reserved stub defaulting to `0.0` — intended for proximity penalty to shell networks |
 
 ---
 

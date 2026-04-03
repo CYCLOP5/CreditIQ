@@ -38,7 +38,7 @@ this document details the complete technology stack, algorithmic tools, and arch
 
 ## synthetic data & statistical modeling
 * **faker**: **what is it?** a python library that generates massive amounts of fake, privacy-safe dummy data. **how we use it:** generates synthetic pii and structural msme profile data.
-* **sdv** (synthetic data vault): **what is it?** an open-source library utilizing machine learning algorithms to create tabular synthetic dependencies. **how we use it:** integrated for modeling complex synthetic distribution patterns.
+* **sdv** (synthetic data vault): **what is it?** an open-source library utilizing machine learning algorithms to create tabular synthetic dependencies. **how we use it:** `GaussianCopulaSynthesizer` fits a copula on seed archetype rows (10 per profile type) to learn cross-field correlations (business age ↔ invoice frequency ↔ filing delays). It then samples 250 MSME profiles with realistic parameter correlations that independent random sampling cannot capture.
 * **lognormal distributions**: **what are they?** a continuous probability distribution where the logarithm of the variable is normally distributed resulting in heavily skewed right tails (common in wealth and financial distributions). **how we use them:** extensively employed by `numpy.random.lognormal()` during synthetic generation to ensure extremely realistic financial tail skews (mimicking genuine transactional activity mapping amounts securely across different profile types).
 * **exponential inter-arrival times**: **what are they?** the time gaps occurring between sequential events happening continuously and independently at a constant average rate (poisson processes). **how we use them:** generating pseudo-random clustered timestamps organically across gst distributions instead of linear intervals, allowing accurate temporal simulation.
 
@@ -50,11 +50,11 @@ this document details the complete technology stack, algorithmic tools, and arch
 ## frontend dashboard
 * **react 18** (core & dom): **what is it?** a declarative, component-based javascript ui library focused on building single-page applications. **how we use it:** the ui library powering the interactive dashboard.
 * **vite 5**: **what is it?** a next-generation lightning-fast frontend build tool and local dev server relying heavily on native es modules and rollup. **how we use it:** fast build tool and development server for the react app.
-* **plotly**: **what is it?** a graphing library delivering interactive, publish-quality graphs directly formatted. **how we use it:** for advanced and interactive charting.
-* **streamlit**: **what is it?** an open-source python framework for easily transforming analytics scripts into interactive web apps quickly. **how we use it:** as an alternative dashboard and visualization engine.
+* **plotly**: **what is it?** a graphing library delivering interactive, publish-quality graphs directly formatted. **how we use it:** available as a project dependency for advanced charting. the primary dashboard uses custom svg visualizations in react.
+* **streamlit**: **what is it?** an open-source python framework for easily transforming analytics scripts into interactive web apps quickly. **how we use it:** stub pages exist at `src/dashboard/` as an alternative to the react frontend. the primary dashboard is the react+vite app at `frontend/`.
 
 ### `joblib`
-Used to serialize and persist `scikit-learn` artifacts (like `KNNImputer` and `IsolationForest`) generated during offline batch training so they can be loaded instantly in the real-time scoring worker to perfectly eliminate train-serve skew.
+Used to serialize and persist `scikit-learn` artifacts (like `KNNImputer` and `IsolationForest`) generated during offline batch training. Available as a project dependency for future model persistence needs.
 
 ### `NetworkX (PageRank)`
 Used for topological fraud detection (Hub-and-Spoke bipartite models) on the multi-directed UPI transfer graphs.

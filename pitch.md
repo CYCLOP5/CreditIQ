@@ -19,4 +19,4 @@ Our local, CPU-based Phi-3 LLM uses SHAP inference not only to explain "why" a s
 We built an Expected Loss engine (`PD * LGD * Exposure`) to dynamically calculate exact exposure capacity to meet the bank's risk appetite limit. But we also built a policy-gating layer that automatically clamps the algorithmic limit to strictly comply with RBI/CGTMSE regulatory thresholds.
 
 ## Continuous Updating (Temporal Decay EMAs)
-We replaced static 30d/90d rolling sums with Exponential Moving Averages (`Value * e^{-λt}`), making the credit score bleed down or spike up with literal daily precision across the API.
+We replaced static 7d/30d/90d rolling sums with Exponential Moving Averages (`Value * e^{-λt}`), eliminating the cliff effect where a ₹50L invoice at day 31 drops from full weight to zero. The credit score now bleeds down or spikes up with literal daily precision across the API. Half-life mapping: `_7d_*` = 7d, `_30d_*` = 30d, `_90d_*` = 90d.

@@ -59,6 +59,48 @@ class FeatureEngine:
         path.parent.mkdir(parents=True, exist_ok=True)
         df.write_parquet(path)
 
+
+    @staticmethod
+    def _ema_weights(timestamps: pl.Series, half_life_days: float, ref_time) -> np.ndarray:
+        """
+        compute exponential decay weights for each timestamp relative to ref_time
+        λ = ln(2)/τ so that weight at exactly half_life_days ago = 0.5
+        """
+        lambda_ = np.log(2) / half_life_days
+        deltas_seconds = (ref_time - timestamps).dt.total_seconds().to_numpy().astype(np.float64)
+        deltas_days = deltas_seconds / 86400.0
+        deltas_days = np.maximum(deltas_days, 0.0)
+        return np.exp(-lambda_ * deltas_days)
+
+    @staticmethod
+    def _ema_weighted_sum(timestamps: pl.Series, values: pl.Series,
+                          half_life_days: float, ref_time) -> float:
+        """ema-weighted sum of values: each value × exp(-λ·Δt)"""
+        weights = FeatureEngine._ema_weights(timestamps, half_life_days, ref_time)
+        vals = values.to_numpy().astype(np.float64)
+        return float(np.nansum(vals * weights))
+
+    @staticmethod
+    def _ema_weighted_count(timestamps: pl.Series, half_life_days: float,
+                            ref_time) -> float:
+        """ema-weighted count: each event contributes exp(-λ·Δt)"""
+        weights = FeatureEngine._ema_weights(timestamps, half_life_days, ref_time)
+        return float(np.sum(weights))
+
+    @staticmethod
+    def _ema_weighted_nunique(timestamps: pl.Series, keys: pl.Series,
+                              half_life_days: float, ref_time) -> float:
+        """
+        ema-weighted unique count
+        each unique key contributes its max weight among all its transactions
+        preserves 'how many distinct counterparties' semantic with temporal decay
+        """
+        weights = FeatureEngine._ema_weights(timestamps, half_life_days, ref_time)
+        df = pl.DataFrame({"key": keys, "w": pl.Series(weights)})
+        result = df.group_by("key").agg(pl.col("w").max()).select(pl.col("w").sum())
+        return float(result[0, 0])
+
+
     def _compute_velocity_features(
         self,
         gstin: str,
@@ -67,33 +109,25 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> dict:
         """
-        rolling sum count features over 7d 30d 90d temporal windows
+        ema-weighted velocity features across 7d 30d 90d half-life windows
+        exponential decay eliminates hard cutoff cliff effect
         reference time anchored max timestamp each signal frame
-        fill_null00 outputs since absence equals zero activity
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin)
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
         ewb_g = ewb_df.filter(pl.col("gstin") == gstin)
 
         if gst_g.height == 0:
-            gst_7d_value = np.nan
-            gst_30d_value = np.nan
-            gst_90d_value = np.nan
-            gst_30d_unique_buyers = np.nan
+            gst_7d_value = 0.0
+            gst_30d_value = 0.0
+            gst_90d_value = 0.0
+            gst_30d_unique_buyers = 0.0
         else:
             gst_now = gst_g["timestamp"].max()
-            gst_7d_value = float(
-                gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=7))["taxable_value"].sum() or 0.0
-            )
-            gst_30d_value = float(
-                gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=30))["taxable_value"].sum() or 0.0
-            )
-            gst_90d_value = float(
-                gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=90))["taxable_value"].sum() or 0.0
-            )
-            gst_30d_unique_buyers = float(
-                gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=30))["buyer_gstin"].n_unique()
-            )
+            gst_7d_value = self._ema_weighted_sum(gst_g["timestamp"], gst_g["taxable_value"], 7.0, gst_now)
+            gst_30d_value = self._ema_weighted_sum(gst_g["timestamp"], gst_g["taxable_value"], 30.0, gst_now)
+            gst_90d_value = self._ema_weighted_sum(gst_g["timestamp"], gst_g["taxable_value"], 90.0, gst_now)
+            gst_30d_unique_buyers = self._ema_weighted_nunique(gst_g["timestamp"], gst_g["buyer_gstin"], 30.0, gst_now)
 
         if upi_g.height == 0:
             upi_7d_inbound_count = 0.0
@@ -103,18 +137,15 @@ class FeatureEngine:
         else:
             upi_now = upi_g["timestamp"].max()
             upi_inbound = upi_g.filter(pl.col("direction") == "inbound")
-            upi_7d_inbound_count = float(
-                upi_inbound.filter(pl.col("timestamp") >= upi_now - timedelta(days=7)).height
-            )
-            upi_30d_inbound_count = float(
-                upi_inbound.filter(pl.col("timestamp") >= upi_now - timedelta(days=30)).height
-            )
-            upi_90d_inbound_count = float(
-                upi_inbound.filter(pl.col("timestamp") >= upi_now - timedelta(days=90)).height
-            )
-            upi_30d_unique_counterparties = float(
-                upi_g.filter(pl.col("timestamp") >= upi_now - timedelta(days=30))["counterparty_vpa"].n_unique()
-            )
+            if upi_inbound.height == 0:
+                upi_7d_inbound_count = 0.0
+                upi_30d_inbound_count = 0.0
+                upi_90d_inbound_count = 0.0
+            else:
+                upi_7d_inbound_count = self._ema_weighted_count(upi_inbound["timestamp"], 7.0, upi_now)
+                upi_30d_inbound_count = self._ema_weighted_count(upi_inbound["timestamp"], 30.0, upi_now)
+                upi_90d_inbound_count = self._ema_weighted_count(upi_inbound["timestamp"], 90.0, upi_now)
+            upi_30d_unique_counterparties = self._ema_weighted_nunique(upi_g["timestamp"], upi_g["counterparty_vpa"], 30.0, upi_now)
 
         if ewb_g.height == 0:
             ewb_7d_value = 0.0
@@ -122,15 +153,9 @@ class FeatureEngine:
             ewb_90d_value = 0.0
         else:
             ewb_now = ewb_g["timestamp"].max()
-            ewb_7d_value = float(
-                ewb_g.filter(pl.col("timestamp") >= ewb_now - timedelta(days=7))["tot_inv_value"].sum() or 0.0
-            )
-            ewb_30d_value = float(
-                ewb_g.filter(pl.col("timestamp") >= ewb_now - timedelta(days=30))["tot_inv_value"].sum() or 0.0
-            )
-            ewb_90d_value = float(
-                ewb_g.filter(pl.col("timestamp") >= ewb_now - timedelta(days=90))["tot_inv_value"].sum() or 0.0
-            )
+            ewb_7d_value = self._ema_weighted_sum(ewb_g["timestamp"], ewb_g["tot_inv_value"], 7.0, ewb_now)
+            ewb_30d_value = self._ema_weighted_sum(ewb_g["timestamp"], ewb_g["tot_inv_value"], 30.0, ewb_now)
+            ewb_90d_value = self._ema_weighted_sum(ewb_g["timestamp"], ewb_g["tot_inv_value"], 90.0, ewb_now)
 
         return {
             "gst_7d_value": gst_7d_value,
@@ -163,8 +188,8 @@ class FeatureEngine:
         ewb_g = ewb_df.filter(pl.col("gstin") == gstin).sort("timestamp")
 
         if gst_g.height < 2:
-            gst_mean_filing_interval_days = np.nan
-            gst_std_filing_interval_days = np.nan
+            gst_mean_filing_interval_days = 0.0
+            gst_std_filing_interval_days = 0.0
         else:
             gst_diffs = (
                 gst_g["timestamp"]
@@ -223,10 +248,11 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> dict:
         """
-        ratio concentration features derived 30d 90d fullhistory windows
-        divisions guarded maxdenominator 10 prevent dividebyzero
-        hhi computed sum squared counterparty vpa share over 30d inbound
-        invoicetoewb lag parsed ddmmyyyy doc_date strictfalse fallback
+        ema-weighted ratio concentration features 30d 90d half-life windows
+        hhi computed via ema-weighted counterparty share squared sum
+        p2m ratio uses ema-weighted counts for smooth decay
+        gst_upi_receivables_gap uses ema-weighted gst and upi amounts
+        cv and ewb mom growth keep hard cutoffs as temporal distribution metrics
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin)
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
@@ -240,34 +266,58 @@ class FeatureEngine:
             upi_outbound_failure_rate = 0.0
         else:
             upi_now = upi_g["timestamp"].max()
-            cutoff_30d = upi_now - timedelta(days=30)
-            upi_30d = upi_g.filter(pl.col("timestamp") >= cutoff_30d)
-            upi_30d_inbound = upi_30d.filter(pl.col("direction") == "inbound")
-            upi_30d_outbound = upi_30d.filter(pl.col("direction") == "outbound")
+            upi_inbound = upi_g.filter(pl.col("direction") == "inbound")
+            upi_outbound = upi_g.filter(pl.col("direction") == "outbound")
 
-            inbound_amt = float(upi_30d_inbound["amount"].sum() or 0.0)
-            outbound_amt = float(upi_30d_outbound["amount"].sum() or 0.0)
+            if upi_inbound.height == 0:
+                inbound_amt = 0.0
+            else:
+                inbound_amt = self._ema_weighted_sum(upi_inbound["timestamp"], upi_inbound["amount"], 30.0, upi_now)
+            if upi_outbound.height == 0:
+                outbound_amt = 0.0
+            else:
+                outbound_amt = self._ema_weighted_sum(upi_outbound["timestamp"], upi_outbound["amount"], 30.0, upi_now)
             upi_inbound_outbound_ratio_30d = inbound_amt / max(outbound_amt, 1.0)
 
-            if upi_30d_inbound.height == 0:
+            if upi_inbound.height == 0:
                 upi_hhi_30d = 0.0
             else:
-                total_inbound = float(upi_30d_inbound.height)
-                hhi_df = (
-                    upi_30d_inbound.group_by("counterparty_vpa")
-                    .agg(pl.len().alias("cnt"))
-                    .with_columns((pl.col("cnt").cast(pl.Float64) / total_inbound).alias("share"))
-                )
-                upi_hhi_30d = float(hhi_df.select((pl.col("share") ** 2).sum())["share"][0] or 0.0)
+                weights = self._ema_weights(upi_inbound["timestamp"], 30.0, upi_now)
+                hhi_df = pl.DataFrame({
+                    "counterparty_vpa": upi_inbound["counterparty_vpa"],
+                    "w": pl.Series(weights),
+                })
+                cp_weighted = hhi_df.group_by("counterparty_vpa").agg(pl.col("w").sum().alias("weighted_cnt"))
+                total_weighted = float(cp_weighted["weighted_cnt"].sum())
+                if total_weighted > 0:
+                    cp_shares = cp_weighted.with_columns(
+                        (pl.col("weighted_cnt") / total_weighted).alias("share")
+                    )
+                    upi_hhi_30d = float(cp_shares.select((pl.col("share") ** 2).sum())["share"][0] or 0.0)
+                else:
+                    upi_hhi_30d = 0.0
 
-            p2m_inbound = upi_30d_inbound.filter(pl.col("txn_type") == "p2m").height
-            upi_p2m_ratio_30d = p2m_inbound / max(upi_30d_inbound.height, 1)
+            if upi_inbound.height == 0:
+                upi_p2m_ratio_30d = 0.0
+            else:
+                p2m_inbound = upi_inbound.filter(pl.col("txn_type") == "p2m")
+                p2m_weighted = self._ema_weighted_count(p2m_inbound["timestamp"], 30.0, upi_now) if p2m_inbound.height > 0 else 0.0
+                total_inbound_weighted = self._ema_weighted_count(upi_inbound["timestamp"], 30.0, upi_now)
+                upi_p2m_ratio_30d = p2m_weighted / max(total_inbound_weighted, 1.0)
 
             upi_all_outbound = upi_g.filter(pl.col("direction") == "outbound")
-            failed_outbound = upi_all_outbound.filter(
-                pl.col("status").is_in(["failed_technical", "failed_funds"])
-            ).height
-            upi_outbound_failure_rate = failed_outbound / max(upi_all_outbound.height, 1)
+            if upi_all_outbound.height == 0:
+                upi_outbound_failure_rate = 0.0
+            else:
+                failed_outbound = upi_all_outbound.filter(
+                    pl.col("status").is_in(["failed_technical", "failed_funds"])
+                )
+                if failed_outbound.height == 0:
+                    upi_outbound_failure_rate = 0.0
+                else:
+                    failed_weighted = self._ema_weighted_count(failed_outbound["timestamp"], 30.0, upi_now)
+                    total_outbound_weighted = self._ema_weighted_count(upi_all_outbound["timestamp"], 30.0, upi_now)
+                    upi_outbound_failure_rate = failed_weighted / max(total_outbound_weighted, 1.0)
 
         if gst_g.height == 0:
             gst_revenue_cv_90d = 0.0
@@ -293,10 +343,8 @@ class FeatureEngine:
 
             ontime_count = gst_g.filter(pl.col("filing_status") == "ontime").height
             filing_compliance_rate = ontime_count / max(gst_g.height, 1)
-            gst_30d_value = float(
-                gst_g.filter(pl.col("timestamp") >= gst_now - timedelta(days=30))["taxable_value"].sum() or 0.0
-            )
-            gst_upi_receivables_gap = (gst_30d_value - inbound_amt) / max(gst_30d_value, 1.0)
+            gst_30d_value_ema = self._ema_weighted_sum(gst_g["timestamp"], gst_g["taxable_value"], 30.0, gst_now)
+            gst_upi_receivables_gap = (gst_30d_value_ema - inbound_amt) / max(gst_30d_value_ema, 1.0)
 
         if ewb_g.height == 0:
             ewb_volume_growth_mom = 0.0
@@ -453,22 +501,24 @@ class FeatureEngine:
             total_amount = float(upi_g["amount"].sum() or 0.0)
             upi_daily_avg_throughput = total_amount / active_days
 
-            cutoff_30d = upi_now - timedelta(days=30)
-            upi_30d_inbound = upi_g.filter(
-                (pl.col("timestamp") >= cutoff_30d) & (pl.col("direction") == "inbound")
-            )
+            upi_inbound = upi_g.filter(pl.col("direction") == "inbound")
 
-            if upi_30d_inbound.height == 0:
+            if upi_inbound.height == 0:
                 upi_top3_concentration = 0.0
             else:
+                weights = self._ema_weights(upi_inbound["timestamp"], 30.0, upi_now)
+                cp_df = pl.DataFrame({
+                    "counterparty_vpa": upi_inbound["counterparty_vpa"],
+                    "weighted_amt": pl.Series(upi_inbound["amount"].to_numpy().astype(np.float64) * weights),
+                })
                 cp_agg = (
-                    upi_30d_inbound.group_by("counterparty_vpa")
-                    .agg(pl.col("amount").sum().alias("total_amt"))
+                    cp_df.group_by("counterparty_vpa")
+                    .agg(pl.col("weighted_amt").sum().alias("total_amt"))
                     .sort("total_amt", descending=True)
                 )
-                total_inbound_amt = float(upi_30d_inbound["amount"].sum() or 0.0)
+                total_inbound_weighted = float(cp_agg["total_amt"].sum() or 0.0)
                 top3_amt = float(cp_agg.head(3)["total_amt"].sum() or 0.0)
-                upi_top3_concentration = top3_amt / max(total_inbound_amt, 1.0)
+                upi_top3_concentration = top3_amt / max(total_inbound_weighted, 1.0)
 
             if upi_g.height < 2:
                 upi_dormancy_periods = 0
@@ -490,26 +540,33 @@ class FeatureEngine:
                 )
                 upi_dormancy_periods = max(0, total_possible_weeks - active_weeks)
 
-            upi_30d_inbound_all = upi_g.filter(
-                (pl.col("timestamp") >= cutoff_30d) & (pl.col("direction") == "inbound")
-            )
-            upi_30d_outbound_all = upi_g.filter(
-                (pl.col("timestamp") >= cutoff_30d) & (pl.col("direction") == "outbound")
-            )
-            inbound_30d_amt = float(upi_30d_inbound_all["amount"].sum() or 0.0)
-            outbound_30d_amt = float(upi_30d_outbound_all["amount"].sum() or 0.0)
-            daily_outflow = outbound_30d_amt / 30.0
-            if daily_outflow > 0:
-                cash_buffer_days = float(min(inbound_30d_amt / daily_outflow, 90.0))
+            upi_outbound = upi_g.filter(pl.col("direction") == "outbound")
+            if upi_inbound.height == 0:
+                inbound_ema_amt = 0.0
             else:
-                cash_buffer_days = 90.0 if inbound_30d_amt > 0 else 0.0
+                inbound_ema_amt = self._ema_weighted_sum(upi_inbound["timestamp"], upi_inbound["amount"], 30.0, upi_now)
+            if upi_outbound.height == 0:
+                outbound_ema_amt = 0.0
+            else:
+                outbound_ema_amt = self._ema_weighted_sum(upi_outbound["timestamp"], upi_outbound["amount"], 30.0, upi_now)
+            daily_outflow = outbound_ema_amt / 30.0
+            if daily_outflow > 0:
+                cash_buffer_days = float(min(inbound_ema_amt / daily_outflow, 90.0))
+            else:
+                cash_buffer_days = 90.0 if inbound_ema_amt > 0 else 0.0
 
-            upi_90d = upi_g.filter(pl.col("timestamp") >= upi_now - timedelta(days=90))
-            upi_90d_outbound = upi_90d.filter(pl.col("direction") == "outbound")
-            failed_90d = upi_90d_outbound.filter(
-                pl.col("status").is_in(["failed_technical", "failed_funds"])
-            ).height
-            debit_failure_rate_90d = failed_90d / max(upi_90d_outbound.height, 1)
+            if upi_outbound.height == 0:
+                debit_failure_rate_90d = 0.0
+            else:
+                failed_outbound = upi_outbound.filter(
+                    pl.col("status").is_in(["failed_technical", "failed_funds"])
+                )
+                if failed_outbound.height == 0:
+                    debit_failure_rate_90d = 0.0
+                else:
+                    failed_weighted = self._ema_weighted_count(failed_outbound["timestamp"], 90.0, upi_now)
+                    total_outbound_weighted = self._ema_weighted_count(upi_outbound["timestamp"], 90.0, upi_now)
+                    debit_failure_rate_90d = failed_weighted / max(total_outbound_weighted, 1.0)
 
         if ewb_g.height == 0:
             hsn_entropy_90d = 0.0
@@ -622,6 +679,7 @@ class FeatureEngine:
             "cycle_recurrence": 0.0,
             "counterparty_compliance_avg": 0.0,
             "counterparty_fraud_exposure": 0.0,
+            "pagerank_score": 0.0,
         }
 
         if not skip_cache:

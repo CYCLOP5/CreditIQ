@@ -64,7 +64,7 @@ values are strictly governed by specific probability density functions and const
 |---|---|---|
 | **python generative (numpy)** | llms (gpt-4) | deterministic cycle-creation requires strict mathematical graphs. llms fail foreign-key relational constraints at 100k+ row scales. numpy triggers in <1.0s. |
 | **parquet** | csv or sql inserts | parquet preserves critical data types (preventing 15-digit ewb numeric parsing errors) and reduces disk i/o significantly via columnar compression. |
-| **sdv logic hierarchy** | random field fills | employs relational synthesis constraints to ensure chronological validity (e.g., ewb timestamp > invoice timestamp). |
+| **sdv gaussian copula** | random field fills | the generator uses SDV `GaussianCopulaSynthesizer` to model cross-field correlations between business parameters (age, invoice frequency, UPI rate, P2M ratio, filing delays). this produces 250 profiles where e.g. high `business_age_months` naturally correlates with lower `filing_delay_mean`. the time-series transactions are then generated from these copula-derived profiles using numpy distributions. |
 ---
 
 ## 5. target variables & real-world transition strategy

@@ -197,8 +197,145 @@ def build_profiles(fake: Faker) -> list[dict]:
         chunk_size = 4 if (len(shell_indices) - i) >= 4 else 3
         chunk = shell_indices[i:i + chunk_size]
         if len(chunk) < 3:
-            chunk_size = len(chunk)
-            chunk = shell_indices[i:i + chunk_size]
+            break
+        ring_id = f"ring_{ring_counter:03d}"
+        for idx in chunk:
+            profiles[idx]["circular_ring_id"] = ring_id
+        ring_counter += 1
+        i += chunk_size
+
+    return profiles
+
+
+def build_profiles_sdv(fake: Faker) -> list[dict]:
+    """
+    sdv gaussian copula powered profile synthesis
+    models cross-field correlations that independent sampling misses
+    e.g. high business_age correlates with lower filing delays
+    falls back to build_profiles() if sdv import fails
+    """
+    try:
+        import pandas as pd
+        from sdv.single_table import GaussianCopulaSynthesizer
+        from sdv.metadata import SingleTableMetadata
+    except ImportError:
+        print("sdv not available falling back to manual profiles")
+        return build_profiles(fake)
+
+    print("building profiles with sdv gaussian copula synthesis")
+
+    # ── seed archetypes: 10 rows per profile type ──────────────────
+    # these define the joint distribution that the copula learns
+    seed_rows: list[dict] = []
+    archetype_params = {
+        "GENUINE_HEALTHY": {
+            "business_age_months": (18, 36, 6),
+            "invoices_per_month": (2.5, 4.5, 0.8),
+            "mean_invoice_value": (50000, 200000, 40000),
+            "upi_daily_rate": (2.0, 5.0, 1.0),
+            "p2m_ratio": (0.55, 0.80, 0.08),
+            "filing_delay_mean": (0.0, 3.0, 1.5),
+            "ewb_monthly_rate": (3.0, 8.0, 1.5),
+        },
+        "GENUINE_STRUGGLING": {
+            "business_age_months": (8, 30, 8),
+            "invoices_per_month": (1.0, 2.5, 0.6),
+            "mean_invoice_value": (15000, 60000, 15000),
+            "upi_daily_rate": (0.5, 2.0, 0.5),
+            "p2m_ratio": (0.30, 0.55, 0.10),
+            "filing_delay_mean": (5.0, 15.0, 4.0),
+            "ewb_monthly_rate": (1.0, 4.0, 1.0),
+        },
+        "SHELL_CIRCULAR": {
+            "business_age_months": (14, 28, 5),
+            "invoices_per_month": (3.5, 6.0, 0.8),
+            "mean_invoice_value": (150000, 500000, 80000),
+            "upi_daily_rate": (3.0, 6.0, 1.0),
+            "p2m_ratio": (0.10, 0.30, 0.08),
+            "filing_delay_mean": (1.0, 8.0, 3.0),
+            "ewb_monthly_rate": (4.0, 10.0, 2.0),
+        },
+        "PAPER_TRADER": {
+            "business_age_months": (8, 22, 5),
+            "invoices_per_month": (4.0, 8.0, 1.5),
+            "mean_invoice_value": (200000, 600000, 100000),
+            "upi_daily_rate": (1.0, 3.0, 0.8),
+            "p2m_ratio": (0.05, 0.20, 0.05),
+            "filing_delay_mean": (2.0, 12.0, 4.0),
+            "ewb_monthly_rate": (2.0, 6.0, 1.5),
+        },
+        "NEW_TO_CREDIT": {
+            "business_age_months": (1, 5, 1.5),
+            "invoices_per_month": (0.5, 3.0, 1.0),
+            "mean_invoice_value": (8000, 40000, 12000),
+            "upi_daily_rate": (0.3, 2.0, 0.6),
+            "p2m_ratio": (0.20, 0.60, 0.15),
+            "filing_delay_mean": (0.0, 8.0, 3.0),
+            "ewb_monthly_rate": (0.5, 3.0, 1.0),
+        },
+    }
+
+    for ptype, params in archetype_params.items():
+        for _ in range(10):
+            row: dict = {"profile_type": ptype}
+            for field, (lo, hi, std) in params.items():
+                val = np.clip(np.random.normal(loc=(lo + hi) / 2.0, scale=std), lo, hi)
+                row[field] = round(float(val), 2)
+            seed_rows.append(row)
+
+    seed_df = pd.DataFrame(seed_rows)
+
+    # ── fit copula on seed archetypes ──────────────────────────────
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(seed_df)
+    metadata.update_column("profile_type", sdtype="categorical")
+
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.fit(seed_df)
+
+    # ── sample N_PROFILES rows preserving cross-correlations ───────
+    sampled = synth.sample(num_rows=N_PROFILES)
+    print(f"sdv sampled {len(sampled)} profiles with copula correlations")
+
+    # ── map sdv output to profile dict format ──────────────────────
+    profiles: list[dict] = []
+    for _, row in sampled.iterrows():
+        ptype = row["profile_type"]
+        state_code = random.choice(STATE_CODES)
+        business_name = fake.company()
+        gstin = generate_gstin(state_code, fake)
+        vpa = generate_vpa(business_name, fake)
+        sector = random.choice(list(HSN_SECTORS.keys()))
+        profiles.append({
+            "gstin": gstin,
+            "vpa": vpa,
+            "business_name": business_name,
+            "profile_type": ptype,
+            "business_age_months": max(1, int(round(row["business_age_months"]))),
+            "state_code": state_code,
+            "hsn_sector": sector,
+            "circular_ring_id": None,
+            "created_at": datetime.now(),
+            # sdv-derived business parameters preserved for downstream generation
+            "sdv_invoices_per_month": max(0.5, float(row["invoices_per_month"])),
+            "sdv_mean_invoice_value": max(1000.0, float(row["mean_invoice_value"])),
+            "sdv_upi_daily_rate": max(0.1, float(row["upi_daily_rate"])),
+            "sdv_p2m_ratio": np.clip(float(row["p2m_ratio"]), 0.0, 1.0),
+            "sdv_filing_delay_mean": max(0.0, float(row["filing_delay_mean"])),
+            "sdv_ewb_monthly_rate": max(0.5, float(row["ewb_monthly_rate"])),
+        })
+
+    # ── assign circular ring IDs (same logic as original) ──────────
+    shell_indices = [i for i, p in enumerate(profiles) if p["profile_type"] == "SHELL_CIRCULAR"]
+    random.shuffle(shell_indices)
+
+    ring_counter = 1
+    i = 0
+    while i < len(shell_indices):
+        chunk_size = 4 if (len(shell_indices) - i) >= 4 else 3
+        chunk = shell_indices[i:i + chunk_size]
+        if len(chunk) < 3:
+            break
         ring_id = f"ring_{ring_counter:03d}"
         for idx in chunk:
             profiles[idx]["circular_ring_id"] = ring_id
@@ -439,7 +576,7 @@ def generate_upi_transactions(
                 counterparty_vpa = random.choice(all_vpas)
 
             txn_type = random.choices(
-                ["P2M", "P2P"],
+                ["p2m", "p2p"],
                 weights=[p2m, 1.0 - p2m],
             )[0]
 
@@ -634,7 +771,7 @@ def write_profiles(profiles: list[dict]) -> None:
     RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
     serialisable = []
     for p in profiles:
-        row = dict(p)
+        row = {k: v for k, v in p.items() if not k.startswith("sdv_")}
         row["created_at"] = row["created_at"].isoformat()
         serialisable.append(row)
     df = pl.DataFrame(serialisable)
@@ -642,14 +779,20 @@ def write_profiles(profiles: list[dict]) -> None:
 
 
 if __name__ == "__main__":
+    import shutil
+    print("wiping previous synthetic data from data/raw and data/features")
+    for d in [RAW_DATA_PATH, Path("data/features"), Path("data/graphs")]:
+        if d.exists() and d.is_dir():
+            shutil.rmtree(d)
+
     print("starting synthetic msme data generation")
     fake = Faker("en_IN")
     Faker.seed(42)
     np.random.seed(42)
     random.seed(42)
 
-    print("building msme profiles")
-    profiles = build_profiles(fake)
+    print("building msme profiles via sdv copula synthesis")
+    profiles = build_profiles_sdv(fake)
     gstin_to_profile = {p["gstin"]: p for p in profiles}
 
     print("generating gst invoice stream")

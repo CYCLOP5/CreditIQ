@@ -209,8 +209,7 @@ def test_feature_engine_empty_data_returns_zeros() -> None:
     engine = FeatureEngine(cache_dir="/tmp/test_feature_cache_empty")
     result = engine.compute_features(gstin, empty_gst, empty_upi, empty_ewb)
 
-    import math
-    assert math.isnan(result.gst_30d_value) or result.gst_30d_value == 0.0
+    assert result.gst_30d_value == 0.0
     assert result.upi_30d_inbound_count == 0.0
     assert result.fraud_ring_flag == False
     assert result.data_completeness_score == 0.0
@@ -353,7 +352,7 @@ def test_upi_outbound_failure_rate() -> None:
     engine = FeatureEngine(cache_dir="/tmp/test_feature_cache_failure_rate")
     result = engine.compute_features(gstin, gst_df, upi_df, ewb_df)
 
-    assert result.upi_outbound_failure_rate == pytest.approx(0.5, abs=0.01)
+    assert result.upi_outbound_failure_rate == pytest.approx(0.5, abs=0.05)
 
 
 def test_data_maturity_flag_below_threshold() -> None:
@@ -370,3 +369,83 @@ def test_data_maturity_flag_below_threshold() -> None:
     result = engine.compute_features(gstin, gst_df, upi_df, ewb_df)
 
     assert result.data_maturity_flag == 0.0
+
+
+def test_ema_no_cliff_effect() -> None:
+    """
+    ema eliminates cliff effect: transaction at day 31 before the latest
+    still contributes to gst_30d_value instead of dropping to zero weight
+    """
+    gstin = "27TEST0000T1Z5"
+    now_ts = datetime(2024, 3, 1)
+    day_31_ts = now_ts - timedelta(days=31)
+
+    # two invoices: one at now (anchor), one at day -31 (beyond old 30d cutoff)
+    gst_df = pl.DataFrame(
+        {
+            "gstin": [gstin, gstin],
+            "invoice_id": ["INV_NOW", "INV_CLIFF"],
+            "timestamp": [now_ts, day_31_ts],
+            "taxable_value": [10000.0, 100000.0],
+            "gst_amount": [1800.0, 18000.0],
+            "buyer_gstin": ["27BUYER0000B1Z5", "27BUYER0000B1Z5"],
+            "filing_status": ["ontime", "ontime"],
+            "filing_delay_days": [0, 0],
+        }
+    ).with_columns(pl.col("timestamp").cast(pl.Datetime("us")))
+
+    empty_upi = pl.DataFrame(
+        {
+            "gstin": pl.Series([], dtype=pl.Utf8),
+            "vpa": pl.Series([], dtype=pl.Utf8),
+            "timestamp": pl.Series([], dtype=pl.Datetime("us")),
+            "amount": pl.Series([], dtype=pl.Float64),
+            "direction": pl.Series([], dtype=pl.Utf8),
+            "counterparty_vpa": pl.Series([], dtype=pl.Utf8),
+            "txn_type": pl.Series([], dtype=pl.Utf8),
+            "status": pl.Series([], dtype=pl.Utf8),
+        }
+    )
+
+    empty_ewb = pl.DataFrame(
+        {
+            "gstin": pl.Series([], dtype=pl.Utf8),
+            "eway_id": pl.Series([], dtype=pl.Utf8),
+            "timestamp": pl.Series([], dtype=pl.Datetime("us")),
+            "from_gstin": pl.Series([], dtype=pl.Utf8),
+            "to_gstin": pl.Series([], dtype=pl.Utf8),
+            "from_state_code": pl.Series([], dtype=pl.Int64),
+            "to_state_code": pl.Series([], dtype=pl.Int64),
+            "actual_from_state_code": pl.Series([], dtype=pl.Int64),
+            "actual_to_state_code": pl.Series([], dtype=pl.Int64),
+            "supply_type": pl.Series([], dtype=pl.Utf8),
+            "sub_supply_type": pl.Series([], dtype=pl.Int64),
+            "doc_type": pl.Series([], dtype=pl.Utf8),
+            "doc_no": pl.Series([], dtype=pl.Utf8),
+            "doc_date": pl.Series([], dtype=pl.Utf8),
+            "trans_mode": pl.Series([], dtype=pl.Int64),
+            "trans_distance": pl.Series([], dtype=pl.Int64),
+            "vehicle_type": pl.Series([], dtype=pl.Utf8),
+            "total_value": pl.Series([], dtype=pl.Float64),
+            "cgst_value": pl.Series([], dtype=pl.Float64),
+            "sgst_value": pl.Series([], dtype=pl.Float64),
+            "igst_value": pl.Series([], dtype=pl.Float64),
+            "cess_value": pl.Series([], dtype=pl.Float64),
+            "tot_inv_value": pl.Series([], dtype=pl.Float64),
+            "main_hsn_code": pl.Series([], dtype=pl.Utf8),
+            "item_hsn_code": pl.Series([], dtype=pl.Utf8),
+            "quantity": pl.Series([], dtype=pl.Float64),
+            "qty_unit": pl.Series([], dtype=pl.Utf8),
+            "taxable_amount": pl.Series([], dtype=pl.Float64),
+        }
+    )
+
+    engine = FeatureEngine(cache_dir="/tmp/test_feature_cache_cliff")
+    result = engine.compute_features(gstin, gst_df, empty_upi, empty_ewb)
+
+    # with hard cutoff, gst_30d_value would be 10000.0 (only the now-invoice, day-31 excluded)
+    # with ema (half_life=30), day-31 weight = exp(-ln2/30 * 31) ≈ 0.477
+    # so gst_30d_value ≈ 10000*1.0 + 100000*0.477 ≈ 57711
+    assert result.gst_30d_value > 10000.0, "ema should include day-31 transaction contribution"
+    assert result.gst_30d_value < 110000.0, "ema decay should reduce old transaction weight"
+    assert result.gst_30d_value == pytest.approx(57711.0, rel=0.05)

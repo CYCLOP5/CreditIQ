@@ -271,9 +271,9 @@ async def run_saga(
         else:
             top_reasons = [f["feature_name"] for f in top_5_features]
 
-        while len(top_reasons) < 5:
+        while len(top_reasons) < 6:
             top_reasons.append("insufficient data for additional reason")
-        top_reasons = top_reasons[:5]
+        top_reasons = top_reasons[:6]
 
         fraud_flag = fv.fraud_ring_flag
         fraud_details_json = "null"

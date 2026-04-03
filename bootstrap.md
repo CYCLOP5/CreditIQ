@@ -41,11 +41,11 @@ writes chunked parquets to data/raw/
 python -m src.ingestion.generator
 ```
 
-expected output:
-
 ```
 starting synthetic msme data generation
-building msme profiles
+building msme profiles via sdv copula synthesis
+building profiles with sdv gaussian copula synthesis
+sdv sampled 250 profiles with copula correlations
 generating gst invoice stream
 generating upi transaction stream
 generating eway bill stream
@@ -113,12 +113,15 @@ expected output:
 loading feature parquets
 feature parquets found N
 loaded N rows
-feature matrix shape (N, 43)
+feature matrix shape (N, 46)
 training xgboost model
 val auc: 0.XX
-model saved
+model a full saved
+model b upi_heavy saved
 training complete
 ```
+
+note: the trainer produces two models — `xgb_credit.ubj` (full feature set) and `xgb_credit_upi_heavy.ubj` (upi-heavy model for thin-file msmes with less than 3 months gst history). both are required by the api worker.
 
 ---
 

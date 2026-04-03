@@ -74,15 +74,15 @@ synthetic data generation (faker + numpy distributions)
         ↓
 redis streams (3 streams: gst, upi, e-way bill)
         ↓
-polars feature engine (43 engineered features)
+polars feature engine (46 engineered features)
         ↓
 networkx fraud detection (scc + cycle enumeration)
         ↓
 xgboost scoring (probability → 300–900 scale)
         ↓
-shap explainability (top 5 feature attributions)
+shap explainability (top 6 feature attributions)
         ↓
-phi-3 mini llm (plain-language reason translation)
+phi-3 mini llm (plain-language reasons + path to prime action)
         ↓
 fastapi rest api (async saga worker pattern)
         ↓
@@ -112,7 +112,7 @@ flowchart td
     a[faker + numpy distributions] -->|synthetic gst, upi, ewb signals| b[redis streams]
     b -->|consumer group pull| c[async saga worker]
     c -->|raw events| d[polars lazy feature engine]
-    d -->|43-dim feature vector| e[networkx fraud detector]
+    d -->|46-dim feature vector| e[networkx fraud detector]
     e -->|clean vector or fraud flag| f[xgboost scoring model]
     f -->|raw score + feature vector| g[shap treeexplainer]
     g -->|top 5 shap vectors| h[phi-3-mini int4 via llama.cpp cpu-only]
@@ -129,7 +129,7 @@ flowchart td
 |---|---|---|---|
 | **1. data generation** | synthetic msme profiles + 3 signal streams | faker, numpy lognormal | [`src/ingestion/generator.py`](src/ingestion/generator.py) |
 | **2. message bus** | redis streams with consumer groups | redis-py async | [`src/ingestion/redis_producer.py`](src/ingestion/redis_producer.py) |
-| **3. feature engineering** | 43 engineered features across 5 sub-vectors | polars lazy evaluation | [`src/features/engine.py`](src/features/engine.py) |
+| **3. feature engineering** | 46 engineered features across 6 sub-vectors | polars lazy evaluation | [`src/features/engine.py`](src/features/engine.py) |
 | **4. fraud detection** | scc decomposition + bounded cycle enumeration | networkx | [`src/fraud/cycle_detector.py`](src/fraud/cycle_detector.py) |
 | **5. ml scoring** | gradient boosted trees, 300–900 scale | xgboost hist | [`src/scoring/model.py`](src/scoring/model.py) |
 | **6. explainability** | shap treeexplainer + llm translation | shap + llama-cpp-python | [`src/scoring/explainer.py`](src/scoring/explainer.py) |
@@ -183,6 +183,7 @@ a comprehensive breakdown of every library used, why it was chosen, and what alt
 | psutil | system memory monitoring | [`src/api/routes.py`](src/api/routes.py) |
 | pytest + pytest-asyncio | test framework for async code | [`tests/test_api.py`](tests/test_api.py) |
 | httpx | async http test client | [`tests/test_api.py`](tests/test_api.py) |
+| sdv | gaussian copula profile synthesis | [`src/ingestion/generator.py`](src/ingestion/generator.py) |
 | react 18 | frontend ui library | [`frontend/package.json`](frontend/package.json) |
 | vite 5 | frontend build tool and dev server | [`frontend/vite.config.js`](frontend/vite.config.js) |
 
@@ -194,9 +195,9 @@ complete mathematical foundations with latex notation are in [**math.md**](math.
 
 ### key formulas at a glance
 
-**rolling velocity** (e.g., gst 30-day value) — [`src/features/engine.py`](src/features/engine.py:67):
+**ema-weighted velocity** (e.g., gst 30-day value) — [`src/features/engine.py`](src/features/engine.py:67):
 
-$$v_{30d}^{gst}(g) = \sum_{i : t_i \geq t_{now} - 30d} \text{taxable\_value}_i \quad \forall \text{invoice } i \text{ where gstin} = g$$
+$$v_{ema}^{gst}(g, 30) = \sum_{i : \text{gstin}_i = g} \text{taxable\_value}_i \cdot e^{-\frac{\ln 2}{30} \cdot (t_{now} - t_i)}$$
 
 **herfindahl-hirschman index** for upi counterparty concentration — [`src/features/engine.py`](src/features/engine.py:170):
 
@@ -322,23 +323,25 @@ consumer groups are created with `xgroup create ... $ mkstream` — the `$` id m
 
 ### phase 3: feature extraction
 
-[`src/features/engine.py`](src/features/engine.py) computes **43 features** grouped into 5 sub-vectors:
+[`src/features/engine.py`](src/features/engine.py) computes **46 features** grouped into 6 sub-vectors:
 
-#### velocity features (11 features)
+#### velocity features (11 features) — ema-weighted
 
-| feature | window | signal | formula |
+all velocity features use **exponential moving averages** (half-life = window name) instead of hard cutoffs. this eliminates the cliff effect where a large invoice dropping past the window boundary causes an instant score change.
+
+| feature | half-life | signal | formula |
 |---|---|---|---|
-| `gst_7d_value` | 7 days | gst | sum of `taxable_value` |
-| `gst_30d_value` | 30 days | gst | sum of `taxable_value` |
-| `gst_90d_value` | 90 days | gst | sum of `taxable_value` |
-| `upi_7d_inbound_count` | 7 days | upi | count of inbound transactions |
-| `upi_30d_inbound_count` | 30 days | upi | count of inbound transactions |
-| `upi_90d_inbound_count` | 90 days | upi | count of inbound transactions |
-| `ewb_7d_value` | 7 days | ewb | sum of `tot_inv_value` |
-| `ewb_30d_value` | 30 days | ewb | sum of `tot_inv_value` |
-| `ewb_90d_value` | 90 days | ewb | sum of `tot_inv_value` |
-| `gst_30d_unique_buyers` | 30 days | gst | n-unique `buyer_gstin` |
-| `upi_30d_unique_counterparties` | 30 days | upi | n-unique `counterparty_vpa` |
+| `gst_7d_value` | 7 days | gst | ema-weighted sum of `taxable_value` |
+| `gst_30d_value` | 30 days | gst | ema-weighted sum of `taxable_value` |
+| `gst_90d_value` | 90 days | gst | ema-weighted sum of `taxable_value` |
+| `upi_7d_inbound_count` | 7 days | upi | ema-weighted count of inbound transactions |
+| `upi_30d_inbound_count` | 30 days | upi | ema-weighted count of inbound transactions |
+| `upi_90d_inbound_count` | 90 days | upi | ema-weighted count of inbound transactions |
+| `ewb_7d_value` | 7 days | ewb | ema-weighted sum of `tot_inv_value` |
+| `ewb_30d_value` | 30 days | ewb | ema-weighted sum of `tot_inv_value` |
+| `ewb_90d_value` | 90 days | ewb | ema-weighted sum of `tot_inv_value` |
+| `gst_30d_unique_buyers` | 30 days | gst | ema-weighted unique count of `buyer_gstin` |
+| `upi_30d_unique_counterparties` | 30 days | upi | ema-weighted unique count of `counterparty_vpa` |
 
 #### cadence features (5 features)
 
@@ -386,7 +389,7 @@ consumer groups are created with `xgroup create ... $ mkstream` — the `$` id m
 | `statutory_payment_regularity_score` | 1 − (avg_filing_delay / 30), clamped to [0,1] |
 | `debit_failure_rate_90d` | 90-day outbound failure rate |
 
-#### fraud features (6 features, populated by fraud module)
+#### fraud features (9 features, populated by fraud module)
 
 | feature | source |
 |---|---|
@@ -396,6 +399,10 @@ consumer groups are created with `xgroup create ... $ mkstream` — the `$` id m
 | `cycle_recurrence` | max repeat count of cycle path |
 | `counterparty_compliance_avg` | average compliance of counterparties (future) |
 | `counterparty_fraud_exposure` | fraction of counterparties flagged (future) |
+
+| `gst_upi_receivables_gap` | cross-signal reconciliation engine |
+| `ewb_smurfing_index` | e-way bill structuring detection |
+| `pagerank_score` | hub-and-spoke centrality score |
 
 all features are validated against the pydantic schema [`engineeredfeaturevector`](src/features/schemas.py:73) before storage.
 
@@ -471,7 +478,7 @@ if `fraud_confidence > 0.5`, the gstin is flagged. confidence is a 50/50 blend o
 1. **load features** from `data/features/gstin=*/features.parquet` via [`load_feature_parquets()`](src/scoring/trainer.py:130)
 2. **generate proxy labels** via rule-based [`generate_proxy_labels()`](src/scoring/trainer.py:86) — a continuous 0–1 score from 13 business rules + gaussian noise
 3. **binarize** at threshold 0.5: label > 0.5 → high risk (1), else low risk (0)
-4. **build feature matrix** from 43 feature columns ([`feature_columns`](src/scoring/trainer.py:14))
+4. **build feature matrix** from 46 feature columns ([`feature_columns`](src/scoring/trainer.py:14))
 5. **train/val split**: 80/20 with `random_state=42`
 6. **sparse conversion** if sparsity > 50% via [`to_sparse_if_needed()`](src/scoring/trainer.py:167)
 7. **train** with eval set and early stopping
@@ -516,8 +523,8 @@ $$s = \text{clip}(900 - 600 \times p_{default},\; 300,\; 900)$$
 
 [`creditexplainer`](src/scoring/explainer.py) wraps `shap.treeexplainer`:
 
-1. computes shap values for all 43 features
-2. extracts **top 5 features by absolute shap magnitude**
+1. computes shap values for all 46 features
+2. extracts **top 6 features by absolute shap magnitude**
 3. labels each as `increases_risk` (positive shap) or `decreases_risk` (negative shap)
 4. prepares **waterfall chart data** with base value + cumulative contributions
 
@@ -526,7 +533,7 @@ $$s = \text{clip}(900 - 600 \times p_{default},\; 300,\; 900)$$
 [`shaptranslator`](src/llm/translator.py) uses **phi-3-mini-128k-instruct** (q4_k_m quantization) via llama-cpp-python for cpu-only inference:
 
 - prompt template: [`src/llm/prompts.py`](src/llm/prompts.py) using phi-3 `<|system|>...<|end|><|user|>...<|end|><|assistant|>` chat format
-- output: exactly 5 plain-language bullet points
+- output: 6 plain-language items (5 explanation bullets + 1 "path to prime" prescriptive action)
 - throughput: ~2–4 tokens/second on cpu
 - fallback when gguf absent: raw feature names + direction labels
 

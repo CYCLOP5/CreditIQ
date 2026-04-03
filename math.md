@@ -5,14 +5,33 @@ This document outlines the mathematical formulas and algorithms used in the Cred
 ## 1. Feature Engineering Formulas
 
 ### Temporal Decay EMAs (Exponential Moving Averages)
-We replaced static rolling sums with continuously updating Exponential Moving Averages (EMA). This mathematically allows the score to bleed down or spike up with literal daily precision.
-$$V_{EMA}^{GST}(g) = \sum_{i} \text{taxable\_value}_i \cdot e^{-\lambda (t_{now} - t_i)} \quad \text{where } \lambda = \frac{\ln(2)}{\text{half\_life}}$$
+All velocity, ratio, and concentration features use Exponential Moving Averages (EMA) with temporal decay. This eliminates the cliff effect where a transaction at day 31 drops from full weight to zero weight at the window boundary.
+
+**EMA-weighted sum** (for GST/EWB values):
+$$V_{ema}(g, \tau) = \sum_{i} x_i \cdot e^{-\lambda \cdot (t_{now} - t_i)} \quad \text{where } \lambda = \frac{\ln(2)}{\tau}$$
+
+A transaction at exactly $\tau$ days ago contributes **50%** of its original weight. At $2\tau$ → 25%, $3\tau$ → 12.5%.
+
+**EMA-weighted count** (for UPI transaction counts):
+$$N_{ema}(g, \tau) = \sum_{i} e^{-\lambda \cdot (t_{now} - t_i)}$$
+
+**EMA-weighted unique count** (for counterparty diversity):
+$$U_{ema}(g, \tau) = \sum_{k \in \text{unique\_keys}} \max_{i : \text{key}_i = k} e^{-\lambda \cdot (t_{now} - t_i)}$$
+
+Each unique entity contributes its most recent (highest-weight) observation.
+
+**Half-life mapping**:
+| Feature suffix | Half-life $\tau$ | Signal |
+|---|---|---|
+| `_7d_*` | 7 days | Short-term pulse |
+| `_30d_*` | 30 days | Monthly cadence |
+| `_90d_*` | 90 days | Quarterly trend |
 
 ### Cadence & Filing Intervals
 To measure the consistency of filings and transactions:
 - **Mean Filing Interval**: $\mu = E\left[\frac{t_{i+1} - t_i}{86400}\right]$ across timestamps.
 - **Standard Deviation of Intervals**: $\sigma = \sqrt{\text{Var}\left[\frac{t_{i+1} - t_i}{86400}\right]}$
-- **Filing Delay Trend**: $\Delta = \text{delay}_{t-3} - \text{delay}_{t}$
+- **Filing Delay Trend**: $\Delta = \text{delay}_{last} - \text{delay}_{first}$ *(positive = worsening, negative = improving)*
 
 ### Herfindahl-Hirschman Index (HHI)
 Measures the counterparty concentration for UPI transactions. A high HHI indicates reliance on a small number of counterparties.

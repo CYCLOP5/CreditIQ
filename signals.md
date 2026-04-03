@@ -4,6 +4,8 @@
 
 this is the domain knowledge layer that informs both feature engineering and fraud detection. it maps real-world indian msme financial behavior to measurable signals derived from upi transaction data, e-way bills, gst filings, and bank statements. each signal pillar targets a distinct dimension of creditworthiness that cannot be captured by traditional bureau scores. together the four pillars construct a composite trust profile grounded in actual economic activity rather than credit history.
 
+**temporal weighting**: all velocity, concentration, and ratio features use exponential moving averages (ema) with half-life decay rather than hard window cutoffs. this prevents the cliff effect where a large transaction crossing a window boundary causes an artificial score change. see [math.md](math.md) for the ema formulas.
+
 ---
 
 ## section 1, upi transaction signal — digital heartbeat
@@ -54,7 +56,7 @@ features: `hsn_entropy_90d`, `hsn_shift_count_90d`
 
 time between invoice date and e-way bill generation date should reflect realistic logistics planning. instantaneous generation of e-way bills for very long distances suggests paper-only trading where bills are generated in bulk without physical goods movement. legitimate long-distance consignments require vehicle booking, loading time, and departure preparation.
 
-features: `invoice_to_ewb_lag_hours_median`, `ewb_distance_time_anomaly_flag`
+features: `invoice_to_ewb_lag_hours_median`, `ewb_distance_per_value_ratio`
 
 ### relevant e-way bill fields used
 
@@ -104,7 +106,7 @@ metrics: `cycle_velocity`, `cycle_recurrence`
 
 shared gst registration address, mobile number, or email across multiple independent companies is a classic shell company trait. a single building in mumbai hosting 40 registered companies is an obvious red flag. high entity clustering at a single address or phone number is a structural indicator of coordinated fraud even if each company's individual transactions appear normal.
 
-metric: `address_entity_cluster_size`
+metric: `address_entity_cluster_size` *(future — not yet implemented in synthetic pipeline; requires real gstn registration data)*
 
 ### counterparty risk profiling
 
@@ -147,13 +149,13 @@ features: `counterparty_compliance_avg`, `counterparty_fraud_exposure`
 | upi_dormancy_periods | digital heartbeat | upi stream | src/features/engine.py |
 | upi_top3_concentration | digital heartbeat | upi stream | src/features/engine.py |
 | debit_failure_rate_90d | cash flow hygiene | bank statement | src/features/engine.py |
-| address_entity_cluster_size | anti-fraud | gst registration data | src/fraud/graph_builder.py |
+| address_entity_cluster_size | anti-fraud | gst registration data | *(future — not yet implemented)* |
 | counterparty_fraud_exposure | anti-fraud | upi graph | src/fraud/cycle_detector.py |
 | hsn_shift_count_90d | physical validation | eway bill stream | src/features/engine.py |
 
 ---
 
-## section 8, msme classification and lending signal integration
+## section 7, msme classification and lending signal integration
 
 ### msme category and credit limit context
 
@@ -186,7 +188,7 @@ udyam registration is the official msme portal registration. registered business
 - psb loans in 59 minutes platform access
 - priority in government procurement
 
-feature: `udyam_registered` bool. in synthetic pipeline this is a randomly assigned flag with 80% base registration rate among micro and 70% among small enterprises.
+feature: `udyam_registered` bool. *(future — not yet implemented in synthetic pipeline; set as a randomly assigned flag with 80% base registration rate among micro and 70% among small enterprises in a production deployment)*
 
 ### gst filing regularity cross-referenced with itr
 
