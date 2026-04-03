@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     models_path: str = "data/models"
     graphs_path: str = "data/graphs"
     xgb_model_path: str = "data/models/xgb_credit.ubj"
-    phi3_model_path: str = "data/models/phi-3-mini-128k-instruct-q4_k_m.gguf"
+    phi3_model_path: str = "data/models/Phi-3.1-mini-128k-instruct-Q4_K_M.gguf"
     phi3_n_gpu_layers: int = 33
     phi3_max_tokens: int = 512
     uvicorn_workers: int = 2

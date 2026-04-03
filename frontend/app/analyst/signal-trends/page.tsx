@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/dib/authContext";
 import { useRouter } from "next/navigation";
 import { FEATURE_LABELS } from "@/dib/mockData";
@@ -127,7 +127,7 @@ export default function SignalTrendsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 className="pl-9 font-mono text-sm"
-                placeholder="Enter GSTIN (e.g. 24AAKFD8732P1ZM)"
+                placeholder="Enter GSTIN (e.g. 33WMCXS5986T3Z1)"
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -148,7 +148,7 @@ export default function SignalTrendsPage() {
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="text-xs text-muted-foreground">Try:</span>
-            {["27AABFB2230J1ZX", "24AAKFD8732P1ZM", "29AAHFT6543R1ZK"].map((g) => (
+            {["29GYWWJ1876Z9Z0", "33WMCXS5986T3Z1", "29RASVZ4103X2Z1"].map((g) => (
               <button
                 key={g}
                 className="text-xs font-mono text-primary underline underline-offset-2 hover:no-underline"

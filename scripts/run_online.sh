@@ -19,4 +19,7 @@ bash "$SCRIPTS/phase6_api.sh" &
 API_PID=$!
 echo "api pid $API_PID"
 
+echo "injecting real GSTINs into frontend"
+python "$SCRIPTS/inject_real_gstins.py"
+
 bash "$SCRIPTS/phase7_frontend.sh"

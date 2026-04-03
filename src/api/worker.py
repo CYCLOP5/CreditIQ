@@ -71,7 +71,11 @@ def _load_demo_feature_vector(gstin: str) -> EngineeredFeatureVector | None:
     existing = sorted(cache_root.glob("gstin=*/features.parquet"))
     if not existing:
         return None
-    chosen = random.choice(existing)
+    
+    # Use deterministic fallback so a particular GSTIN always gets the same demo features
+    rng = random.Random(gstin)
+    chosen = rng.choice(existing)
+    
     df = pl.scan_parquet(str(chosen)).collect()
     if df.height == 0:
         return None

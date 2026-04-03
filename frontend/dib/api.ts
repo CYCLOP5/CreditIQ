@@ -230,6 +230,6 @@ export const msmeApi = {
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 export const analyticsApi = {
-  getCohortMedian: () => apiFetch<Record<string, unknown>>("/analytics/cohort-median"),
+  getCohortMedian: (category: string = "all") => apiFetch<Record<string, unknown>>(`/analytics/cohort-median?msme_category=${category}`),
 };
 
