@@ -1,6 +1,6 @@
 """
-pydantic v2 schema definitions for raw signal inputs and engineered feature vectors
-used by the msme credit scoring feature engine
+pydantic v2 schema definitions raw signal inputs engineered feature vectors
+used msme credit scoring feature engine
 """
 
 from datetime import datetime
@@ -11,8 +11,8 @@ from pydantic import BaseModel
 
 class GSTInvoiceRecord(BaseModel):
     """
-    raw gst invoice record ingested from gstn portal
-    filing_status captures compliance state for delay scoring
+    raw gst invoice record ingested gstn portal
+    filing_status captures compliance state delay scoring
     """
 
     gstin: str
@@ -27,8 +27,8 @@ class GSTInvoiceRecord(BaseModel):
 
 class UPITransactionRecord(BaseModel):
     """
-    raw upi transaction record from npci stream
-    direction and status critical for cashflow and failure rate features
+    raw upi transaction record npci stream
+    direction status critical cashflow failure rate features
     """
 
     gstin: str
@@ -43,8 +43,8 @@ class UPITransactionRecord(BaseModel):
 
 class EWayBillRecord(BaseModel):
     """
-    raw e-way bill record sourced from nic eway portal
-    captures interstate movement metadata for logistics feature computation
+    raw eway bill record sourced nic eway portal
+    captures interstate movement metadata logistics feature computation
     """
 
     gstin: str
@@ -79,9 +79,9 @@ class EWayBillRecord(BaseModel):
 
 class EngineeredFeatureVector(BaseModel):
     """
-    fully engineered feature vector output from feature engine
-    groups velocity cadence ratio sparsity and fraud sub-vectors
-    fraud fields default zero and are populated by downstream fraud module
+    fully engineered feature vector output feature engine
+    groups velocity cadence ratio sparsity fraud subvectors
+    fraud fields default zero populated downstream fraud module
     """
 
     gstin: str
@@ -129,8 +129,8 @@ class EngineeredFeatureVector(BaseModel):
 
 class FeatureBatch(BaseModel):
     """
-    batch wrapper around a list of engineered feature vectors
-    used for bulk serialization and api transport
+    batch wrapper around list engineered feature vectors
+    used bulk serialization api transport
     """
 
     vectors: list[EngineeredFeatureVector]

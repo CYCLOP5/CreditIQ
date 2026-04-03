@@ -1,6 +1,6 @@
 """
-fraud cycle detector identifies circular transaction patterns in directed multigraphs
-uses strongly connected components and simple cycle enumeration for ring detection
+fraud cycle detector identifies circular transaction patterns directed multigraphs
+strongly connected components simple cycle enumeration ring detection
 """
 
 import gc
@@ -13,8 +13,8 @@ from src.features.schemas import EngineeredFeatureVector
 
 class CycleMetrics(BaseModel):
     """
-    per-cycle metrics computed over a directed cycle path
-    velocity recurrence and concentration signal laundering ring intensity
+    percycle metrics computed over directed cycle path
+    velocity recurrence concentration signal laundering ring intensity
     """
 
     cycle_path: list[str]
@@ -25,8 +25,8 @@ class CycleMetrics(BaseModel):
 
 class FraudResult(BaseModel):
     """
-    per-gstin fraud detection result aggregated from all cycles it participates in
-    confidence blends velocity and recurrence signals into a single 0-1 score
+    pergstin fraud detection result aggregated cycles participates
+    confidence blends velocity recurrence signals into single 01 score
     """
 
     gstin: str
@@ -39,8 +39,8 @@ class FraudResult(BaseModel):
 
 class CycleDetector:
     """
-    detects fraudulent circular transaction rings in a directed transaction multigraph
-    uses scc decomposition cycle enumeration and metric thresholding
+    detects fraudulent circular transaction rings directed transaction multigraph
+    scc decomposition cycle enumeration metric thresholding
     """
 
     def __init__(
@@ -50,7 +50,7 @@ class CycleDetector:
         cycle_length_bound: int = 5,
     ) -> None:
         """
-        initializes detector with velocity recurrence and cycle length thresholds
+        initializes detector velocity recurrence cycle length thresholds
         """
         self.velocity_threshold = velocity_threshold
         self.recurrence_threshold = recurrence_threshold
@@ -60,9 +60,9 @@ class CycleDetector:
         self, graph: nx.MultiDiGraph, window_days: int = 30
     ) -> dict[str, FraudResult]:
         """
-        full pipeline from graph to per-gstin fraud results
-        returns empty dict if graph has no edges
-        prints summary of sccs cycles and flagged gstins
+        full pipeline graph pergstin fraud results
+        returns empty dict if graph no edges
+        prints summary sccs cycles flagged gstins
         """
         if graph.number_of_edges() == 0:
             return {}
@@ -88,8 +88,8 @@ class CycleDetector:
         self, graph: nx.MultiDiGraph
     ) -> list[nx.MultiDiGraph]:
         """
-        extracts sccs with 3 or more nodes as cycle candidate subgraphs
-        uses networkx strongly_connected_components on the full multigraph
+        extracts sccs 3 or nodes cycle candidate subgraphs
+        networkx strongly_connected_components full multigraph
         """
         candidate_subgraphs: list[nx.MultiDiGraph] = []
         for scc_nodes in nx.strongly_connected_components(graph):
@@ -102,8 +102,8 @@ class CycleDetector:
         self, scc_graph: nx.MultiDiGraph
     ) -> list[list[str]]:
         """
-        enumerates simple cycles within an scc subgraph up to cycle_length_bound
-        returns empty list if scc has no edges
+        enumerates simple cycles within scc subgraph up cycle_length_bound
+        returns empty list if scc no edges
         """
         if scc_graph.number_of_edges() == 0:
             return []
@@ -116,8 +116,8 @@ class CycleDetector:
         window_days: int,
     ) -> CycleMetrics:
         """
-        computes velocity recurrence and concentration metrics for a single directed cycle
-        operates on the full graph to capture all parallel edges between cycle nodes
+        computes velocity recurrence concentration metrics single directed cycle
+        operates full graph capture parallel edges between cycle nodes
         """
         pairs = [(cycle[i], cycle[(i + 1) % len(cycle)]) for i in range(len(cycle))]
 
@@ -168,8 +168,8 @@ class CycleDetector:
         metrics: list[CycleMetrics],
     ) -> dict[str, FraudResult]:
         """
-        aggregates per-cycle metrics to per-gstin fraud results
-        confidence blends velocity and recurrence thresholds at equal weight
+        aggregates percycle metrics pergstin fraud results
+        confidence blends velocity recurrence thresholds at equal weight
         """
         gstin_cycle_map: dict[str, list[tuple[list[str], CycleMetrics]]] = {}
         for cycle, metric in zip(cycles, metrics):
@@ -200,7 +200,7 @@ class CycleDetector:
 
     def _cleanup_subgraph(self, scc_graph: nx.MultiDiGraph) -> None:
         """
-        clears scc subgraph internals deletes local reference and triggers gc
+        clears scc subgraph internals deletes local reference triggers gc
         prevents multigraph memory accumulation across large scc sets
         """
         scc_graph.clear()
@@ -214,7 +214,7 @@ def merge_fraud_into_features(
 ) -> list[EngineeredFeatureVector]:
     """
     merges fraud detection results into feature vectors
-    overwrites fraud fields in place for flagged gstins
+    overwrites fraud fields place flagged gstins
     returns updated feature vector list
     """
     for fv in features:

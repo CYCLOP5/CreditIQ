@@ -1,7 +1,7 @@
 """
-feature engineering engine for msme credit scoring
-computes velocity cadence ratio sparsity sub-vectors from gst upi ewb signal frames
-parquet spill cache keyed by gstin partition path data/features/gstin={gstin}/features.parquet
+feature engineering engine msme credit scoring
+computes velocity cadence ratio sparsity subvectors gst upi ewb signal
+parquet spill cache keyed gstin partition path datafeaturesgstingstinfeaturesparquet
 """
 
 import os
@@ -16,21 +16,21 @@ from src.features.schemas import EngineeredFeatureVector
 
 class FeatureEngine:
     """
-    stateful feature engine with per-gstin parquet cache and memory pressure guard
-    all compute methods are null-safe and return zero-filled vectors on empty input
+    stateful feature engine pergstin parquet cache memory pressure guard
+    compute methods nullsafe return zerofilled vectors empty input
     """
 
     def __init__(self, cache_dir: str = "data/features", spill_threshold_gb: float = 3.0) -> None:
         """
-        init with cache root dir and memory spill threshold in gb
+        init cache root dir memory spill threshold gb
         """
         self.cache_dir = cache_dir
         self.spill_threshold_gb = spill_threshold_gb
 
     def _check_memory_pressure(self) -> bool:
         """
-        returns true if process rss exceeds 90pct of spill_threshold_gb
-        uses psutil to read current process memory
+        returns true if process rss exceeds 90pct spill_threshold_gb
+        psutil read current process memory
         """
         proc = psutil.Process()
         rss_gb = proc.memory_info().rss / (1024 ** 3)
@@ -38,8 +38,8 @@ class FeatureEngine:
 
     def _load_cached_features(self, gstin: str) -> pl.DataFrame | None:
         """
-        reads parquet feature cache for gstin partition
-        returns none if file does not exist
+        reads parquet feature cache gstin partition
+        returns none if file not exist
         """
         path = Path(self.cache_dir) / f"gstin={gstin}" / "features.parquet"
         if not path.exists():
@@ -48,7 +48,7 @@ class FeatureEngine:
 
     def _save_cached_features(self, gstin: str, df: pl.DataFrame) -> None:
         """
-        writes feature dataframe to partitioned parquet path for gstin
+        writes feature dataframe partitioned parquet path gstin
         creates parent dirs if absent
         """
         path = Path(self.cache_dir) / f"gstin={gstin}" / "features.parquet"
@@ -63,9 +63,9 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> dict:
         """
-        rolling sum and count features over 7d 30d 90d temporal windows
-        reference time anchored to max timestamp in each signal frame
-        fill_null(0.0) on all outputs since absence equals zero activity
+        rolling sum count features over 7d 30d 90d temporal windows
+        reference time anchored max timestamp each signal frame
+        fill_null00 outputs since absence equals zero activity
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin)
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
@@ -150,9 +150,9 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> dict:
         """
-        inter-arrival time statistics across gst upi ewb signal streams
-        diffs converted to float days via total_seconds then forward_fill then fill_null(0.0)
-        gst_filing_delay_trend is signed delta of last 3 filing_delay_days values
+        interarrival time statistics across gst upi ewb signal streams
+        diffs converted float days via total_seconds forward_fill fill_null00
+        gst_filing_delay_trend signed delta last 3 filing_delay_days values
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin).sort("timestamp")
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
@@ -225,10 +225,10 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> dict:
         """
-        ratio and concentration features derived from 30d 90d and full-history windows
-        all divisions guarded by max(denominator 1.0) to prevent divide-by-zero
-        hhi computed as sum of squared counterparty vpa share over 30d inbound upi
-        invoice-to-ewb lag parsed from dd/mm/yyyy doc_date with strict=false fallback
+        ratio concentration features derived 30d 90d fullhistory windows
+        divisions guarded maxdenominator 10 prevent dividebyzero
+        hhi computed sum squared counterparty vpa share over 30d inbound
+        invoicetoewb lag parsed ddmmyyyy doc_date strictfalse fallback
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin)
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
@@ -362,9 +362,9 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> dict:
         """
-        data availability and gap metrics across all three signal types
-        longest_gap_days merges timestamps from all frames and finds max inter-event gap
-        data_maturity_flag is 1.0 when months_active_gst reaches 3 or more
+        data availability gap metrics across three signal types
+        longest_gap_days merges timestamps frames finds max interevent gap
+        data_maturity_flag 10 months_active_gst reaches 3 or
         """
         gst_g = gst_df.filter(pl.col("gstin") == gstin)
         upi_g = upi_df.filter(pl.col("gstin") == gstin)
@@ -421,9 +421,9 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> EngineeredFeatureVector:
         """
-        full feature vector computation for a single gstin
+        full feature vector computation single gstin
         merges velocity cadence ratio sparsity dicts into engineered vector
-        persists one-row parquet to partitioned cache after computation
+        persists onerow parquet partitioned cache after computation
         """
         print(f"computing features for gstin {gstin}")
 
@@ -456,9 +456,9 @@ class FeatureEngine:
         ewb_df: pl.DataFrame,
     ) -> list[EngineeredFeatureVector]:
         """
-        batch feature computation over all unique gstins found in gst_df
-        logs progress every 50 gstins and warns on memory pressure near spill threshold
-        returns list of engineered feature vectors in gstin iteration order
+        batch feature computation over unique gstins found gst_df
+        logs progress every 50 gstins warns memory pressure near spill
+        returns list engineered feature vectors gstin iteration order
         """
         unique_gstins: list[str] = gst_df["gstin"].unique().to_list()
         total = len(unique_gstins)

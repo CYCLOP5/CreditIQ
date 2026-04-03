@@ -1,7 +1,7 @@
 """
-fraud graph builder constructs and manages networkx directed multigraphs
-from parquet edge lists representing upi and ewb transaction flows
-supports incremental updates partitioned loading and parquet persistence
+fraud graph builder constructs manages networkx directed multigraphs
+parquet edge lists representing upi ewb transaction flows
+supports incremental updates partitioned loading parquet persistence
 """
 
 from datetime import timedelta
@@ -13,21 +13,21 @@ import polars as pl
 
 class FraudGraphBuilder:
     """
-    builds and manages directed multigraphs from transaction edge lists
-    supports incremental updates partitioned loading and parquet persistence
+    builds manages directed multigraphs transaction edge lists
+    supports incremental updates partitioned loading parquet persistence
     """
 
     def __init__(self, edge_dir: str = "data/graphs", max_nodes: int = 50000) -> None:
         """
-        initializes builder with edge storage directory and node memory guard threshold
+        initializes builder edge storage directory node memory guard threshold
         """
         self.edge_dir = Path(edge_dir)
         self.max_nodes = max_nodes
 
     def build_from_parquet(self, date_from: str, date_to: str) -> nx.MultiDiGraph:
         """
-        scans edge_dir for parquet files within yyyymmdd date range inclusive
-        concatenates qualifying frames and delegates to build_from_dataframe
+        scans edge_dir parquet files within yyyymmdd date range inclusive
+        concatenates qualifying frames delegates build_from_dataframe
         returns empty multigraph if no qualifying files found
         """
         frames = []
@@ -46,9 +46,9 @@ class FraudGraphBuilder:
 
     def build_from_dataframe(self, edges_df: pl.DataFrame) -> nx.MultiDiGraph:
         """
-        constructs directed multigraph from polars edge dataframe
-        each row becomes a directed edge with amount timestamp txn_type edge_id attrs
-        uses iter_rows named for efficient attribute extraction
+        constructs directed multigraph polars edge dataframe
+        each row becomes directed edge amount timestamp txn_type edge_id attrs
+        iter_rows named efficient attribute extraction
         """
         graph = nx.MultiDiGraph()
         for row in edges_df.iter_rows(named=True):
@@ -67,7 +67,7 @@ class FraudGraphBuilder:
     ) -> nx.MultiDiGraph:
         """
         merges new edge dataframe into existing graph via temp multigraph
-        preserves all existing edges and appends new parallel edges
+        preserves existing edges appends new parallel edges
         """
         temp_graph = self.build_from_dataframe(new_edges_df)
         graph.add_edges_from(temp_graph.edges(data=True))
@@ -75,7 +75,7 @@ class FraudGraphBuilder:
 
     def save_edges(self, edges_df: pl.DataFrame, date_str: str) -> None:
         """
-        persists edge dataframe to parquet at standard path convention
+        persists edge dataframe parquet at standard path convention
         creates parent directories if absent
         """
         self.edge_dir.mkdir(parents=True, exist_ok=True)
@@ -84,8 +84,8 @@ class FraudGraphBuilder:
 
     def load_edges(self, date_str: str) -> pl.DataFrame | None:
         """
-        reads edge parquet for given yyyymmdd date string
-        returns none if file does not exist
+        reads edge parquet given yyyymmdd date string
+        returns none if file not exist
         """
         path = self.edge_dir / f"edges_{date_str}.parquet"
         if not path.exists():
@@ -95,7 +95,7 @@ class FraudGraphBuilder:
     def _check_node_limit(self, graph: nx.MultiDiGraph) -> bool:
         """
         returns true if graph node count exceeds max_nodes ceiling
-        triggers partition strategy in caller
+        triggers partition strategy caller
         """
         return graph.number_of_nodes() > self.max_nodes
 
@@ -103,8 +103,8 @@ class FraudGraphBuilder:
         self, edges_df: pl.DataFrame, window_days: int = 7
     ) -> list[pl.DataFrame]:
         """
-        splits edge dataframe into sequential temporal partitions of window_days duration
-        sorts by timestamp before partitioning and skips empty partitions
+        splits edge dataframe into sequential temporal partitions window_days duration
+        sorts timestamp before partitioning skips empty partitions
         """
         sorted_df = edges_df.sort("timestamp")
         if sorted_df.is_empty():
@@ -127,9 +127,9 @@ class FraudGraphBuilder:
 
 def upi_edges_from_transactions(upi_df: pl.DataFrame) -> pl.DataFrame:
     """
-    converts upi transaction dataframe to edge list format
-    outbound transactions only produce directed edges from gstin to counterparty
-    filters to direction outbound and status success before projection
+    converts upi transaction dataframe edge list format
+    outbound transactions only produce directed edges gstin counterparty
+    filters direction outbound status success before projection
     """
     filtered = upi_df.filter(
         (pl.col("direction") == "outbound") & (pl.col("status") == "success")
