@@ -1,6 +1,6 @@
 """
-synthetic msme data generator for phase 1 credit scoring pipeline.
-generates gst invoices, upi transactions and eway bills for 250 profiles.
+synthetic msme data generator phase 1 credit scoring pipeline
+generates gst invoices upi transactions eway bills 250 profiles
 """
 
 import random
@@ -121,8 +121,8 @@ RAW_DATA_PATH: Path = Path("data/raw")
 
 def generate_gstin(state_code: int, fake: Faker) -> str:
     """
-    generates a valid-format gstin for the given state code.
-    pan portion follows the 5-letter 4-digit 1-letter pattern.
+    generates validformat gstin given state code
+    pan portion follows 5letter 4digit 1letter pattern
     """
     pan_letters_a = "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=5))
     pan_digits = "".join(random.choices("0123456789", k=4))
@@ -135,7 +135,7 @@ def generate_gstin(state_code: int, fake: Faker) -> str:
 
 def generate_vpa(business_slug: str, fake: Faker) -> str:
     """
-    generates a upi vpa from the business name slug.
+    generates upi vpa business name slug
     """
     slug = business_slug.lower().replace(" ", "")[:12]
     handle = random.choice(BANK_HANDLES)
@@ -144,7 +144,7 @@ def generate_vpa(business_slug: str, fake: Faker) -> str:
 
 def generate_vehicle_no(fake: Faker) -> str:
     """
-    generates a synthetic indian vehicle registration number.
+    generates synthetic indian vehicle registration number
     """
     prefix = random.choice(VEHICLE_PREFIXES)
     district = f"{random.randint(10, 99)}"
@@ -155,7 +155,7 @@ def generate_vehicle_no(fake: Faker) -> str:
 
 def build_profiles(fake: Faker) -> list[dict]:
     """
-    builds the master list of 250 msme profiles with assigned types and ring ids.
+    builds master list 250 msme profiles assigned types ring ids
     """
     profile_type_assignments = random.choices(PROFILE_TYPES, weights=PROFILE_WEIGHTS, k=N_PROFILES)
 
@@ -210,7 +210,7 @@ def build_profiles(fake: Faker) -> list[dict]:
 
 def get_active_period(profile: dict) -> tuple[datetime, datetime]:
     """
-    returns start and end datetimes for the profile based on business age.
+    returns start end datetimes profile based business age
     """
     end_dt = datetime.now()
     start_dt = end_dt - timedelta(days=profile["business_age_months"] * 30)
@@ -219,9 +219,9 @@ def get_active_period(profile: dict) -> tuple[datetime, datetime]:
 
 def sample_timestamps(start: datetime, end: datetime, n: int, burst: bool = False) -> list[datetime]:
     """
-    generates n timestamps between start and end.
-    burst mode clusters into 2-3 activity bursts separated by dormant periods.
-    non-burst uses exponential inter-arrival times for natural clustering.
+    generates n timestamps between start end
+    burst mode clusters into 23 activity bursts separated dormant periods
+    nonburst exponential interarrival times natural clustering
     """
     total_seconds = (end - start).total_seconds()
     if n == 0:
@@ -250,8 +250,8 @@ def sample_timestamps(start: datetime, end: datetime, n: int, burst: bool = Fals
 
 def generate_gst_invoices(profiles: list[dict], fake: Faker) -> pl.DataFrame:
     """
-    generates gst invoice records for all profiles and returns a single polars dataframe.
-    invoice counts, taxable values and filing behaviour vary by profile type.
+    generates gst invoice records profiles returns single polars dataframe
+    invoice counts taxable values filing behaviour vary profile type
     """
     all_gstins = [p["gstin"] for p in profiles]
 
@@ -340,8 +340,8 @@ def generate_upi_transactions(
     fake: Faker,
 ) -> pl.DataFrame:
     """
-    generates upi transaction records for all profiles.
-    shell circular profiles exhibit burst patterns and ring counterparty rotation.
+    generates upi transaction records profiles
+    shell circular profiles exhibit burst patterns ring counterparty rotation
     """
     n_txn_map: dict[str, tuple[int, int]] = {
         "GENUINE_HEALTHY": (20, 50),
@@ -465,9 +465,9 @@ def generate_upi_transactions(
 
 def generate_eway_bills(profiles: list[dict], fake: Faker) -> pl.DataFrame:
     """
-    generates eway bill records using official field structure.
-    paper traders produce many bills with low distance and mixed hsn codes.
-    shell companies produce very few bills reflecting minimal physical goods movement.
+    generates eway bill records official field structure
+    paper traders produce bills low distance mixed hsn codes
+    shell companies produce bills reflecting minimal physical goods movement
     """
     all_gstins = [p["gstin"] for p in profiles]
     gstin_to_state: dict[str, int] = {p["gstin"]: p["state_code"] for p in profiles}
@@ -615,7 +615,7 @@ def generate_eway_bills(profiles: list[dict], fake: Faker) -> pl.DataFrame:
 
 def write_chunks(df: pl.DataFrame, prefix: str, chunk_size: int) -> int:
     """
-    writes the dataframe to parquet files in chunks and returns the chunk count.
+    writes dataframe parquet files chunks returns chunk count
     """
     RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
     n_rows = len(df)
@@ -629,7 +629,7 @@ def write_chunks(df: pl.DataFrame, prefix: str, chunk_size: int) -> int:
 
 def write_profiles(profiles: list[dict]) -> None:
     """
-    serialises the profile metadata list to a parquet file.
+    serialises profile metadata list parquet file
     """
     RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
     serialisable = []

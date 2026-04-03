@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "credit-scoring-engine"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "redis",
+    "polars",
+    "xgboost",
+    "shap",
+    "networkx",
+    "faker",
+    "sdv",
+    "llama-cpp-python",
+    "streamlit",
+    "plotly",
+    "pyarrow",
+    "scipy",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "httpx",
+    "pytest",
+    "pytest-asyncio",
+    "psutil",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.envs.default]
+[tool.hatch.envs.default.scripts]
+start-api = "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 2"
+start-worker = "python -m src.api.worker"

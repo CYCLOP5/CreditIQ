@@ -1,0 +1,132 @@
+Validations:,,,,,,,,,
+,,,,,,,,,
+"1.      In case of tax payer generating as supplier, the GSTIN of the requesting tax payer should be fromGstin",,,,,,,,,
+"2.      In case of tax payer generating as recipient, the GSTIN of the requesting tax payer should be toGstin",,,,,,,,,
+"3.      In case of transporter(enrolled transporter / GSTIN updated as transporter in e-way bill portal) generating e-way bill, the GSTIN/TRANSIN of the requesting person should be transporterId",,,,,,,,,
+4.      Enrolled transporter(TRANSIN) cannot be supplier (fromGstin) or buyer (toGstin),,,,,,,,,
+5.      The following fields should have the one of the values given in the master codes,,,,,,,,,
+a.    Supply Type,,,,,,,,,
+b.    Sub Supply Type,,,,,,,,,
+c.   Sub Supply Description is mandatory only if the sub supply Type is Others.,,,,,,,,,
+d.    Document Type,,,,,,,,,
+e.    Transportation Mode,,,,,,,,,
+f.    Unit Quantity Code,,,,,,,,,
+6.      The Document Date should be less than or equal to current date,,,,,,,,,
+7.      The Transport document Date should be greater than equal to document date,,,,,,,,,
+"8.      fromGstin and toGstin should be valid GSTIN number of the supplier and recipient. In case of unregistered person involved in the transaction, pass URP in these fields.",,,,,,,,,
+"9.      In case of ‘Bill to – ship to’ transaction, toGstin, toTrdName and  toStateCode should be passed with ‘Bill To’ party and - toAddr1,  toAddr2,  toPlace,  toPincode and  actToStateCode  values should be passed with ‘Ship To’ party.",,,,,,,,,
+"10.    In case of ‘Bill From – Dispatch From’ transaction, fromGstin, fromTrdName and  fromStateCode should be passed with ‘Bill From’ party and fromAddr1, fromAddr2,  fromPlace, fromPincode and actFromStateCode values should be passed with ‘Dispatch from’ party.",,,,,,,,,
+11.    HSN Code should be valid as per the GST master,,,,,,,,,
+"12.    In case of intra-state transaction, where both  fromGstin and  toGstin belong to same state, the SGST and CGST tax rate and value has to be passed",,,,,,,,,
+"13.    In case of inter-state transaction, where both  fromGstin and  toGstin  belong to different states, the IGST tax rate and value has to be passed",,,,,,,,,
+"14.    In case of one of the party is SEZ unit, then  IGST tax rate and value has to be passed",,,,,,,,,
+"15.    In case of road is a transportation mode , the vehicle number should be passed and transport document number is optional",,,,,,,,,
+"16.    In case of rail, air or ship is a transportation mode, the transport document number and tansport document date  is must",,,,,,,,,
+"17.    In case of export, the  Bill-to state has to be ‘Other Country’ .",,,,,,,,,
+"18.    In case of import, the Bill-from state  has to be ‘Other Country’.",,,,,,,,,
+"19.    If PART-B (transportation mode, vehicle number or transport document number) is not passed, the system generate unique number and return without validity period",,,,,,,,,
+"20.    If the transportation is done through the transporter, transporterId field should have valid TRANSID or GSTIN",,,,,,,,,
+"21.    In case of road transportation, if the vehicle is ‘over dimension cargo’, pass O, otherwise R (regular).",,,,,,,,,
+"22.    In case of Air and Rail transportation,  the vehicle type is  R (regular).",,,,,,,,,
+"23.    In case of Ship/Road cum Ship transportation, the vehicle type is ODC(over dimension cargo).",,,,,,,,,
+"24.    In case of non-advelarom tax of cess, directly pass the calculated value in cessValue along with advelarom cess tax value, if any.",,,,,,,,,
+"25.    If vehicle number is passed, the format of the vehicle should be valid and as per the format",,,,,,,,,
+"26.    In case of sub supply type is others, and then pass the subSupplyDesc accordingly.",,,,,,,,,
+"27.    In case of import or export, the actual distance being travelled in the country has to be passed.",,,,,,,,,
+28.    The actual distance from source to destination cannot be greater than 4000.,,,,,,,,,
+29. If a single invoice having multiple consignments then the total invoice value and other charges should be same for all the items having same invoice number.,,,,,,,,,
+"30. If mode of transport is ROAD, then select vehicle type as either Regular or Over Dimensional Cargo. 
+If mode of transport is RAIL or AIR or SHIP, then vehicle type should be Regular.
+",,,,,,,,,
+"31. For intra-state, CGST and SGST will be applicable and for Intra state, IGST will be applicable. CESS and CESS Non Advol is common for both.  ",,,,,,,,,
+32. Total invoice value indicates the sum of assessable value plus tax value. ,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+" There are few validations on supply type and document type for generating an ewaybill
+",,,,,,,,,
+Validations for outward transaction:,,,,,,,,,
+1,If supply type is outward – sub supply type is supply and document type is Tax Invoice then from gstin should be self or login gstin and to gstin can either be URP or other party gstin and tax rate need to be selected from the dropdown list.,,,,,,,,
+2,For supply type outward – sub supply type is supply and document type is bill of supply then from gstin should be self or login gstin and to gstin can either be URP or other party gstin and for this combination tax rate should be zero.,,,,,,,,
+3,For outward – export and doc type is tax invoice then from gstin should be self or login GSTIN and to GSTIN should be u r p and tax rate need to be selected from the dropdown list.,,,,,,,,
+4,For outward – export and doc type is Bill of supply then from gstin should be self or login GSTIN and to GSTIN should be u r p and tax rate should be zero.,,,,,,,,
+5,"For outward – job work, doc type will be delivery challan and from gstin should be self and to GSTIN should be u r p and tax rate should be zero.",,,,,,,,
+6,"For outward – S K D or C K D and doc type is tax invoice, then from gstin should be self or login GSTIN and to GSTIN should be u r p and tax rate need to be selected from the dropdown list.",,,,,,,,
+7,"For outward – S K D or C K D and doc type is Bill of supply, then from gstin should be self or login GSTIN and to GSTIN should be u r p and tax rate should be zero.",,,,,,,,
+8,"For outward – S K D or C K D and doc type is delivery challan, then from gstin should be self or login GSTIN and to GSTIN should be u r p and tax rate should be zero.",,,,,,,,
+9,"For outward – Recipient not known and doc type is delivery challan, then from and to gstin should be self or login gstin and tax rate should be zero.",,,,,,,,
+10,"For outward – Recipient not known and doc type is others, then from and to gstin should be self or login gstin and tax rate should be zero.",,,,,,,,
+11,"For outward – for own use, doc type will be delivery challan and from and to gstin should be self or login gstin and tax rate should be zero.",,,,,,,,
+12,"For outward – Exhibition or fairs, doc type will be delivery challan and from and to gstin should be self or login gstin and tax rate should be zero.",,,,,,,,
+13,"For outward – line sales, doc type will be delivery challan and from and to gstin should be self or login gstin and tax rate should be zero.",,,,,,,,
+14,"For outward – for others, and doc type is delivery challan then from should be self or login gstin and to gstin can either be self or other party gstin and tax rate should be zero.",,,,,,,,
+15,"For outward – for others, and doc type is others then from should be self or login gstin and to gstin can either be self or other party gstin and tax rate should be zero.",,,,,,,,
+,,,,,,,,,
+Validations for inward transaction:,,,,,,,,,
+1,If supply type is inward – sub supply type is supply and document type is Tax Invoice then from GSTIN can either be U R P or other party GSTIN and to GSTIN should be self or login GSTIN and tax rate need to be selected from the dropdown list.,,,,,,,,
+2,For supply type inward – sub supply type is supply and document type is bill of supply then from GSTIN can either be U R P or other party GSTIN and to GSTIN should be self and for this combination tax rate should be zero.,,,,,,,,
+3,For inward – import and doc type is bill of entry then from GSTIN should be u r p and to GSTIN should be self and tax rate need to be selected from the dropdown list.,,,,,,,,
+4,"For inward – job work, doc type will be delivery challan and from GSTIN can either be URP or other party GSTIN and to GSTIN should be self and tax rate should be zero.",,,,,,,,
+5,"For inward – S K D or C K D and doc type is bill of entry, then from GSTIN should be u r p and to GSTIN should be self and tax rate need to be selected from the dropdown list.",,,,,,,,
+6,"For inward – S K D or C K D and doc type is tax invoice, then from GSTIN can either be U R P or other party GSTIN or login GSTIN and to GSTIN should be self and tax rate need to be selected from dropdown list.",,,,,,,,
+7,"For inward – S K D  or C K D and doc type is Bill of supply, then from GSTIN can either be URP or other party GSTIN and to GSTIN should be self and tax rate should be zero.",,,,,,,,
+8,"For inward – S K D or C K D and doc type is delivery challan, then from GSTIN can either be U R P or other party GSTIN and to GSTIN should be self and tax rate should be zero.",,,,,,,,
+9,"For inward – job work returns and doc type is delivery challan, then from GSTIN can either be u r p or other party GSTIN and to GSTIN should be self and tax rate should be zero.",,,,,,,,
+10,"For inward – for own use, doc type will be delivery challan and from and to GSTIN should be self or login GSTIN and tax rate should be zero.",,,,,,,,
+11,"For inward – Exhibition or fairs, doc type will be delivery challan and from and to GSTIN should be self or login GSTIN and tax rate should be zero.",,,,,,,,
+12,"For inward – for others, and doc type is delivery challan then from GSTIN can either be self or other party GSTIN and to GSTIN can either be self and tax rate should be zero.",,,,,,,,
+13,"For inward – for others, and doc type is others then from GSTIN can either be self or other party GSTIN and to GSTIN can either be self and tax rate should be zero.",,,,,,,,
+,,,,,,,,,
+,,,Table 1:  Validation of tax rates while generating the e-way bill.,,,,,,
+,,,Following Tax Rates are applicable as on 1st October.,,,,,,
+,,,,,,,,,
+,,,"CGST
+(%)",SGST (%), IGST (%) ,CESS – Advol (%) ,CESS - NonAdvol. (Rs.),,
+,,,0,0,0,0 or 1 or 3 or 5,"0  or 
+400  or
+2076  or
+2747  or
+3668  or
+4006  or
+4170  ",,
+,,,0.05,0.05,0.1,or 11 or 12 or,,,
+,,,0.125,0.125,0.25,12.5 or 15 or 17,,,
+,,,1.5,1.5,3,or 21 or 22 or 36,,,
+,,,2.5,2.5,5,or 49 or 60 or 61,,,
+,,,6,6,12,or 65 or 71 or 72,,,
+,,,9,9,18,or 89 or 96 or,,,
+,,,14,14,28,142 or 160 or 204 or 290,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,Table 2:  Validating the Supply Type with Document Type.,,,,,
+,,,Following Supply-Document Types are applicable as on 1st October.,,,,,,
+,,,,,,,,,
+Supply Type,Sub Supply Type,,,Document Type,,,From GSTIN (Supplier),,To GSTIN (Buyer)
+Outward,Supply,,,Tax Invoice,,,Self,,Other GSTIN /URP
+,,,,Bill of Supply,,,Self,,Other GSTIN /URP
+,Export,,,Tax Invoice,,,Self,,URP
+,,,,Bill of Supply,,,Self,,URP
+,Job Work,,,Delivery Challan,,,Self,,Other GSTIN/URP
+,SKD/CKD,,,Tax Invoice,,,Self,,Other GSTIN /URP
+,,,,Bill of Supply,,,Self,,Other GSTIN /URP
+,,,,Delivery Challan,,,Self,,Other GSTIN /URP
+,Recipient not known,,,Delivery Challan,,,Self,,Self
+,,,,Others,,,Self,,Self
+,For own Use,,,Delivery Challan,,,Self,,Self
+,Exhibition or fairs,,,Delivery Challan,,,Self,,Self
+,Line Sales,,,Delivery Challan,,,Self,,Self
+,Others,,,Delivery Challan,,,Self,,Self/Other
+,,,,Others,,,Self,,Self/Other
+,,,,,,,,,
+Inward,Supply,,,Tax Invoice,,,Other GSTIN /URP,,Self
+,,,,Bill of Supply,,,Other GSTIN /URP,,Self
+,Import,,,Bill of Entry,,,URP,,Self
+,SKD/CKD,,,Bill of Entry,,,URP,,Self
+,,,,Tax Invoice,,,Other GSTIN /URP,,Self
+,,,,Bill of Supply,,,Other GSTIN /URP,,Self
+,,,,Delivery Challan,,,Other GSTIN /URP,,Self
+,Job Work Returns,,,Delivery Challan,,,Other GSTIN /URP,,Self
+,Sales Return,,,Delivery Challan,,,Other GSTIN /URP,,Self
+,Exhibition or fairs,,,Delivery Challan,,,Self,,Self
+,For Own Use,,,Delivery Challan,,,Self,,Self
+,Others,,,Delivery Challan,,,Self/Other,,Self
+,,,,Others,,,Self/Other,,Self

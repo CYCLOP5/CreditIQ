@@ -1,0 +1,59 @@
+EWB JSON ATTRIBUTES - Version (1.0.0621),,,,,,
+Attribute Name,Type,Description,Attribute Value,Mandatory,,Validations on Columns
+userGstin,Text(15),GSTIN of user,29BQSPA3829E124,Yes,,Only valid GSTIN is allowed.
+supplyType,Char (1),Supply whether it is outward/inward,Refer Master codes,Yes,,Either Inward or Outward is allowed
+subSupplyType,Number(1),Sub types of Supply,Refer Master codes,Yes,,Selection based on Inward or Outward transaction.
+subSupplyDesc,Text(100),Sub supply description is mandatory when the sub supply type is others.,Sub supply description ,Yes,,Only Document Type with the corresponding Sub-Type is allowed. Refer Table 2 in the Validations sheet for more details.
+docType,Char(3),Document Type,Refer Master codes,Yes,,"Only alpha numeric keys and  - (hyphen),   / (slash) and .(dot) are allowed."
+docNo,Text(16),Document Number,78656,Yes,,Document Date should be in DD/MM/YYYY format
+docDate,Text(10),Document Date,01/01/2018,Yes,,Only valid Transaction Types are allowed.
+transType,Number(1),Type of Transaction,Refer Master codes,Yes,,Only alpha numeric keys and  - (hyphen)  / (slash) and .(dot) are allowed.
+fromTrdName,Text(100),LegalName of consignor,Ambuja Private Ltd,No,,Only valid GSTIN is allowed.
+fromGstin,Text(15),GSTIN of the Consignor,29AAACG0569P1Z3,Yes,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+fromAddr1,Text(120),Address of consignor - Line 1,BEML ROAD,No,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+fromAddr2,Text(120),Address of consignor - Line 2,KG ROAD,No,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+fromPlace,Text(50),Place of consignor,BANGALORE,No,,Only 6 digits number is allowed.
+fromPincode,Number(6),Pincode of consignor,560090,Yes,,Only valid state codes are allowed.
+fromStateCode,Number(2),State of consignor,Refer Master codes,Yes,,Only valid state codes are allowed.
+actualFromStateCode,Number(2),State from where it is being dispatched,Refer Master codes,Yes,,Only alpha numeric keys and  - (hyphen)  / (slash) and .(dot) are allowed.
+toTrdName,Text(100),LegalName of consignee,HUKKERI PVT LTD,No,,Only valid GSTIN is allowed.
+toGstin,Text(15),GSTIN of consignee,URP,Yes,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+toAddr1,Text(120),Address of consignee - Line 1,VIDYARANYAPUR ROAD,No,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+toAddr2,Text(120),Address of consignee- Line 2,MG ROAD,No,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+toPlace,Text(50),Place of consignee,BANGALORE,No,,Only 6 digit number is allowed.
+toPincode,Number(6),Pincode of the consignee,560090,Yes,,Only valid state codes are allowed.
+toStateCode,Number(2),State of the consignee,Refer Master codes,Yes,,Only valid state codes are allowed.
+actualToStateCode,Number(2),State to where it is being shipped,Refer Master codes,Yes,,Only numbers are allowed.
+ totalValue,Number(18),sum of assessable value,12,No,,Only numbers are allowed.
+cgstValue,Number(18),cgstValue,12,No,,Only numbers are allowed.
+ sgstValue,Number(18), sgstValue,12,No,,Only numbers are allowed.
+ igstValue,Number(18), igstValue,12,No,,Only numbers are allowed.
+ cessValue,Number(18), cessValue,12,No,,Only numbers are allowed.
+TotNonAdvolVal,Number(18),Total Non Advool Value,1,No,,Negative and Non negative numbers are allowed.
+OthValue,Number(18),Other charges,1,No,,Valid 4 digits or 8 digits HSN code is allowed.
+mainHsnCode,Text(8),HSN Code of the Product,1001,No,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+productName,Text(100),Name of the Product,IRON,No,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+productDesc,Text(100),Description of the Product,IRON PYRITES,No,,Valid 4 digits or 8 digits HSN code is allowed.
+hsnCode,Text(8),HSN Code of the Product,1005,Yes,,Valid Unit is allowed.
+qtyUnit,Text(3),Unit of the Product,Refer Master codes,No,,Only numbers are allowed.
+quantity,Number(12),Quantity of Product,12,No,,Only numbers are allowed.
+taxableAmount,Number(18),taxable amount,31,Yes,,Only Standard Tax Rates are allowed(Refer Table 1 in the Validation sheet).
+sgstRate,Number(3),sgstRate,12,No,,Only Standard Tax Rates are allowed(Refer Table 1 in the Validation sheet).
+cgstRate,Number(3),cgstRate,12,No,,Only Standard Tax Rates are allowed(Refer Table 1 in the Validation sheet).
+igstRate,Number(3),igstRate,12,No,,Only Standard Tax Rates are allowed(Refer Table 1 in the Validation sheet).
+cessRate,Number(3),cessRate,12,No,,Only Standard Tax Rates are allowed(Refer Table 1 in the Validation sheet).
+cessNonAdvol,Number(3),cess Non Advol Rate,1,No,,"Sum of Assessable value, CGST Amount, SGST Amount, IGST Amount, CESS Amount, CESS Non Advol Amount and Others  should be lesser than or equal to  the Total Invoice Value.(Only 2 Rupee difference is allowed)"
+totInvValue,Number(18),"Sum of assessable value , tax value and other charges",65,Yes,,Only valid Trans Mode is allowed.
+transMode,Number(1),Mode of transportation,Refer Master codes,No,,Only numbers are allowed. Distance should be lesser than or equal to 4000 KM.
+transDistance,Number(4),Distance of transportation,80,Yes,,"Only alpha numeric keys and  @,  # , -,  /,, &, . are allowed."
+transporterName,Text(25),Transporter Name,TAKRE PVT LTD,No,,Only valid GSTIN is allowed.
+transporterId,Text(15),Transporter Id,28ASDRF0767H1V4,Conditional,Mandatory if Trans mode is Road and Vehicle number is not entered,"Only alpha numeric keys and  - (hyphen),   / (slash) and .(dot) are allowed."
+transDocNo,Text(16),Transporter Document Number,4567,Conditional,"Mandatory if Trans mode is Rail/Air  
+Optional if Trans mode is Ship / Road cum Ship",Trans Date should be in DD/MM/YYYY format.
+transDocDate,Text(10),Transporter Doc Date,10/01/2018,Conditional,"Mandatory if Trans mode is Rail/Air, Optional if Trans mode is Ship / Road cum Ship",Only valid vehicle numbers are allowed.
+vehicleNo,Text(15),Vehicle Number,"KA12KA1234          OR
+KA12K1234             OR   
+KA123456                OR
+KAR1234                  OR              KA123K1234           OR 
+KA12KAR1234        OR   DFXXXXXX               OR         TMXXXXXX               OR           BPXXXXXX               OR  NPXXXXXX",Conditional,"Mandatory if Mode of transportation is Road and TransId is not entered ,                      Optional if mode of transportion is Ship/Road cum Ship",Either Regular or ODC (Over Dimentional Cargo) are allowed.
+vehicleType,Text(1),Vehicle Type,Refer Master codes,Conditional,Mandatory If Trans Mode is Road,
