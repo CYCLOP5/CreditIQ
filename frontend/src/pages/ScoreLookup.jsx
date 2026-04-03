@@ -164,7 +164,7 @@ export default function ScoreLookupContent({ result, onResult }) {
       intervalRef.current = setInterval(async () => {
         try {
           const data = await getScore(task_id);
-          if (data.status !== 'pending') {
+          if (data.status === 'complete' || data.status === 'failed') {
             clearPolling();
             setLoading(false);
             onResult(data);

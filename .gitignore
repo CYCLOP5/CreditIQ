@@ -12,7 +12,7 @@ data/raw/*.parquet
 *.md
 data/features
 data/models
-
+!markdownstochat/mmmmapimusic.md
 # BUT keep architecture file
 !markdownstochat/archi.md
 # Distribution / packaging
