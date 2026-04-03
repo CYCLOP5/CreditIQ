@@ -426,3 +426,17 @@ defines rest interfaces exposed by fastapi application for orchestration and rea
 | `post` | `/score/{task_id}/chat` | `ChatRequest` -> `text/event-stream` | rag-based phi-3 credit analyst q&a |
 | `post` | `/audit/replay` | `AuditReplayRequest` -> `AuditReplayResponse` | event-sourced time-travel replay of feature state |
 
+---
+
+## section 9 — ui proxy endpoints 
+
+the following frontend-specific proxies are exposed. they are fully stateful but write to `data/frontend_db.json`.
+
+| module | endpoints | purpose | authentication |
+|---|---|---|---|
+| auth | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | injects local jwt and grants mock access for rbac testing | none |
+| msme | `POST /loan-requests`, `PUT /permissions/{id}`, `POST /disputes` | msme user lifecycle creating scopes | requires `msme` role |
+| bank | `GET /loan-requests`, `GET /loan-requests/{id}/score`, `PUT /loan-requests/{id}/decision` | loan officer queues. score fetches directly access redis if permission is granted | requires `loan_officer` |
+| analyst | `GET /score-history`, `GET /transactions/{gstin}/graph`, `PUT /disputes/{id}/resolve` | analyst tools querying mock topology | requires `credit_analyst` |
+| risk | `GET /fraud-alerts`, `GET /risk-thresholds`, `GET /transactions/graph` | systemic risk review covering parameters and topology | requires `risk_manager` |
+| admin | `GET /banks`, `GET /api-keys`, `GET /users`, `GET /audit-log` | simulated tenant administration endpoints | requires `admin` |
