@@ -16,7 +16,7 @@
 | Architecture deep-dive | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Mathematical foundations | [math.md](math.md) |
 | Tools, libraries & alternatives | [tools.md](tools.md) |
-| Data generation & profiles | [DATA_GENERATION.md](DATA_GENERATION.md) |
+| Data generation & profiles | [howisthedatamade.md](howisthedatamade.md) |
 | Database & redis schemas | [schema.md](schema.md) |
 | System bootstrapping | [bootstrap.md](bootstrap.md) |
 | API service architecture | [api.md](api.md) |
