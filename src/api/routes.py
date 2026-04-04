@@ -6,6 +6,7 @@ redis interaction via app state connection shared across requests
 
 from __future__ import annotations
 
+import os
 import json
 import uuid
 from datetime import datetime, timezone
@@ -146,27 +147,10 @@ async def health(request: Request) -> HealthResponse:
 from src.api.schemas import ChatRequest
 from typing import AsyncGenerator
 
-_chat_llm_instance = None
+
 
 def get_chat_llm():
-    """
-    lazy loads phi-3-mini locally for chat inference
-    cpu-only n_gpu_layers=0 limits memory consumption
-    imports llama_cpp lazily to avoid crashing the api if not installed
-    """
-    global _chat_llm_instance
-    if _chat_llm_instance is None:
-        from llama_cpp import Llama
-        from src.llm.translator import get_model_path
-        print("loading chat llm lazily on cpu")
-        _chat_llm_instance = Llama(
-            model_path=str(get_model_path()),
-            n_gpu_layers=0,
-            n_ctx=2048,
-            n_threads=4,
-            verbose=False,
-        )
-    return _chat_llm_instance
+    pass
 
 @router.get("/score/{task_id}/stream")
 async def stream_score_progress(request: Request, task_id: str):
@@ -195,34 +179,60 @@ async def stream_score_progress(request: Request, task_id: str):
 
 @router.post("/score/{task_id}/chat")
 async def chat_with_score(request: Request, task_id: str, body: ChatRequest):
-    """
-    interactive credit analyst genai chat feature
-    retrieves cached score and streams inferences directly
-    """
     from sse_starlette.sse import EventSourceResponse
+    import json
+    import httpx
+
     redis_client: aioredis.Redis = request.app.state.redis
     data = await redis_client.hgetall(f"score:{task_id}")
     
     if not data or data.get("status") not in ("complete", "failed"):
         raise HTTPException(status_code=400, detail="score not ready for chat")
         
-    prompt = f"""<|system|>You are an AI Credit Analyst using only this MSME data:
+    system_prompt = f"""You are an AI Credit Analyst discussing this exact MSME data profile:
 Score: {data.get('credit_score', 'N/A')}
 Risk Band: {data.get('risk_band', 'N/A')}
 Fraud Flag: {data.get('fraud_flag', 'false')}
 Top Reasons: {data.get('top_reasons', '[]')}
 Fraud Details: {data.get('fraud_details', 'null')}
-<|end|>
-<|user|>
-{body.query}
-<|end|>
-<|assistant|>"""
+Answer concisely based only on this context. 
+If the user's question goes beyond this data, gently bring it back."""
 
-    llm = get_chat_llm()
-    
-    def stream_generator():
-        for chunk in llm(prompt, max_tokens=512, stop=["<|end|>", "<|user|>"], stream=True):
-            yield chunk["choices"][0]["text"]
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+
+    async def stream_generator():
+        async with httpx.AsyncClient() as client:
+            try:
+                async with client.stream(
+                    "POST",
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "qwen/qwen-2.5-72b-instruct:free",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": body.query}
+                        ],
+                        "stream": True
+                    },
+                    timeout=15.0
+                ) as response:
+                    async for line in response.aiter_lines():
+                        if line.startswith("data: "):
+                            if line.strip() == "data: [DONE]":
+                                break
+                            try:
+                                chunk = json.loads(line[6:])
+                                text_val = chunk["choices"][0]["delta"].get("content", "")
+                                if text_val:
+                                    yield text_val
+                            except Exception:
+                                pass
+            except Exception as e:
+                yield f"\n\n[Connection Error: {str(e)}]"
             
     return EventSourceResponse(stream_generator())
 

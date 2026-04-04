@@ -120,7 +120,7 @@ def pick_gstins(profiles: pl.DataFrame, in_features: set[str]) -> tuple[dict, di
         circular = profiles.filter(pl.col("profile_type") == "SHELL_CIRCULAR").sort("business_age_months", descending=True)
 
     imran_row = circular.row(0, named=True)
-    ring_id = imran_row["ring_id"] if "ring_id" in imran_row and imran_row["ring_id"] is not None else "ring_unknown"
+    ring_id = imran_row["circular_ring_id"] if "circular_ring_id" in imran_row and imran_row["circular_ring_id"] is not None else "ring_unknown"
     
     imran = {
         "gstin": imran_row["gstin"],
@@ -134,7 +134,7 @@ def pick_gstins(profiles: pl.DataFrame, in_features: set[str]) -> tuple[dict, di
     if ring_id != "ring_unknown":
         ring_members_df = (
             profiles.filter(
-                (pl.col("ring_id") == ring_id) &
+                (pl.col("circular_ring_id") == ring_id) &
                 (pl.col("gstin").is_in(list(in_features))) &
                 (pl.col("gstin") != imran["gstin"])
             )

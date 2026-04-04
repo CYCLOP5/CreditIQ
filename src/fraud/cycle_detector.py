@@ -152,7 +152,20 @@ class CycleDetector:
         if scc_graph.number_of_edges() == 0:
             return []
         
-        all_cycles = list(nx.simple_cycles(scc_graph, length_bound=self.cycle_length_bound))
+        # Convert to simple DiGraph to avoid combinatorial explosion with parallel edges
+        simple_scc = nx.DiGraph(scc_graph)
+        from itertools import islice
+        
+        # We only care about cycles of length >= 3
+        # simple_cycles yields them in basically arbitrary order but typically smaller first
+        # Let's filter while generating
+        all_cycles = []
+        for c in nx.simple_cycles(simple_scc, length_bound=self.cycle_length_bound):
+            if len(c) >= 3:
+                all_cycles.append(c)
+            if len(all_cycles) >= 500:
+                break
+                
         temporal_cycles = [c for c in all_cycles if is_temporal_cycle(c, scc_graph)]
         return temporal_cycles
 

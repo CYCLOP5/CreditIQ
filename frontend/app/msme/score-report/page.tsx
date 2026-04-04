@@ -86,11 +86,33 @@ export default function MsmeScoreReport() {
     setChatInput("");
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     try {
-      const res = (await scoreApi.chat(score.task_id, { query: msg })) as any;
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: res.reply || "I'm processing that." },
-      ]);
+            const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: msg }],
+          context: { scoreData: score }
+        })
+      });
+
+      if (!res.ok) throw new Error("Network error");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      
+      let botMsg = "";
+      setChatMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        botMsg += decoder.decode(value, { stream: true });
+        
+        setChatMessages(prev => {
+          const newArray = [...prev];
+          newArray[newArray.length - 1] = { ...newArray[newArray.length - 1], content: botMsg };
+          return newArray;
+        });
+      }
     } catch {
       setChatMessages((prev) => [
         ...prev,

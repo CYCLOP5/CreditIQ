@@ -1,0 +1,145 @@
+{
+  "users": [
+    {
+      "id": "usr_001",
+      "name": "Priya Sharma",
+      "email": "priya@bakerycraft.in",
+      "role": "msme",
+      "gstin": "19HLPRM4249Z3Z1",
+      "status": "active"
+    },
+    {
+      "id": "usr_002",
+      "name": "Rahul Desai",
+      "email": "rahul@boltautomotive.in",
+      "role": "msme",
+      "gstin": "09EXVAF9205D6Z0",
+      "status": "active"
+    },
+    {
+      "id": "usr_003",
+      "name": "Imran Shaikh",
+      "email": "imran@textilezone.in",
+      "role": "msme",
+      "gstin": "07AFDYP4721H7Z9",
+      "status": "active"
+    },
+    {
+      "id": "usr_004",
+      "name": "Anjali Mehta",
+      "email": "anjali@sbiloans.co.in",
+      "role": "loan_officer",
+      "bank_id": "bank_001",
+      "status": "active"
+    },
+    {
+      "id": "usr_005",
+      "name": "Vikram Nair",
+      "email": "vikram@analyst.platform.in",
+      "role": "credit_analyst",
+      "status": "active"
+    },
+    {
+      "id": "usr_006",
+      "name": "Deepa Krishnan",
+      "email": "deepa@risk.platform.in",
+      "role": "risk_manager",
+      "status": "active"
+    },
+    {
+      "id": "usr_007",
+      "name": "Arjun Kapoor",
+      "email": "arjun@admin.platform.in",
+      "role": "admin",
+      "status": "active"
+    }
+  ],
+  "loan_requests": [],
+  "permissions": [],
+  "disputes": [],
+  "reminders": [],
+  "notifications": [],
+  "banks": [
+    {
+      "id": "bank_001",
+      "name": "State Bank of India",
+      "registration_number": "RBI-SCB-0001",
+      "status": "active",
+      "officer_count": 1,
+      "api_key_count": 0,
+      "created_at": "2026-01-01T00:00:00"
+    },
+    {
+      "id": "bank_002",
+      "name": "Canara Bank",
+      "registration_number": "RBI-SCB-0045",
+      "status": "active",
+      "officer_count": 0,
+      "api_key_count": 0,
+      "created_at": "2026-01-01T00:00:00"
+    },
+    {
+      "id": "bank_003",
+      "name": "HDFC Bank",
+      "registration_number": "RBI-PVT-0201",
+      "status": "active",
+      "officer_count": 0,
+      "api_key_count": 0,
+      "created_at": "2026-01-01T00:00:00"
+    },
+    {
+      "id": "bank_004",
+      "name": "Axis Bank",
+      "registration_number": "RBI-PVT-0312",
+      "status": "suspended",
+      "officer_count": 0,
+      "api_key_count": 0,
+      "created_at": "2026-01-01T00:00:00"
+    }
+  ],
+  "api_keys": [],
+  "audit_log": [],
+  "risk_thresholds": {
+    "bands": [
+      {
+        "band": "very_low",
+        "min_score": 800,
+        "max_score": 900
+      },
+      {
+        "band": "low",
+        "min_score": 700,
+        "max_score": 799
+      },
+      {
+        "band": "medium",
+        "min_score": 550,
+        "max_score": 699
+      },
+      {
+        "band": "high",
+        "min_score": 300,
+        "max_score": 549
+      }
+    ],
+    "recommendation_rules": [
+      {
+        "msme_category": "micro",
+        "risk_band": "very_low",
+        "max_wc_amount": 5000000,
+        "max_term_amount": 10000000
+      }
+    ],
+    "system_config": {
+      "fraud_confidence_threshold": 0.7,
+      "data_maturity_min_months": 3
+    },
+    "amnesty_config": {
+      "active": false,
+      "quarter": 1,
+      "year": 2025,
+      "filing_penalty_multiplier": 0.0,
+      "description": "GST amnesty: late filings in selected quarter will not be penalised in credit scoring"
+    }
+  }
+}

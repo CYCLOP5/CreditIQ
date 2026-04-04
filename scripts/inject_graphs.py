@@ -15,8 +15,11 @@ def build_graphs():
     print("loading upi data...")
     df = pl.concat([pl.read_parquet(f) for f in upi_files])
     
+    print("loading profiles...")
+    profiles_df = pl.read_parquet("data/raw/msme_profiles.parquet")
+    
     print("converting to edge list...")
-    edges_df = upi_edges_from_transactions(df)
+    edges_df = upi_edges_from_transactions(df, profiles_df)
     
     print(f"saving {len(edges_df)} edges...")
     builder.save_edges(edges_df, "20260404")

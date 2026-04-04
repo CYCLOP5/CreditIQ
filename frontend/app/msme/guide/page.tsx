@@ -95,15 +95,33 @@ export default function MsmeGuidePage() {
     setInput("");
 
     try {
-      const res = await msmeApi.chat({ message: input, language }) as any;
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: res.reply || "I am sorry, I do not understand.",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+            const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: input }],
+          context: { language, selectedTopic }
+        })
+      });
+
+      if (!res.ok) throw new Error("Network error");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      
+      let botMsg = "";
+      setMessages(prev => [...prev, { role: "assistant", content: "", timestamp: new Date().toISOString() }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        botMsg += decoder.decode(value, { stream: true });
+        
+        setMessages(prev => {
+          const newArray = [...prev];
+          newArray[newArray.length - 1] = { ...newArray[newArray.length - 1], content: botMsg };
+          return newArray;
+        });
+      }
     } catch {
       setMessages((prev) => [
         ...prev,

@@ -13,12 +13,25 @@
     "gstin": "07AFDYP4721H7Z9",
     "name": "Imran Circular Enterprises",
     "profile_type": "SHELL_CIRCULAR",
-    "ring_id": "ring_unknown",
-    "ring_members": []
+    "ring_id": "ring_006",
+    "ring_members": [
+      {
+        "gstin": "19SZNHC1210R3Z4",
+        "name": "Khatri-Bhardwaj"
+      },
+      {
+        "gstin": "36WDZKD9879O9Z6",
+        "name": "Kade-Sani"
+      },
+      {
+        "gstin": "22ITJYW9238N1Z5",
+        "name": "Narayanan Inc"
+      }
+    ]
   },
   "cohort_medians": {
     "filing_compliance_rate": 0.675,
     "upi_30d_inbound_count": 11,
-    "fraud_confidence": 0.01
+    "fraud_confidence": 0.012134019999999999
   }
 }

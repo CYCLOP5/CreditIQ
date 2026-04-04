@@ -125,7 +125,7 @@ class FraudGraphBuilder:
         return partitions
 
 
-def upi_edges_from_transactions(upi_df: pl.DataFrame) -> pl.DataFrame:
+def upi_edges_from_transactions(upi_df: pl.DataFrame, profiles_df: pl.DataFrame = None) -> pl.DataFrame:
     """
     converts upi transaction dataframe edge list format
     outbound transactions only produce directed edges gstin counterparty
@@ -133,6 +133,34 @@ def upi_edges_from_transactions(upi_df: pl.DataFrame) -> pl.DataFrame:
     """
     filtered = upi_df.filter(
         (pl.col("direction") == "outbound") & (pl.col("status") == "success")
+    )
+    
+    if profiles_df is not None:
+        # Map counterparty_vpa to its actual GSTIN
+        vpa_to_gstin = profiles_df.select([pl.col("vpa"), pl.col("gstin").alias("to_gstin")])
+        filtered = filtered.join(vpa_to_gstin, left_on="counterparty_vpa", right_on="vpa", how="left")
+        # For external VPAs not in our profiles, just keep the VPA string or fill nulls
+        filtered = filtered.with_columns(
+            pl.coalesce(["to_gstin", "counterparty_vpa"]).alias("to_gstin")
+        )
+    else:
+        filtered = filtered.with_columns(pl.col("counterparty_vpa").alias("to_gstin"))
+
+    return filtered.select(
+        [
+            pl.col("gstin").alias("from_gstin"),
+            pl.col("to_gstin"),
+            pl.col("amount"),
+            pl.col("timestamp"),
+            pl.lit("upi").alias("txn_type"),
+            (
+                pl.col("gstin")
+                + pl.lit("_")
+                + pl.col("to_gstin")
+                + pl.lit("_")
+                + pl.col("timestamp").cast(pl.Utf8)
+            ).alias("edge_id"),
+        ]
     )
     return filtered.select(
         [

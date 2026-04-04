@@ -49,7 +49,7 @@ async def get_gstin_details(gstin: str, user: dict = Depends(require_role(["cred
         
         # Timeline grouping by day
         timeline_df = upi_lf.with_columns(
-            pl.col("timestamp").dt.date().alias("date")
+            pl.col("timestamp").str.to_datetime().dt.date().alias("date")
         ).group_by("date").agg([
             pl.col("amount").sum().alias("daily_volume"),
             pl.col("amount").count().alias("daily_count")
@@ -78,7 +78,7 @@ async def get_gstin_details(gstin: str, user: dict = Depends(require_role(["cred
         
         # Timeline grouping by day
         timeline_df = ewb_lf.with_columns(
-            pl.col("timestamp").dt.date().alias("date")
+            pl.col("timestamp").str.to_datetime().dt.date().alias("date")
         ).group_by("date").agg([
             pl.col("totalValue").sum().alias("daily_ewb_volume"),
             pl.col("totalValue").count().alias("daily_ewb_count")
