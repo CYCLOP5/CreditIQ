@@ -47,7 +47,8 @@ export const scoreApi = {
       method: "POST",
       body: JSON.stringify({ gstin }),
     }),
-  get: (taskId: string) => apiFetch<Record<string, unknown>>(`/score/${taskId}`),
+  get: (taskId: string) =>
+    apiFetch<Record<string, unknown>>(`/score/${taskId}`),
   chat: (taskId: string, body: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>(`/score/${taskId}/chat`, {
       method: "POST",
@@ -107,8 +108,7 @@ export const permApi = {
 
 // ── Disputes ──────────────────────────────────────────────────────────────────
 export const disputeApi = {
-  list: (params?: Params) =>
-    apiFetch<unknown[]>(`/disputes${buildQs(params)}`),
+  list: (params?: Params) => apiFetch<unknown[]>(`/disputes${buildQs(params)}`),
   create: (body: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>("/disputes", {
       method: "POST",
@@ -190,8 +190,10 @@ export const adminApi = {
       body: JSON.stringify(body),
     }),
   getFraudAlerts: () => apiFetch<unknown[]>("/fraud-alerts"),
-  getFraudAlert: (gstin: string) => apiFetch<Record<string, unknown>>(`/fraud-alerts/${gstin}`),
-  getRiskThresholds: () => apiFetch<Record<string, unknown>>("/risk-thresholds"),
+  getFraudAlert: (gstin: string) =>
+    apiFetch<Record<string, unknown>>(`/fraud-alerts/${gstin}`),
+  getRiskThresholds: () =>
+    apiFetch<Record<string, unknown>>("/risk-thresholds"),
   updateRiskThresholds: (body: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>("/risk-thresholds", {
       method: "PUT",
@@ -199,9 +201,14 @@ export const adminApi = {
     }),
   getScoreHistory: (gstin: string) =>
     apiFetch<unknown[]>(`/score-history?gstin=${gstin}`),
-  getGlobalGraph: () => apiFetch<Record<string, unknown>>("/transactions/graph"),
+  getGlobalGraph: () =>
+    apiFetch<Record<string, unknown>>("/transactions/graph"),
   getGstinGraph: (gstin: string) =>
     apiFetch<Record<string, unknown>>(`/transactions/${gstin}/graph`),
+  getEwbDistribution: (gstin: string) =>
+    apiFetch<Record<string, unknown>>(`/transactions/${gstin}/ewb-distribution`),
+  getReceivablesGap: (gstin: string) =>
+    apiFetch<Record<string, unknown>>(`/transactions/${gstin}/receivables-gap`),
 };
 
 // ── Notifications ─────────────────────────────────────────────────────────────
@@ -230,6 +237,8 @@ export const msmeApi = {
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 export const analyticsApi = {
-  getCohortMedian: (category: string = "all") => apiFetch<Record<string, unknown>>(`/analytics/cohort-median?msme_category=${category}`),
+  getCohortMedian: (category: string = "all") =>
+    apiFetch<Record<string, unknown>>(
+      `/analytics/cohort-median?msme_category=${category}`,
+    ),
 };
-

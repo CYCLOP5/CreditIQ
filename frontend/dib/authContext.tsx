@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { authApi, notifApi } from "@/dib/api";
-import { MOCK_NOTIFICATIONS } from "@/dib/mockData";
 
 export type Role =
   | "msme"
@@ -41,13 +41,14 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const pathname = usePathname();
 
-  const fetchNotifications = async (u: User) => {
+  const fetchNotifications = async (_u: User) => {
     try {
       const data = await notifApi.list(false);
       setNotifications(data as any[]);
     } catch {
-      setNotifications(MOCK_NOTIFICATIONS[u.id] ?? []);
+      setNotifications([]);
     }
   };
 
@@ -58,9 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u);
       fetchNotifications(u);
     }
-  }, []);
+  }, [pathname]);
 
-  const login = async (email: string, password: string): Promise<LoginResult> => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<LoginResult> => {
     try {
       const { token, user: raw } = await authApi.login(email, password);
       sessionStorage.setItem("msme_token", token);

@@ -4,6 +4,7 @@ import { useAuth } from "@/dib/authContext";
 import { useRouter } from "next/navigation";
 import { FEATURE_LABELS } from "@/dib/mockData";
 import { adminApi } from "@/dib/api";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader, RiskBadge } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceArea,
 } from "recharts";
 
 const FEATURE_COLORS: Record<string, string> = {
@@ -27,6 +29,7 @@ const FEATURE_COLORS: Record<string, string> = {
   upi_30d_inbound_count: "#22c55e",
   eway_bill_mom_growth: "#f59e0b",
   longest_gap_days: "#8b5cf6",
+  ewb_smurfing_index: "#f97316",
 };
 
 const AVAILABLE_FEATURES = [
@@ -35,7 +38,21 @@ const AVAILABLE_FEATURES = [
   "upi_30d_inbound_count",
   "eway_bill_mom_growth",
   "longest_gap_days",
+  "ewb_smurfing_index",
 ];
+
+// Maps a GST amnesty quarter + year to the date labels that appear on the chart.
+// Returns [startLabel, endLabel] matching the "Mon YY" format used by chart data.
+function amnestyDateLabels(quarter: number, year: number): [string, string] {
+  // Quarter is fiscal (Q1=Apr-Jun, Q2=Jul-Sep, Q3=Oct-Dec, Q4=Jan-Mar)
+  const fiscalStartMonth = [3, 6, 9, 0][quarter - 1]; // 0-indexed month
+  const fiscalEndMonth = [5, 8, 11, 2][quarter - 1];
+  const startYear = fiscalStartMonth === 0 ? year + 1 : year; // Q4 spills into next year
+  const endYear = fiscalEndMonth < fiscalStartMonth ? year + 1 : startYear;
+  const fmt = (m: number, y: number) =>
+    new Date(y, m, 15).toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+  return [fmt(fiscalStartMonth, startYear), fmt(fiscalEndMonth, endYear)];
+}
 
 export default function SignalTrendsPage() {
   const { user } = useAuth();
@@ -47,6 +64,13 @@ export default function SignalTrendsPage() {
   const [activeFeatures, setActiveFeatures] = useState<Set<string>>(
     new Set(AVAILABLE_FEATURES),
   );
+  const [amnestyConfig, setAmnestyConfig] = useState<any>(null);
+
+  useEffect(() => {
+    adminApi.getRiskThresholds().then((data: any) => {
+      if (data?.amnesty_config) setAmnestyConfig(data.amnesty_config);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
 
@@ -127,7 +151,7 @@ export default function SignalTrendsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 className="pl-9 font-mono text-sm"
-                placeholder="Enter GSTIN (e.g. 33WMCXS5986T3Z1)"
+                placeholder="Enter GSTIN (e.g. 36CWGXT1223V5Z8)"
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -148,7 +172,7 @@ export default function SignalTrendsPage() {
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="text-xs text-muted-foreground">Try:</span>
-            {["29GYWWJ1876Z9Z0", "33WMCXS5986T3Z1", "29RASVZ4103X2Z1"].map((g) => (
+            {["29MUSKV7503C9Z0", "36CWGXT1223V5Z8", "19DUTDZ1506O6Z3"].map((g) => (
               <button
                 key={g}
                 className="text-xs font-mono text-primary underline underline-offset-2 hover:no-underline"
@@ -170,6 +194,18 @@ export default function SignalTrendsPage() {
 
       {history && chartData.length > 0 && (
         <div className="space-y-6">
+          {/* Amnesty active banner */}
+          {amnestyConfig?.active && (
+            <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-300 rounded-xl">
+              <Badge className="bg-amber-400 text-amber-900 hover:bg-amber-400 text-xs shrink-0">Amnesty Active</Badge>
+              <p className="text-xs text-amber-800">
+                GST amnesty is <strong>ON</strong> for Q{amnestyConfig.quarter} FY{amnestyConfig.year}–{amnestyConfig.year + 1}.
+                Late filing penalties suppressed to <strong>{(amnestyConfig.filing_penalty_multiplier * 100).toFixed(0)}%</strong>.
+                The shaded region on the chart marks the amnesty window.
+              </p>
+            </div>
+          )}
+
           {/* Score trend */}
           <Card className="border-border shadow-sm">
             <CardHeader className="py-3 px-5 border-b">
@@ -190,6 +226,20 @@ export default function SignalTrendsPage() {
                     formatter={(value: any) => [value, "Credit Score"]}
                     contentStyle={{ fontSize: 12 }}
                   />
+                  {amnestyConfig?.active && (() => {
+                    const [start, end] = amnestyDateLabels(amnestyConfig.quarter, amnestyConfig.year);
+                    return (
+                      <ReferenceArea
+                        x1={start}
+                        x2={end}
+                        fill="#fbbf24"
+                        fillOpacity={0.18}
+                        stroke="#f59e0b"
+                        strokeOpacity={0.5}
+                        label={{ value: "Amnesty Window", position: "insideTop", fontSize: 10, fill: "#92400e" }}
+                      />
+                    );
+                  })()}
                   <Line
                     type="monotone"
                     dataKey="score"
@@ -253,13 +303,26 @@ export default function SignalTrendsPage() {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip contentStyle={{ fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
+                  {amnestyConfig?.active && (() => {
+                    const [start, end] = amnestyDateLabels(amnestyConfig.quarter, amnestyConfig.year);
+                    return (
+                      <ReferenceArea
+                        x1={start}
+                        x2={end}
+                        fill="#fbbf24"
+                        fillOpacity={0.15}
+                        stroke="#f59e0b"
+                        strokeOpacity={0.4}
+                      />
+                    );
+                  })()}
                   {AVAILABLE_FEATURES.filter((f) => activeFeatures.has(f)).map(
                     (f) => (
                       <Line
                         key={f}
                         type="monotone"
                         dataKey={f}
-                        name={FEATURE_LABELS[f] || f}
+                        name={FEATURE_LABELS[f] || (f === "ewb_smurfing_index" ? "EWB Smurfing Index" : f)}
                         stroke={FEATURE_COLORS[f]}
                         strokeWidth={2}
                         dot={{ r: 3 }}

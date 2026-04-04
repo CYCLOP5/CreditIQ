@@ -104,6 +104,20 @@ this platform implements advanced algorithmic features specifically engineered t
 * **event-sourced audit trail:** provides a `/audit/replay` endpoint for strict regulatory review, literally rewinding the temporal stream to logically rebuild exact historical decision contexts.
 * **temporal graph validation:** circular transaction rings are only flagged if the cashflows actually move sequentially forward in time (`is_temporal_cycle`), significantly reducing false positives vs strict simple cycle detection.
 
+### twist implementations
+
+**twist 1 — fraud ring topology visualisation (implemented)**
+the fraud topology dashboard (`/risk/fraud-topology`) renders the full multi-directed upi graph as an interactive 3d force graph using three.js. businesses are nodes, upi payments are directed edges with particle animation. fraud ring members are coloured red, clean entities teal. node size encodes fraud risk weight. a ranked bar chart on the sidebar shows **eigenvector centrality (pagerank)** for every node — high pagerank with zero gst footprint immediately flags a bipartite shell mule hub. clicking any node reveals its ring membership and confidence score. role-gated to `risk_manager`.
+
+**twist 2 — gst amnesty scheme feature weight adjustment (implemented)**
+the risk thresholds page (`/risk/thresholds`) includes a **gst amnesty configuration panel** accessible to the `risk_manager`. the risk manager toggles amnesty on/off, selects the fiscal quarter (q1–q4) and year, and sets a `filing_penalty_multiplier` (0.0 = full waiver, 1.0 = no change). the config persists in the mock db via `put /risk-thresholds`. the scoring worker reads `amnesty_config.active` at inference time and scales `filing_compliance_rate` and `gst_filing_delay_trend` by the multiplier for gstins that filed late during the amnesty window — no model retraining required. the signal trends analyst page renders an amber **amnesty overlay band** on both the credit score trend chart and the feature signal chart, marking the exact quarter window.
+
+### advanced signal visualisations
+
+* **ewb smurfing histogram** (`/analyst/shap-explorer`): after scoring any gstin, displays a bucketed bar chart of e-way bill values. the ₹45,000–₹49,999 "smurf band" (below the mandatory ₹50,000 reporting threshold) is highlighted in red. a smurfing index (0–1) is computed and a "high smurfing risk" badge fires when the index exceeds 30%.
+* **gst vs upi receivables gap chart** (`/analyst/shap-explorer`): grouped monthly bar chart comparing gst-invoiced amounts against actual upi inbound receipts. large gaps expose accounts-receivable bottlenecks or unaccounted cash flows. a callout shows the gap percentage for the latest period.
+* **ewb smurfing index signal trend** (`/analyst/signal-trends`): `ewb_smurfing_index` is now a sixth toggleable feature line in the credit analyst signal trends chart, alongside filing compliance, gst revenue cv, upi inbound count, eway bill growth, and filing gap days.
+
 ## 2. system architecture
 
 ### end-to-end pipeline diagram

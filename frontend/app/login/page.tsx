@@ -8,9 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { MOCK_USERS } from "@/dib/mockData";
-import image from "@/img/image.jpg";
+import image from "@/img/photo.jpeg";
+import { Mail, Lock, LogIn, User, Shield } from "lucide-react";
 import type { Role } from "@/dib/authContext";
+// import card from "@/img/card.png";
+
+// Demo credentials — mirrors src/api/mock_db.py exactly. All passwords are "demo".
+const DEMO_USERS = [
+  { id: "usr_001", name: "Priya Sharma",   email: "priya@bakerycraft.in",       role: "msme" },
+  { id: "usr_002", name: "Rahul Desai",    email: "rahul@boltautomotive.in",    role: "msme" },
+  { id: "usr_003", name: "Imran Shaikh",   email: "imran@textilezone.in",       role: "msme" },
+  { id: "usr_004", name: "Anjali Mehta",   email: "anjali@sbiloans.co.in",      role: "loan_officer" },
+  { id: "usr_005", name: "Vikram Nair",    email: "vikram@analyst.platform.in", role: "credit_analyst" },
+  { id: "usr_006", name: "Deepa Krishnan", email: "deepa@risk.platform.in",     role: "risk_manager" },
+  { id: "usr_007", name: "Arjun Kapoor",   email: "arjun@admin.platform.in",    role: "admin" },
+];
 
 const ROLE_LABELS: Record<string, string> = {
   msme: "MSME Owner",
@@ -57,34 +69,45 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] lg:h-[700px]">
-        <div className="p-6 sm:p-10 lg:p-12 flex items-center">
-          <div className="w-full max-w-md mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-foreground text-balance">
-                MSME Credit Platform
+    <div className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden">
+      <div className="w-full max-w-6xl rounded-2xl border border-border bg-card shadow-2xl grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] lg:h-[700px] overflow-hidden">
+        <div className="p-6 sm:p-8 lg:p-10 flex items-center overflow-hidden">
+          <div className="w-full max-w-md mx-auto pr-1">
+            {/* <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Shield className="w-6 h-6 text-primary" />
+              <h1 className="text-2xl font-bold text-foreground">
+                Credora AI
               </h1>
             </div>
+            <p className="text-sm text-muted-foreground">
+              Smart MSME Credit Intelligence Platform
+            </p>
+          </div> */}
 
             <Card className="shadow-lg border-border">
               <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="email">Email address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                    />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoComplete="email"
+                        className="pl-10"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="password"
                         type={showPw ? "text" : "password"}
@@ -92,7 +115,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="pr-10"
+                        className="pl-10 pr-10"
                       />
                       <button
                         type="button"
@@ -116,12 +139,14 @@ export default function LoginPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90"
+                    className="w-full bg-primary hover:bg-primary/90 flex items-center justify-center gap-2"
                     disabled={loading}
                   >
                     {loading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : null}
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <LogIn className="w-4 h-4" />
+                    )}
                     Sign in
                   </Button>
                 </form>
@@ -131,7 +156,7 @@ export default function LoginPage() {
                     Quick demo access
                   </p> */}
                   <div className="grid grid-cols-1 gap-1.5">
-                    {MOCK_USERS.map((u) => (
+                    {DEMO_USERS.map((u) => (
                       <button
                         key={u.id}
                         type="button"
@@ -139,7 +164,8 @@ export default function LoginPage() {
                         className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/30 transition-colors text-left group"
                       >
                         <div>
-                          <span className="text-sm font-medium text-foreground">
+                          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <User className="w-4 h-4 text-muted-foreground" />
                             {u.name}
                           </span>
                           <span className="text-xs text-muted-foreground ml-2">
@@ -157,8 +183,7 @@ export default function LoginPage() {
             </Card>
           </div>
         </div>
-
-        <div className="relative hidden lg:block h-full">
+        <div className="bg-gradient-to-tr from-[#e6fffb] via-[#99f6e4] to-[#e6fffb] relative hidden lg:flex items-center justify-center h-full">
           <Image
             src={image}
             alt="Login background"
@@ -166,7 +191,6 @@ export default function LoginPage() {
             priority
             className="object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-primary/35 via-primary/15 to-transparent" />
         </div>
       </div>
     </div>

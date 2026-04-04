@@ -115,14 +115,21 @@ export function ScoreGauge({
   return (
     <svg
       width={size}
-      height={size * 0.75}
-      viewBox={`0 0 ${size} ${size * 0.75}`}
+      height={size * 0.9}
+      viewBox={`0 0 ${size} ${size * 0.9}`}
+      className="overflow-visible"
     >
+      <defs>
+        <filter id="gaugeShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor={color} floodOpacity="0.4" />
+        </filter>
+      </defs>
       {/* Track */}
       <path
         d={arcPath(trackStart, trackEnd)}
         fill="none"
-        stroke="#e5e5eb"
+        stroke="currentColor"
+        className="text-muted/50"
         strokeWidth={strokeWidth}
         strokeLinecap="round"
       />
@@ -133,24 +140,27 @@ export function ScoreGauge({
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
+        filter="url(#gaugeShadow)"
+        className="transition-all duration-1000 ease-out"
       />
       {/* Score text */}
       <text
         x={cx}
         y={cy * 0.95}
         textAnchor="middle"
-        fontSize={size * 0.2}
-        fontWeight="700"
+        fontSize={size * 0.22}
+        fontWeight="800"
         fill={color}
+        style={{ textShadow: `0px 4px 12px ${color}40` }}
       >
         {score}
       </text>
       <text
         x={cx}
-        y={cy * 0.95 + size * 0.08}
+        y={cy * 0.95 + size * 0.12}
         textAnchor="middle"
         fontSize={size * 0.07}
-        fill="#6b7280"
+        className="fill-muted-foreground font-medium uppercase tracking-widest"
       >
         out of 900
       </text>

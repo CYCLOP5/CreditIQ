@@ -438,5 +438,65 @@ the following frontend-specific proxies are exposed. they are fully stateful and
 | msme | `POST /loan-requests`, `PUT /permissions/{id}`, `POST /disputes` | msme user lifecycle creating scopes | requires `msme` role |
 | bank | `GET /loan-requests`, `GET /loan-requests/{id}/score`, `PUT /loan-requests/{id}/decision` | loan officer queues. score fetches directly access redis if permission is granted | requires `loan_officer` |
 | analyst | `GET /score-history`, `GET /transactions/{gstin}/graph`, `PUT /disputes/{id}/resolve` | analyst tools querying data topology | requires `credit_analyst` |
-| risk | `GET /fraud-alerts`, `GET /risk-thresholds`, `GET /transactions/graph` | systemic risk review covering parameters and topology | requires `risk_manager` |
+| analyst | `GET /transactions/{gstin}/ewb-distribution` | bucketed e-way bill value histogram for smurfing detection. returns `buckets[]` (range, count, smurf_band flag) and `smurfing_index` (0–1). ₹45K–₹49,999 band is highlighted as the mandatory-threshold structuring window | requires `credit_analyst` or `risk_manager` |
+| analyst | `GET /transactions/{gstin}/receivables-gap` | monthly GST-invoiced vs UPI-inbound comparison exposing cash/accrual reconciliation gaps. returns `monthly[]` with `gst_invoiced`, `upi_inbound`, and `gap` fields | requires `credit_analyst` or `risk_manager` |
+| risk | `GET /fraud-alerts`, `GET /risk-thresholds`, `GET /transactions/graph` | systemic risk review covering parameters and topology. `/transactions/graph` now returns nodes with `pagerank_score` field for eigenvector centrality ranking | requires `risk_manager` |
+| risk | `PUT /risk-thresholds` | persists risk band boundaries, system config, and the new `amnesty_config` object (active, quarter, year, filing_penalty_multiplier). when amnesty is active the scoring worker suppresses `filing_compliance_rate` and `gst_filing_delay_trend` penalties for the specified fiscal quarter | requires `risk_manager` |
 | admin | `GET /banks`, `GET /api-keys`, `GET /users`, `GET /audit-log` | simulated tenant administration endpoints | requires `admin` |
+
+---
+
+## section 10 — amnesty config schema
+
+the `amnesty_config` sub-object lives inside the `risk_thresholds` document and is read/written via `PUT /risk-thresholds`.
+
+```json
+{
+  "amnesty_config": {
+    "active": false,
+    "quarter": 1,
+    "year": 2025,
+    "filing_penalty_multiplier": 0.0,
+    "description": "GST amnesty: late filings in selected quarter will not be penalised in credit scoring"
+  }
+}
+```
+
+| field | type | description |
+|---|---|---|
+| `active` | bool | master on/off toggle. when false the amnesty has no effect |
+| `quarter` | int 1–4 | fiscal quarter (Q1=Apr–Jun, Q2=Jul–Sep, Q3=Oct–Dec, Q4=Jan–Mar) |
+| `year` | int | fiscal year start (e.g. 2025 = FY 2025–26) |
+| `filing_penalty_multiplier` | float 0–1 | 0.0 = full waiver of filing penalty. 1.0 = no change |
+| `description` | string | human-readable label shown in the risk thresholds UI |
+
+the scoring worker checks `amnesty_config.active` before weighting `filing_compliance_rate`. if the GSTIN's late filing occurred within the amnesty quarter window the feature value is scaled by `filing_penalty_multiplier` before XGBoost inference — no model retraining required.
+
+---
+
+## section 11 — fraud graph node schema
+
+the `/transactions/graph` endpoint returns enriched nodes with centrality data:
+
+```json
+{
+  "nodes": [
+    {
+      "id": "19DUTDZ1506O6Z3",
+      "label": "Textile Zone (Imran)",
+      "flagged": true,
+      "pagerank_score": 0.24
+    }
+  ],
+  "edges": [
+    {
+      "source": "19DUTDZ1506O6Z3",
+      "target": "SHELL_HUB_01",
+      "weight": 8,
+      "amount": 4500000
+    }
+  ]
+}
+```
+
+`pagerank_score` is the normalised nx.pagerank score (0–1). nodes with `pagerank_score > 0.1` and zero GST footprint are classified as **Bipartite Shell Mule hubs** and immediately lock `fraud_confidence = 0.95`. the fraud topology dashboard renders this as a ranked horizontal bar chart alongside the 3D force graph.

@@ -20,3 +20,15 @@ We built an Expected Loss engine (`PD * LGD * Exposure`) to dynamically calculat
 
 ## Continuous Updating (Temporal Decay EMAs)
 We replaced static 7d/30d/90d rolling sums with Exponential Moving Averages (`Value * e^{-λt}`), eliminating the cliff effect where a ₹50L invoice at day 31 drops from full weight to zero. The credit score now bleeds down or spikes up with literal daily precision across the API. Half-life mapping: `_7d_*` = 7d, `_30d_*` = 30d, `_90d_*` = 90d.
+
+## Twist 1 — Fraud Ring Topology Dashboard (Live)
+The `/risk/fraud-topology` page renders the full multi-directed UPI graph as an interactive **3D force graph** (Three.js / WebGL). Businesses are nodes, payments are directed edges with animated particles. Red = fraud ring, teal = clean. Node size encodes fraud risk weight. A **PageRank centrality bar chart** in the sidebar ranks all nodes by eigenvector centrality — a node with `pagerank_score > 0.1` and zero GST footprint is immediately classified as a Bipartite Shell Mule hub and locks `fraud_confidence = 0.95`. Clicking any node reveals its ring members and confidence score.
+
+## Twist 2 — GST Amnesty Scheme — Dynamic Feature Weight Adjustment (Live)
+The Risk Manager can activate an amnesty window for any fiscal quarter via the `/risk/thresholds` page. The `amnesty_config` object (active, quarter, year, `filing_penalty_multiplier`) persists in the backend. At inference time the scoring worker reads this config and **scales `filing_compliance_rate` and `gst_filing_delay_trend`** by the multiplier for any GSTIN whose late filing fell in that quarter — zero model retraining, zero downtime. The Signal Trends analyst page renders an **amber overlay band** on the credit score chart marking the exact amnesty window so analysts can visually identify which score runs were affected.
+
+## E-Way Bill Smurfing Histogram (Live)
+The SHAP Explorer now displays a bucketed bar chart of all e-way bill values after scoring. The ₹45,000–₹49,999 band (below the ₹50,000 mandatory E-Way Bill threshold) is highlighted in red. A `smurfing_index` (0–1) is computed as the fraction of bills in the structuring window — a "High Smurfing Risk" badge fires when it exceeds 30%. Imran's (fraud) GSTIN shows a spike of 120 bills in the smurf band vs single digits for clean entities.
+
+## GST vs UPI Receivables Gap Chart (Live)
+The SHAP Explorer displays a grouped monthly bar chart comparing **GST-invoiced amounts** (accrual) against **UPI inbound receipts** (cash). A persistent gap signals an AR bottleneck or unaccounted cash — the clearest single indicator that declared turnover does not correspond to real economic activity. Imran's GSTIN shows UPI at only 5–15% of GST invoiced, a textbook circular trading signature.

@@ -12,7 +12,7 @@ class MockDB:
             "users": [
                 {"id": "usr_001", "name": "Priya Sharma",   "email": "priya@bakerycraft.in",       "role": "msme",           "gstin": "27AABFB2230J1ZX", "status": "active"},
                 {"id": "usr_002", "name": "Rahul Desai",    "email": "rahul@boltautomotive.in",    "role": "msme",           "gstin": "24AAKFD8732P1ZM", "status": "active"},
-                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "29AAHFT6543R1ZK", "status": "active"},
+                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "19DUTDZ1506O6Z3", "status": "active"},
                 {"id": "usr_004", "name": "Anjali Mehta",   "email": "anjali@sbiloans.co.in",      "role": "loan_officer",   "bank_id": "bank_001", "status": "active"},
                 {"id": "usr_005", "name": "Vikram Nair",    "email": "vikram@analyst.platform.in", "role": "credit_analyst", "status": "active"},
                 {"id": "usr_006", "name": "Deepa Krishnan", "email": "deepa@risk.platform.in",     "role": "risk_manager",   "status": "active"},
@@ -44,6 +44,13 @@ class MockDB:
                 "system_config": {
                     "fraud_confidence_threshold": 0.7,
                     "data_maturity_min_months": 3
+                },
+                "amnesty_config": {
+                    "active": False,
+                    "quarter": 1,
+                    "year": 2025,
+                    "filing_penalty_multiplier": 0.0,
+                    "description": "GST amnesty: late filings in selected quarter will not be penalised in credit scoring"
                 }
             }
         }

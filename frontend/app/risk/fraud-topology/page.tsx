@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/dib/authContext";
 import { useRouter } from "next/navigation";
 import { adminApi } from "@/dib/api";
@@ -9,8 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { CytoscapeGraph } from "@/components/CytoscapeGraph";
-import { Network, Filter } from "lucide-react";
+import { Network, Filter, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+
+// Dynamic import — Three.js / WebGL requires browser environment
+const ForceGraph3D = dynamic(() => import("@/components/ForceGraph3DComponent"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[560px] text-sm text-muted-foreground">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        Loading 3D graph…
+      </div>
+    </div>
+  ),
+});
 
 export default function FraudTopologyPage() {
   const { user } = useAuth();
@@ -18,40 +41,30 @@ export default function FraudTopologyPage() {
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [minConfidence, setMinConfidence] = useState(0);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [globalGraph, setGlobalGraph] = useState<{ nodes: any[]; edges: any[] }>({ nodes: [], edges: [] });
+  const [globalGraph, setGlobalGraph] = useState<{ nodes: any[]; edges: any[] }>({
+    nodes: [],
+    edges: [],
+  });
   const [fraudAlerts, setFraudAlerts] = useState<any[]>([]);
 
   useEffect(() => {
-    adminApi.getGlobalGraph()
+    adminApi
+      .getGlobalGraph()
       .then((data: any) => setGlobalGraph(data ?? { nodes: [], edges: [] }))
       .catch(() => {});
-    adminApi.getFraudAlerts()
+    adminApi
+      .getFraudAlerts()
       .then((data) => setFraudAlerts(data as any[]))
       .catch(() => {});
   }, []);
 
   useEffect(() => {
-
-
     if (!user || user.role !== "risk_manager") {
-
-
       router.push("/unauthorized");
-
-
     }
-
-
   }, [user, router]);
 
-
-  if (!user || user.role !== "risk_manager") {
-
-
-    return null;
-
-
-  }
+  if (!user || user.role !== "risk_manager") return null;
 
   const filteredAlerts = fraudAlerts.filter(
     (a: any) => (a.fraud_details?.confidence ?? 0) >= minConfidence / 100,
@@ -68,8 +81,6 @@ export default function FraudTopologyPage() {
           filteredNodes.some((n: any) => n.id === e.target),
       )
     : globalGraph.edges;
-
-  const graphData = { nodes: filteredNodes, edges: filteredEdges };
 
   const selectedAlert = selectedNode
     ? fraudAlerts.find((a: any) =>
@@ -88,7 +99,7 @@ export default function FraudTopologyPage() {
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
-        {/* Filters sidebar */}
+        {/* ── Filters sidebar ── */}
         <div className="xl:col-span-1 space-y-4">
           <Card className="border-border shadow-sm">
             <CardHeader className="py-3 px-4 border-b">
@@ -100,18 +111,13 @@ export default function FraudTopologyPage() {
             <CardContent className="p-4 space-y-5">
               <div className="flex items-center justify-between">
                 <Label className="text-sm">Flagged nodes only</Label>
-                <Switch
-                  checked={flaggedOnly}
-                  onCheckedChange={setFlaggedOnly}
-                />
+                <Switch checked={flaggedOnly} onCheckedChange={setFlaggedOnly} />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm">
                   Min. Confidence:{" "}
-                  <span className="font-semibold text-primary">
-                    {minConfidence}%
-                  </span>
+                  <span className="font-semibold text-primary">{minConfidence}%</span>
                 </Label>
                 <Slider
                   min={0}
@@ -145,18 +151,21 @@ export default function FraudTopologyPage() {
             </CardHeader>
             <CardContent className="p-4 space-y-2.5">
               {[
-                { color: "bg-red-600", label: "In fraud ring" },
-                { color: "bg-slate-400", label: "Clean node" },
+                { color: "bg-red-500", label: "In fraud ring" },
+                { color: "bg-teal-400", label: "Clean node" },
               ].map((l) => (
                 <div key={l.label} className="flex items-center gap-2.5">
                   <span className={`w-3 h-3 rounded-full ${l.color} shrink-0`} />
                   <span className="text-xs text-muted-foreground">{l.label}</span>
                 </div>
               ))}
-              <div className="pt-1 border-t border-border space-y-1.5 text-xs text-muted-foreground">
-                <p>Node size — UPI volume</p>
-                <p>Edge thickness — transaction count</p>
-                <p>Click node to highlight connections</p>
+              <div className="pt-2 border-t border-border space-y-1.5 text-xs text-muted-foreground">
+                <p>Node size — fraud risk weight</p>
+                <p>Edge particles — transaction flow</p>
+                <p>🖱 Left-drag to rotate</p>
+                <p>🖱 Right-drag to pan</p>
+                <p>🖱 Scroll to zoom</p>
+                <p>Click node to focus</p>
               </div>
             </CardContent>
           </Card>
@@ -165,9 +174,9 @@ export default function FraudTopologyPage() {
           <Card className="border-border shadow-sm">
             <CardContent className="p-4 space-y-3">
               {[
-                { label: "Fraud Rings", value: filteredAlerts.length, color: "text-red-700" },
-                { label: "Flagged Nodes", value: flaggedCount, color: "text-amber-700" },
-                { label: "Clean Nodes", value: cleanCount, color: "text-emerald-700" },
+                { label: "Fraud Rings", value: filteredAlerts.length, color: "text-red-600" },
+                { label: "Flagged Nodes", value: flaggedCount, color: "text-amber-600" },
+                { label: "Clean Nodes", value: cleanCount, color: "text-teal-600" },
                 { label: "Total Nodes", value: globalGraph.nodes.length, color: "text-foreground" },
               ].map((s) => (
                 <div key={s.label} className="flex items-center justify-between">
@@ -177,45 +186,127 @@ export default function FraudTopologyPage() {
               ))}
             </CardContent>
           </Card>
+
+          {/* PageRank centrality chart */}
+          {globalGraph.nodes.length > 0 && (() => {
+            const ranked = [...globalGraph.nodes]
+              .filter((n: any) => typeof n.pagerank_score === "number")
+              .sort((a: any, b: any) => b.pagerank_score - a.pagerank_score)
+              .slice(0, 7)
+              .map((n: any) => ({
+                id: n.id.length > 14 ? n.id.slice(0, 12) + "…" : n.id,
+                fullId: n.id,
+                pagerank: Number((n.pagerank_score * 100).toFixed(1)),
+                flagged: n.flagged,
+              }));
+            if (ranked.length === 0) return null;
+            return (
+              <Card className="border-border shadow-sm">
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="text-xs font-semibold flex items-center gap-2">
+                    <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                    Node Centrality (PageRank)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3">
+                  <p className="text-[10px] text-muted-foreground mb-2 leading-relaxed">
+                    High PageRank + zero GST footprint = Bipartite Shell Mule hub
+                  </p>
+                  <ResponsiveContainer width="100%" height={ranked.length * 28 + 20}>
+                    <BarChart
+                      data={ranked}
+                      layout="vertical"
+                      margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
+                      barSize={10}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f5" />
+                      <XAxis
+                        type="number"
+                        tick={{ fontSize: 9, fill: "#6b7280" }}
+                        tickFormatter={(v) => `${v}%`}
+                        domain={[0, "auto"]}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="id"
+                        tick={{ fontSize: 9, fill: "#374151" }}
+                        width={80}
+                      />
+                      <Tooltip
+                        formatter={(v: any) => [`${v}%`, "PageRank"]}
+                        labelFormatter={(_: any, payload: any) => payload?.[0]?.payload?.fullId ?? ""}
+                        contentStyle={{ fontSize: 11 }}
+                      />
+                      <Bar dataKey="pagerank" radius={[0, 3, 3, 0]}>
+                        {ranked.map((entry, idx) => (
+                          <Cell
+                            key={idx}
+                            fill={entry.flagged ? "#ef4444" : "#0d9488"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Fraud ring</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-teal-600 inline-block" /> Clean</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
-        {/* Graph */}
+        {/* ── 3D Graph ── */}
         <div className="xl:col-span-3 space-y-4">
-          <Card className="border-border shadow-sm">
-            <CardHeader className="py-3 px-4 border-b flex-row items-center justify-between">
+          <Card
+            className="border-border shadow-sm overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(240,253,250,0.9) 0%, rgba(204,251,241,0.65) 50%, rgba(240,253,250,0.9) 100%)",
+            }}
+          >
+            <CardHeader
+              className="py-3 px-4 flex-row items-center justify-between"
+              style={{ borderBottom: "1px solid rgba(13,148,136,0.15)" }}
+            >
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Network className="w-4 h-4 text-primary" />
-                Transaction Network
+                Transaction Network — 3D View
               </CardTitle>
               <span className="text-xs text-muted-foreground">
-                {graphData.nodes.length} nodes · {graphData.edges.length} edges
+                {filteredNodes.length} nodes · {filteredEdges.length} edges
               </span>
             </CardHeader>
-            <CardContent className="p-3">
-              <CytoscapeGraph
-                data={graphData}
-                height={500}
-                onNodeClick={(id) => setSelectedNode(id)}
+            <CardContent className="p-0">
+              <ForceGraph3D
+                nodes={filteredNodes}
+                edges={filteredEdges}
+                height={560}
+                onNodeClick={(id: string) => setSelectedNode(id)}
               />
             </CardContent>
           </Card>
 
-          {/* Selected node info */}
+          {/* Selected node detail */}
           {selectedNode && (
             <Card className="border-border shadow-sm">
               <CardHeader className="py-3 px-4 border-b">
-                <CardTitle className="text-xs font-semibold">
-                  Selected Node: {selectedNode}
+                <CardTitle className="text-xs font-semibold flex items-center gap-2">
+                  {selectedAlert ? (
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5 text-teal-500" />
+                  )}
+                  Selected Node: <span className="font-mono">{selectedNode}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
                 {selectedAlert ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        Fraud Ring Confidence:
-                      </span>
-                      <span className="text-sm font-semibold text-red-700">
+                      <span className="text-xs text-muted-foreground">Fraud Ring Confidence:</span>
+                      <span className="text-sm font-semibold text-red-600">
                         {((selectedAlert.fraud_details?.confidence ?? 0) * 100).toFixed(0)}%
                       </span>
                     </div>

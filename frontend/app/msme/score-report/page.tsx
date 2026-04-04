@@ -18,7 +18,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CheckCircle2, XCircle, Info, Download, RefreshCw, Loader2, AlertTriangle, MessageSquare, Send, User, Bot } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Info,
+  Download,
+  RefreshCw,
+  Loader2,
+  AlertTriangle,
+  MessageSquare,
+  Send,
+  User,
+  Bot,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { scoreApi } from "@/dib/api";
 import { Input } from "@/components/ui/input";
@@ -52,7 +64,13 @@ export default function MsmeScoreReport() {
   const { user } = useAuth();
   const router = useRouter();
   const { score, status, refresh } = useScore(user?.gstin);
-  const [chatMessages, setChatMessages] = useState<any[]>([{ role: "assistant", content: "Hi! I am your score assistant. Do you have any questions about this report?" }]);
+  const [chatMessages, setChatMessages] = useState<any[]>([
+    {
+      role: "assistant",
+      content:
+        "Hi! I am your score assistant. Do you have any questions about this report?",
+    },
+  ]);
   const [chatInput, setChatInput] = useState("");
   const chatRef = useRef<HTMLDivElement>(null);
 
@@ -66,46 +84,44 @@ export default function MsmeScoreReport() {
     if (!chatInput.trim() || !score) return;
     const msg = chatInput;
     setChatInput("");
-    setChatMessages(prev => [...prev, { role: "user", content: msg }]);
+    setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     try {
-      const res = await scoreApi.chat(score.task_id, { message: msg }) as any;
-      setChatMessages(prev => [...prev, { role: "assistant", content: res.reply || "I'm processing that." }]);
+      const res = (await scoreApi.chat(score.task_id, { query: msg })) as any;
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: res.reply || "I'm processing that." },
+      ]);
     } catch {
-      setChatMessages(prev => [...prev, { role: "assistant", content: "Error communicating." }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Error communicating." },
+      ]);
     }
   };
 
   useEffect(() => {
-
-
     if (!user || user.role !== "msme") {
-
-
       router.push("/unauthorized");
-
-
     }
-
-
   }, [user, router]);
 
-
   if (!user || user.role !== "msme") {
-
-
     return null;
-
-
   }
 
   if (status === "idle" || status === "pending" || status === "processing") {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <PageHeader title="Credit Score Report" description="Computing your score…" />
+      <div className="p-6 w-full max-w-[1400px] mx-auto">
+        <PageHeader
+          title="Credit Score Report"
+          description="Computing your score…"
+        />
         <div className="flex flex-col items-center justify-center h-64 gap-4 text-muted-foreground">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
           <p className="text-sm">
-            {status === "processing" ? "Running ML pipeline…" : "Queuing score request…"}
+            {status === "processing"
+              ? "Running ML pipeline…"
+              : "Queuing score request…"}
           </p>
         </div>
       </div>
@@ -114,29 +130,42 @@ export default function MsmeScoreReport() {
 
   if (status === "failed" || !score) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <PageHeader title="Credit Score Report" description="Score unavailable" />
+      <div className="p-6 w-full max-w-[1400px] mx-auto">
+        <PageHeader
+          title="Credit Score Report"
+          description="Score unavailable"
+        />
         <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
           <AlertTriangle className="w-10 h-10 text-amber-500" />
-          <p className="text-sm">Could not load score. Is the backend running?</p>
-          <Button size="sm" onClick={refresh}>Retry</Button>
+          <p className="text-sm">
+            Could not load score. Is the backend running?
+          </p>
+          <Button size="sm" onClick={refresh}>
+            Retry
+          </Button>
         </div>
       </div>
     );
   }
 
   const shap = score.shap_waterfall ?? [];
-  const maxShap = shap.length > 0 ? Math.max(...shap.map((s) => s.abs_magnitude)) : 1;
+  const maxShap =
+    shap.length > 0 ? Math.max(...shap.map((s) => s.abs_magnitude)) : 1;
 
   return (
     <TooltipProvider>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-6 w-full max-w-[1400px] mx-auto">
         <PageHeader
           title="Credit Score Report"
           description={`Score as of ${new Date(score.score_freshness).toLocaleString("en-IN", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`}
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="gap-2" onClick={refresh}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={refresh}
+              >
                 <RefreshCw className="w-3.5 h-3.5" />
                 Refresh
               </Button>
@@ -284,11 +313,11 @@ export default function MsmeScoreReport() {
                 </span>
               </div>
               <div className="space-y-2">
-                {shap.map((item) => {
+                {shap.map((item, i) => {
                   const pct = (item.abs_magnitude / maxShap) * 100;
                   const isGood = item.direction === "decreases_risk";
                   return (
-                    <div key={item.feature_name} className="flex items-center gap-3">
+                    <div key={i} className="flex items-center gap-3">
                       <span className="w-52 text-xs text-muted-foreground text-right truncate shrink-0">
                         {FEATURE_LABELS[item.feature_name] || item.feature_name}
                       </span>
@@ -302,7 +331,7 @@ export default function MsmeScoreReport() {
                         className={`text-xs font-mono font-semibold w-12 shrink-0 ${isGood ? "text-emerald-700" : "text-red-700"}`}
                       >
                         {isGood ? "+" : "-"}
-                        {item.abs_magnitude.toFixed(3)}
+                        {item.abs_magnitude?.toFixed(3)}
                       </span>
                     </div>
                   );
@@ -345,16 +374,27 @@ export default function MsmeScoreReport() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 flex flex-col gap-4">
-            <div 
+            <div
               ref={chatRef}
               className="h-48 overflow-y-auto space-y-3 p-2 bg-muted/30 rounded-md border"
             >
               {chatMessages.map((m, i) => (
-                <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${m.role === "assistant" ? "bg-primary text-white" : "bg-muted text-foreground border"}`}>
-                    {m.role === "assistant" ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                <div
+                  key={i}
+                  className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}
+                >
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${m.role === "assistant" ? "bg-primary text-white" : "bg-muted text-foreground border"}`}
+                  >
+                    {m.role === "assistant" ? (
+                      <Bot className="w-3 h-3" />
+                    ) : (
+                      <User className="w-3 h-3" />
+                    )}
                   </div>
-                  <div className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed ${m.role === "assistant" ? "bg-muted" : "bg-primary text-primary-foreground"}`}>
+                  <div
+                    className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed ${m.role === "assistant" ? "bg-muted" : "bg-primary text-primary-foreground"}`}
+                  >
                     {m.content}
                   </div>
                 </div>
@@ -364,17 +404,20 @@ export default function MsmeScoreReport() {
               <Input
                 placeholder="Ask about specific metrics..."
                 value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleChat()}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleChat()}
                 className="text-sm border-border"
               />
-              <Button size="icon" className="shrink-0 bg-primary hover:bg-primary/90" onClick={handleChat}>
+              <Button
+                size="icon"
+                className="shrink-0 bg-primary hover:bg-primary/90"
+                onClick={handleChat}
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
           </CardContent>
         </Card>
-
       </div>
     </TooltipProvider>
   );
