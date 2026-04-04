@@ -4,7 +4,7 @@ import { useAuth } from "@/dib/authContext";
 import { useRouter } from "next/navigation";
 import { adminApi } from "@/dib/api";
 import { PageHeader } from "@/components/shared";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Play, Search, ShieldAlert, Cpu } from "lucide-react";
+import { Play, Search, ShieldAlert, Cpu, History, Activity, FileJson } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 const ACTION_COLORS: Record<string, string> = {
   dispute_assigned: "bg-blue-50 text-blue-700 border border-blue-200",
@@ -46,6 +47,8 @@ export default function AuditLogPage() {
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const [replayState, setReplayState] = useState<any>(null);
+  const [replayLoading, setReplayLoading] = useState(false);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
@@ -77,11 +80,27 @@ export default function AuditLogPage() {
   }
 
   const handleReplay = async (e: any) => {
+    if (e.target_type !== "msme" && e.target_type !== "loan_request") {
+       alert("Replay is currently only supported for MSME entities.");
+       return;
+    }
+    
+    // In our mock, if target_type is loan_request, sometimes the target_id isn't gstin, but we'll try grabbing the gstin from metadata or use target_id directly if MSME
+    const gstin = e.target_type === "msme" ? e.target_id : (e.metadata?.gstin || e.target_id);
+    
     try {
-      await adminApi.replayAudit(e);
-      alert("Replay triggered successfully.");
+      setReplayLoading(true);
+      setReplayState({ event: e, data: null });
+      const res = await adminApi.replayAudit({
+        gstin: gstin,
+        target_timestamp: e.timestamp
+      });
+      setReplayState({ event: e, data: res });
     } catch {
-      alert("Failed to replay event.");
+      alert("Failed to replay event. Engine data might not be available or entity is invalid.");
+      setReplayState(null);
+    } finally {
+      setReplayLoading(false);
     }
   };
 
@@ -241,6 +260,47 @@ export default function AuditLogPage() {
           ))}
         </div>
       )}
+
+      {/* Replay State Sheet */}
+      <Sheet open={!!replayState} onOpenChange={(val) => !val && setReplayState(null)}>
+        <SheetContent className="w-[400px] sm:w-[600px] sm:max-w-none overflow-y-auto bg-slate-50">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="flex items-center gap-2 text-indigo-700">
+               <History className="h-5 w-5" />
+               Point-in-Time Event Sourcing
+            </SheetTitle>
+            <SheetDescription>
+               Rebuilding feature vector exactly as it was at <span className="font-semibold text-slate-800">{new Date(replayState?.event?.timestamp).toLocaleString()}</span>
+            </SheetDescription>
+          </SheetHeader>
+          
+          {replayLoading ? (
+            <div className="flex flex-col items-center justify-center p-12 text-indigo-400 gap-4">
+              <Activity className="h-8 w-8 animate-spin" />
+              <p>Re-running Polars computation up to timestamp...</p>
+            </div>
+          ) : replayState?.data ? (
+             <div className="space-y-6">
+                <Card className="border-indigo-100 shadow-sm">
+                   <CardHeader className="py-3 px-4 bg-indigo-50/50 border-b border-indigo-100">
+                      <div className="text-sm font-semibold flex items-center gap-2 text-indigo-900"><FileJson className="h-4 w-4"/> Replay Details</div>
+                   </CardHeader>
+                   <CardContent className="p-4 text-xs space-y-2 text-slate-600">
+                       <div className="flex justify-between"><span className="font-medium text-slate-500">Target Entity:</span> <span className="font-mono">{replayState.data.gstin}</span></div>
+                       <div className="flex justify-between"><span className="font-medium text-slate-500">Processed Logs:</span> <span>{replayState.data.replayed_events_count} raw events</span></div>
+                       <div className="flex justify-between"><span className="font-medium text-slate-500">State Snapshot:</span> <span className="font-mono">{replayState.data.target_timestamp}</span></div>
+                   </CardContent>
+                </Card>
+                
+                <div className="bg-slate-900 rounded-xl p-4 shadow-inner overflow-x-auto">
+                    <pre className="text-[11px] text-green-400 font-mono leading-relaxed">
+                       {JSON.stringify(replayState.data.state, null, 2)}
+                    </pre>
+                </div>
+             </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       {/* Pagination */}
       {totalPages > 1 && (

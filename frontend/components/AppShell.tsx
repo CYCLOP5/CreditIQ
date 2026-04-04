@@ -27,6 +27,7 @@ import {
   ClipboardList,
   TrendingUp,
   Search,
+  Database,
   GitBranch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ const NAV_ITEMS: Record<
   ],
   credit_analyst: [
     { label: "SHAP Explorer", href: "/analyst/shap-explorer", icon: Search },
+    { label: "Data Explorer", href: "/analyst/data-explorer", icon: Database },
     {
       label: "Signal Trends",
       href: "/analyst/signal-trends",

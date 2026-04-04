@@ -152,6 +152,8 @@ export const bankApi = {
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 export const adminApi = {
+  getExplorerGstins: () => apiFetch<any[]>("/explorer/gstins"),
+  getExplorerDetails: (gstin: string) => apiFetch<any>(`/explorer/${gstin}/details`),
   getUsers: () => apiFetch<unknown[]>("/users"),
   createUser: (body: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>("/users", {

@@ -257,7 +257,9 @@ export default function MsmeDashboard() {
             </CardHeader>
             <CardContent className="p-4">
               <ul className="space-y-2">
-                {score.top_reasons.map((reason: string, i: number) => (
+                {score.top_reasons
+                  .filter((r: string) => !r.startsWith("Path to Prime"))
+                  .map((reason: string, i: number) => (
                   <li
                     key={i}
                     className="flex items-start gap-2 text-sm text-foreground"
@@ -271,6 +273,26 @@ export default function MsmeDashboard() {
               </ul>
             </CardContent>
           </Card>
+          
+          {/* Path to Prime */}
+          {score.top_reasons.some((r: string) => r.startsWith("Path to Prime")) && (
+            <Card className="border-border shadow-sm gsap-card opacity-0 bg-primary/5 border-primary/20">
+              <CardHeader className="py-3 px-4 border-b border-primary/10">
+                <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Path to Prime
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <p className="text-sm text-foreground/90 leading-relaxed">
+                  {score.top_reasons
+                    .find((r: string) => r.startsWith("Path to Prime"))
+                    ?.replace("Path to Prime:", "")
+                    .trim()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
