@@ -88,7 +88,7 @@ async def update_permission(pid: str, req: PermissionAction, user: dict = Depend
     return {"status": stat}
 
 @router_msme.get("/disputes")
-async def get_disputes(gstin: Optional[str] = None, status: Optional[str] = None, user: dict = Depends(require_role(["msme", "credit_analyst", "risk_manager", "admin"]))):
+async def get_disputes(gstin: Optional[str] = None, status: Optional[str] = None, user: dict = Depends(require_role(["msme", "credit_analyst", "risk_manager", "admin", "loan_officer"]))):
     def df(x):
         if gstin and x.get("gstin") != gstin: return False
         if status and x.get("status") not in status.split(","): return False

@@ -11,14 +11,27 @@ class MockDB:
         self.data = {
             "users": [
                 {"id": "usr_001", "name": "Priya Sharma",   "email": "priya@bakerycraft.in",       "role": "msme",           "gstin": "19HLPRM4249Z3Z1", "status": "active"},
-                {"id": "usr_002", "name": "Rahul Desai",    "email": "rahul@boltautomotive.in",    "role": "msme",           "gstin": "09EXVAF9205D6Z0", "status": "active"},
-                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "33QEFVT7885F2Z4", "status": "active"},
+                {"id": "usr_002", "name": "Rahul Desai",    "email": "rahul@boltautomotive.in",    "role": "msme",           "gstin": "07TQGWA2808D4Z3", "status": "active"},
+                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "07QYJFY4493W9Z7", "status": "active"},
                 {"id": "usr_004", "name": "Anjali Mehta",   "email": "anjali@sbiloans.co.in",      "role": "loan_officer",   "bank_id": "bank_001", "status": "active"},
                 {"id": "usr_005", "name": "Vikram Nair",    "email": "vikram@analyst.platform.in", "role": "credit_analyst", "status": "active"},
                 {"id": "usr_006", "name": "Deepa Krishnan", "email": "deepa@risk.platform.in",     "role": "risk_manager",   "status": "active"},
                 {"id": "usr_007", "name": "Arjun Kapoor",   "email": "arjun@admin.platform.in",    "role": "admin",          "status": "active"},
             ],
-            "loan_requests": [],
+                        "loan_requests": [
+                {
+                    "id": "loan_req_001",
+                    "gstin": "07TQGWA2808D4Z3",
+                    "bank_id": "bank_001",
+                    "bank_name": "State Bank of India",
+                    "loan_type": "Working Capital",
+                    "amount_requested": 5000000,
+                    "purpose": "Expand warehouse inventory",
+                    "status": "submitted",
+                    "created_at": "2026-04-03T10:00:00Z",
+                    "updated_at": "2026-04-03T10:00:00Z"
+                }
+            ],
             "permissions": [],
             "disputes": [],
             "reminders": [],

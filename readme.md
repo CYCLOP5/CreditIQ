@@ -97,7 +97,7 @@ xgboost scoring (probability → 300–900 scale)
         ↓
 shap explainability (top 6 feature attributions)
         ↓
-Qwen LLM (plain-language reasons + path to prime action)
+MiniMax LLM (plain-language reasons + path to prime action)
         ↓
 fastapi rest api (async saga worker pattern)
         ↓
@@ -144,7 +144,7 @@ flowchart td
     d -->|46-dim feature vector| e[networkx fraud detector]
     e -->|clean vector or fraud flag| f[xgboost scoring model]
     f -->|raw score + feature vector| g[shap treeexplainer]
-    g -->|top 5 shap vectors| h[Qwen 72B via OpenRouter API]
+    g -->|top 5 shap vectors| h[MiniMax-01 via OpenRouter API]
     h -->|plain language reasons| i[redis state store]
     i -->|result payload| j[fastapi rest endpoint]
     j -->|json response| k[react + next.js app router]
@@ -559,7 +559,7 @@ $$s = \text{clip}(900 - 600 \times p_{default},\; 300,\; 900)$$
 
 ### llm translation
 
-[`shaptranslator`](src/llm/translator.py) uses **qwen-2.5-72b-instruct:free** via OpenRouter API for high-speed cloud inference:
+[`shaptranslator`](src/llm/translator.py) uses **minimax/minimax-01** via OpenRouter API for high-speed cloud inference:
 
 - prompt template: [`src/llm/prompts.py`](src/llm/prompts.py) using standard system/user JSON chat format
 - output: 6 plain-language items (5 explanation bullets + 1 "path to prime" prescriptive action)
@@ -628,7 +628,7 @@ returns [`healthresponse`](src/api/schemas.py:73): `{status, redis_connected, mo
                                                  └────┬────┘
                                                       │
                                                  ┌────▼────┐
-                                                 │ OpenRouter Qwen API   │
+                                                 │ OpenRouter MiniMax API   │
                                                  │ llm     │
                                                  └────┬────┘
                                                       │
@@ -724,7 +724,7 @@ all throw on non-ok responses for consistent error handling.
 |---|---|
 | **three-signal fusion** | first system to fuse gst + upi + e-way bill for msme scoring |
 | **graph-based circular fraud** | scc + bounded cycle enumeration on directed multigraphs |
-| **llm-powered explanations** | local OpenRouter Qwen API-mini translates shap vectors to plain language — no cloud api |
+| **llm-powered explanations** | local OpenRouter MiniMax API-mini translates shap vectors to plain language — no cloud api |
 | **cibil-aligned scoring** | 300–900 scale with rbi-compliant cgtmse/mudra eligibility |
 | **real-time dashboard** | custom svg visualizations for shap waterfall and fraud topology |
 
@@ -846,7 +846,7 @@ cd frontend && pnpm install && cd ..
 for llm-powered plain-language explanations (not required — system falls back gracefully):
 
 ```bash
-# download OpenRouter Qwen API-mini gguf to data/models/
+# download OpenRouter MiniMax API-mini gguf to data/models/
 mkdir -p data/models
 # place openrouter openrouter_api_key in .env in data/models/
 ```

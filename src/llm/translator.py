@@ -36,7 +36,7 @@ class ShapTranslator:
     ) -> None:
         from config.settings import settings
         self.api_key = settings.openrouter_api_key
-        self.model = "qwen/qwen3.6-plus:free"
+        self.model = "minimax/minimax-01"
         print("Using OpenRouter exclusively")
 
     def translate(
@@ -53,7 +53,7 @@ class ShapTranslator:
         
         # Try primary model requested by user
         models_to_try = [
-            "qwen/qwen3.6-plus:free"
+            "minimax/minimax-01"
         ]
         
         for model in models_to_try:
@@ -115,7 +115,7 @@ class ShapTranslator:
                     "Content-Type": "application/json"
                 },
                 data=json.dumps({
-                    "model": "qwen/qwen3.6-plus:free",
+                    "model": "minimax/minimax-01",
                     "response_format": { "type": "json_object" },
                     "messages": [
                         {"role": "system", "content": "You are a fraud analyst outputting formal JSON Suspicious Activity Reports. Output ONLY valid JSON, adhering to: {\"gstin\": \"string\", \"risk_level\": \"string\", \"structural_summary\": \"string\", \"immediate_action\": \"string\"}"},

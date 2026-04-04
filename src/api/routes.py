@@ -212,7 +212,7 @@ If the user's question goes beyond this data, gently bring it back."""
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "qwen/qwen3.6-plus:free",
+                        "model": "minimax/minimax-01",
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": body.query}

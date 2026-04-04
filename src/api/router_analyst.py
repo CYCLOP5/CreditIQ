@@ -295,7 +295,7 @@ async def get_cohort_median(msme_category: str, user: dict = Depends(require_rol
 # ── Risk thresholds ───────────────────────────────────────────────────────────
 
 @router_analyst.get("/risk-thresholds")
-async def get_risk_thresholds(user: dict = Depends(require_role(["risk_manager", "admin"]))):
+async def get_risk_thresholds(user: dict = Depends(require_role(["risk_manager", "admin", "credit_analyst", "loan_officer"]))):
     return db.data["risk_thresholds"]
 
 

@@ -41,6 +41,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [isReady, setIsReady] = useState(false);
   const pathname = usePathname();
 
   const fetchNotifications = async (_u: User) => {
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u);
       fetchNotifications(u);
     }
+    setIsReady(true);
   }, [pathname]);
 
   const login = async (
@@ -101,6 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  if (!isReady) return null;
 
   return (
     <AuthContext.Provider

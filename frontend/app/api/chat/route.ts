@@ -22,7 +22,7 @@ Please answer concisely and accurately.`;
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "qwen/qwen3.6-plus:free",
+        model: "minimax/minimax-01",
         messages: allMessages,
         stream: true
       })

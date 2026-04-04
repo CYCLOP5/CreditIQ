@@ -150,7 +150,7 @@ export default function SignalTrendsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 className="pl-9 font-mono text-sm"
-                placeholder="Enter GSTIN (e.g. 09EXVAF9205D6Z0)"
+                placeholder="Enter GSTIN (e.g. 07TQGWA2808D4Z3)"
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -171,7 +171,7 @@ export default function SignalTrendsPage() {
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="text-xs text-muted-foreground">Try:</span>
-            {["19HLPRM4249Z3Z1", "09EXVAF9205D6Z0", "33QEFVT7885F2Z4"].map((g) => (
+            {["19HLPRM4249Z3Z1", "07TQGWA2808D4Z3", "07QYJFY4493W9Z7"].map((g) => (
               <button
                 key={g}
                 className="text-xs font-mono text-primary underline underline-offset-2 hover:no-underline"

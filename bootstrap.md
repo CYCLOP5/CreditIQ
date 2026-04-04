@@ -193,22 +193,22 @@ dashboard available at http://localhost:3000
 
 ---
 
-## Qwen 72B via API model download (optional, required for llm explanations)
+## MiniMax-01 via API model download (optional, required for llm explanations)
 
-download the Qwen 72B via API gguf model manually to data/models/
+download the MiniMax-01 via API gguf model manually to data/models/
 
 ```bash
 # using huggingface-cli
 pip install huggingface-hub
-huggingface-cli download microsoft/Qwen 72B via API-mini-128k-instruct-gguf \
-  Qwen 72B via API-mini-128k-instruct-cloud endpoint.gguf \
+huggingface-cli download microsoft/MiniMax-01 via API-mini-128k-instruct-gguf \
+  MiniMax-01 via API-mini-128k-instruct-cloud endpoint.gguf \
   --local-dir data/models/
 ```
 
 ```bash
 # rename to match expected filename
-mv data/models/Qwen 72B via API-mini-128k-instruct-cloud endpoint.gguf \
-   data/models/Qwen 72B via API-mini-128k-instruct-cloud endpoint.gguf
+mv data/models/MiniMax-01 via API-mini-128k-instruct-cloud endpoint.gguf \
+   data/models/MiniMax-01 via API-mini-128k-instruct-cloud endpoint.gguf
 ```
 
 if the gguf file is absent the worker uses feature names as fallback explanations. no crash occurs.
