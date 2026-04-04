@@ -90,7 +90,7 @@ xgboost scoring (probability → 300–900 scale)
         ↓
 shap explainability (top 6 feature attributions)
         ↓
-MiniMax LLM (plain-language reasons + path to prime action)
+gemma LLM (plain-language reasons + path to prime action)
         ↓
 fastapi rest api (async saga worker pattern)
         ↓
@@ -661,9 +661,9 @@ if any saga step fails, the worker writes `status=failed` + error message and `x
 |---|---|
 | **three-signal fusion** | first system to fuse gst + upi + e-way bill for msme scoring |
 | **graph-based circular fraud** | scc + bounded cycle enumeration on directed multigraphs |
-| **llm-powered explanations** | local OpenRouter MiniMax API-mini translates shap vectors to plain language — no cloud api |
+| **llm-powered explanations** | OpenRouter gemma API translates shap vectors to plain language |
 | **cibil-aligned scoring** | 300–900 scale with rbi-compliant cgtmse/mudra eligibility |
-| **real-time dashboard** | custom svg visualizations for shap waterfall and fraud topology |
+| **real-time dashboard** | custom svg  for shap waterfall and fraud topology |
 
 ### practicality
 
