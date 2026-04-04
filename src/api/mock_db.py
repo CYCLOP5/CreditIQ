@@ -11,8 +11,8 @@ class MockDB:
         self.data = {
             "users": [
                 {"id": "usr_001", "name": "Priya Sharma",   "email": "priya@bakerycraft.in",       "role": "msme",           "gstin": "19HLPRM4249Z3Z1", "status": "active"},
-                {"id": "usr_002", "name": "Rahul Desai",    "email": "rahul@boltautomotive.in",    "role": "msme",           "gstin": "36ITDJE8781O1Z6", "status": "active"},
-                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "33QEFVT7885F2Z4", "status": "active"},
+                {"id": "usr_002", "name": "Rahul Desai",    "email": "rahul@boltautomotive.in",    "role": "msme",           "gstin": "09EXVAF9205D6Z0", "status": "active"},
+                {"id": "usr_003", "name": "Imran Shaikh",   "email": "imran@textilezone.in",       "role": "msme",           "gstin": "07AFDYP4721H7Z9", "status": "active"},
                 {"id": "usr_004", "name": "Anjali Mehta",   "email": "anjali@sbiloans.co.in",      "role": "loan_officer",   "bank_id": "bank_001", "status": "active"},
                 {"id": "usr_005", "name": "Vikram Nair",    "email": "vikram@analyst.platform.in", "role": "credit_analyst", "status": "active"},
                 {"id": "usr_006", "name": "Deepa Krishnan", "email": "deepa@risk.platform.in",     "role": "risk_manager",   "status": "active"},
@@ -21,7 +21,7 @@ class MockDB:
                         "loan_requests": [
                 {
                     "id": "loan_req_001",
-                    "gstin": "36ITDJE8781O1Z6",
+                    "gstin": "09EXVAF9205D6Z0",
                     "bank_id": "bank_001",
                     "bank_name": "State Bank of India",
                     "loan_type": "Working Capital",

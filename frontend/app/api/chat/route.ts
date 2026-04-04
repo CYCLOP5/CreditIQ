@@ -17,21 +17,35 @@ Please answer concisely and accurately.`;
       mappedMessages.unshift({ role: "user", content: `[SYSTEM INSTRUCTION]\n${systemPrompt}` });
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "google/gemma-3-4b-it:free",
-        messages: mappedMessages,
-        stream: true
-      })
-    });
+    let response;
+    let retries = 0;
+    const maxRetries = 3;
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter error: ${response.status} ${await response.text()}`);
+    while (retries <= maxRetries) {
+      response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "google/gemma-3-4b-it:free",
+          messages: mappedMessages,
+          stream: true
+        })
+      });
+
+      if (response.status === 429) {
+        console.warn(`OpenRouter 429 Too Many Requests (attempt ${retries + 1}). Waiting to retry...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+        retries++;
+      } else {
+        break;
+      }
+    }
+
+    if (!response || !response.ok) {
+      throw new Error(`OpenRouter error: ${response?.status} ${await response?.text()}`);
     }
 
     const encoder = new TextEncoder();

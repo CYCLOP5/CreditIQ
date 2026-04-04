@@ -202,37 +202,47 @@ If the user's question goes beyond this data, gently bring it back."""
     api_key = settings.openrouter_api_key
 
     async def stream_generator():
+        import asyncio
         async with httpx.AsyncClient() as client:
-            try:
-                async with client.stream(
-                    "POST",
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": "google/gemma-3-4b-it:free",
-                        "messages": [
-                            {"role": "user", "content": f"SYSTEM INSTRUCTION: {system_prompt}\n\nUSER PROMPT: {body.query}"}
-                        ],
-                        "stream": True
-                    },
-                    timeout=15.0
-                ) as response:
-                    async for line in response.aiter_lines():
-                        if line.startswith("data: "):
-                            if line.strip() == "data: [DONE]":
-                                break
-                            try:
-                                chunk = json.loads(line[6:])
-                                text_val = chunk["choices"][0]["delta"].get("content", "")
-                                if text_val:
-                                    yield text_val
-                            except Exception:
-                                pass
-            except Exception as e:
-                yield f"\n\n[Connection Error: {str(e)}]"
+            for attempt in range(4):
+                try:
+                    async with client.stream(
+                        "POST",
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {api_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": "google/gemma-3-4b-it:free",
+                            "messages": [
+                                {"role": "user", "content": f"SYSTEM INSTRUCTION: {system_prompt}\n\nUSER PROMPT: {body.query}"}
+                            ],
+                            "stream": True
+                        },
+                        timeout=15.0
+                    ) as response:
+                        if response.status_code == 429:
+                            await asyncio.sleep(2**attempt)
+                            continue
+                            
+                        async for line in response.aiter_lines():
+                            if line.startswith("data: "):
+                                if line.strip() == "data: [DONE]":
+                                    break
+                                try:
+                                    chunk = json.loads(line[6:])
+                                    text_val = chunk["choices"][0]["delta"].get("content", "")
+                                    if text_val:
+                                        yield text_val
+                                except Exception:
+                                    pass
+                        return # successful finish
+                except Exception as e:
+                    if attempt == 3:
+                        yield f"\n\n[Connection Error: {str(e)}]"
+                        return
+                    await asyncio.sleep(2**attempt)
             
     return EventSourceResponse(stream_generator())
 

@@ -13,7 +13,7 @@
       "name": "Rahul Desai",
       "email": "rahul@boltautomotive.in",
       "role": "msme",
-      "gstin": "36ITDJE8781O1Z6",
+      "gstin": "09EXVAF9205D6Z0",
       "status": "active"
     },
     {
@@ -21,7 +21,7 @@
       "name": "Imran Shaikh",
       "email": "imran@textilezone.in",
       "role": "msme",
-      "gstin": "33QEFVT7885F2Z4",
+      "gstin": "07AFDYP4721H7Z9",
       "status": "active"
     },
     {
@@ -57,7 +57,7 @@
   "loan_requests": [
     {
       "id": "loan_req_001",
-      "gstin": "36ITDJE8781O1Z6",
+      "gstin": "09EXVAF9205D6Z0",
       "bank_id": "bank_001",
       "bank_name": "State Bank of India",
       "loan_type": "Working Capital",
