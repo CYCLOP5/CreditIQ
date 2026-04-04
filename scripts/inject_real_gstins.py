@@ -108,6 +108,7 @@ def pick_gstins(profiles: pl.DataFrame, in_features: set[str]) -> tuple[dict, di
     circular = (
         profiles.filter(
             (pl.col("is_fraud")) &
+            (pl.col("profile_type") == "SHELL_CIRCULAR") &
             (pl.col("gstin").is_in(list(in_features))) &
             (pl.col("gstin") != priya["gstin"]) &
             (pl.col("gstin") != rahul["gstin"])

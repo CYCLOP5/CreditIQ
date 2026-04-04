@@ -6,7 +6,7 @@
 export const MOCK_USERS = [
   // { id: "usr_001", name: "Priya Sharma",   email: "priya@bakerycraft.in",      role: "msme",           gstin: "19HLPRM4249Z3Z1", status: "active",    created_at: "2024-08-15T10:00:00+05:30" },
   // { id: "usr_002", name: "Rahul Desai",    email: "rahul@boltautomotive.in",   role: "msme",           gstin: "09EXVAF9205D6Z0", status: "active",    created_at: "2024-06-01T09:00:00+05:30" },
-  { id: "usr_003", name: "Imran Shaikh",   email: "imran@textilezone.in",      role: "msme",           gstin: "07VZZRS5221W3Z5", status: "active",    created_at: "2024-03-20T08:00:00+05:30" },
+  { id: "usr_003", name: "Imran Shaikh",   email: "imran@textilezone.in",      role: "msme",           gstin: "08ICJIQ9867K8Z0", status: "active",    created_at: "2024-03-20T08:00:00+05:30" },
   { id: "usr_004", name: "Anjali Mehta",   email: "anjali@sbiloans.co.in",     role: "loan_officer",   bank_id: "bank_001",       status: "active",    created_at: "2024-01-10T09:00:00+05:30" },
   { id: "usr_005", name: "Vikram Nair",    email: "vikram@analyst.platform.in",role: "credit_analyst",                            status: "active",    created_at: "2024-02-05T09:00:00+05:30" },
   { id: "usr_006", name: "Deepa Krishnan", email: "deepa@risk.platform.in",    role: "risk_manager",                              status: "active",    created_at: "2024-01-01T09:00:00+05:30" },
@@ -78,7 +78,7 @@ export const MOCK_SCORES: Record<string, any> = {
     score_freshness: "2026-04-02T14:30:00+05:30", data_maturity_months: 6, error: null,
   },
   task_abc003: {
-    task_id: "task_abc003", gstin: "07VZZRS5221W3Z5", status: "complete",
+    task_id: "task_abc003", gstin: "08ICJIQ9867K8Z0", status: "complete",
     credit_score: 381, risk_band: "high_risk",
     top_reasons: [
       "GSTIN is detected as part of a circular UPI fund rotation ring",
@@ -90,7 +90,7 @@ export const MOCK_SCORES: Record<string, any> = {
     recommended_wc_amount: 0, recommended_term_amount: 0,
     msme_category: "micro", cgtmse_eligible: false, mudra_eligible: false,
     fraud_flag: true,
-    fraud_details: { cycle_members: ["07VZZRS5221W3Z5", "29BCGFH1234S1ZP", "29XYZAB5678T1ZQ"], confidence: 0.91 },
+    fraud_details: { cycle_members: ["08ICJIQ9867K8Z0", "29BCGFH1234S1ZP", "29XYZAB5678T1ZQ"], confidence: 0.91 },
     shap_waterfall: [
       { feature: "fraud_ring_flag",             value: 0.312, direction: "increases_risk" },
       { feature: "upi_circular_pattern_score",  value: 0.274, direction: "increases_risk" },
@@ -109,7 +109,7 @@ export const MOCK_SCORES: Record<string, any> = {
 export const GSTIN_TASK_MAP: Record<string, string> = {
   "19HLPRM4249Z3Z1": "task_abc001",
   "09EXVAF9205D6Z0": "task_abc002",
-  "07VZZRS5221W3Z5": "task_abc003",
+  "08ICJIQ9867K8Z0": "task_abc003",
 };
 
 // ---- SCORE HISTORY ----
@@ -141,30 +141,30 @@ export const MOCK_PERMISSIONS = [
 
 // ---- DISPUTES ----
 export const MOCK_DISPUTES = [
-  { id: "disp_001", gstin: "07VZZRS5221W3Z5", msme_name: "TextileZone",       description: "Our GSTIN has been flagged as part of a fraud ring. The two other entities listed are suppliers we transact with regularly for fabric procurement. These are legitimate B2B transactions. We have GST invoices for all transfers.", status: "under_review", analyst_id: "usr_005", analyst_name: "Vikram Nair", resolution_note: null, created_at: "2026-04-02T08:00:00+05:30", updated_at: "2026-04-02T11:00:00+05:30" },
+  { id: "disp_001", gstin: "08ICJIQ9867K8Z0", msme_name: "TextileZone",       description: "Our GSTIN has been flagged as part of a fraud ring. The two other entities listed are suppliers we transact with regularly for fabric procurement. These are legitimate B2B transactions. We have GST invoices for all transfers.", status: "under_review", analyst_id: "usr_005", analyst_name: "Vikram Nair", resolution_note: null, created_at: "2026-04-02T08:00:00+05:30", updated_at: "2026-04-02T11:00:00+05:30" },
   { id: "disp_002", gstin: "19AACFC5432Q1ZY", msme_name: "CraftPaper Exports", description: "Flagged incorrectly. All UPI transfers are advance payments to raw material vendors, not circular fund rotation.", status: "resolved", analyst_id: "usr_005", analyst_name: "Vikram Nair", resolution_note: "Transaction graph reviewed. Edge pattern is consistent with vendor payment cycle, not circular rotation. Confidence score revised. GSTIN unflagged and re-scored.", created_at: "2026-02-10T10:00:00+05:30", updated_at: "2026-02-14T16:00:00+05:30" },
 ];
 
 // ---- TRANSACTION GRAPH (per-GSTIN) ----
 export const MOCK_GRAPH_TEXTILEZONE = {
   nodes: [
-    { id: "07VZZRS5221W3Z5", label: "TextileZone",   flagged: true,  total_volume_inr: 4200000 },
+    { id: "08ICJIQ9867K8Z0", label: "TextileZone",   flagged: true,  total_volume_inr: 4200000 },
     { id: "29BCGFH1234S1ZP", label: "FabricWorld",   flagged: true,  total_volume_inr: 3800000 },
     { id: "29XYZAB5678T1ZQ", label: "ThreadMasters", flagged: true,  total_volume_inr: 3600000 },
     { id: "29AAACL9900M1ZT", label: "Loomex Pvt Ltd",flagged: false, total_volume_inr: 520000  },
   ],
   edges: [
-    { source: "07VZZRS5221W3Z5", target: "29BCGFH1234S1ZP", tx_count: 24, total_amount_inr: 1800000 },
+    { source: "08ICJIQ9867K8Z0", target: "29BCGFH1234S1ZP", tx_count: 24, total_amount_inr: 1800000 },
     { source: "29BCGFH1234S1ZP", target: "29XYZAB5678T1ZQ", tx_count: 22, total_amount_inr: 1650000 },
-    { source: "29XYZAB5678T1ZQ", target: "07VZZRS5221W3Z5", tx_count: 23, total_amount_inr: 1740000 },
-    { source: "07VZZRS5221W3Z5", target: "29AAACL9900M1ZT", tx_count: 4,  total_amount_inr: 160000  },
+    { source: "29XYZAB5678T1ZQ", target: "08ICJIQ9867K8Z0", tx_count: 23, total_amount_inr: 1740000 },
+    { source: "08ICJIQ9867K8Z0", target: "29AAACL9900M1ZT", tx_count: 4,  total_amount_inr: 160000  },
   ],
 };
 
 // ---- GLOBAL TRANSACTION GRAPH ----
 export const MOCK_GLOBAL_GRAPH = {
   nodes: [
-    { id: "07VZZRS5221W3Z5", label: "TextileZone",    flagged: true,  total_volume_inr: 4200000 },
+    { id: "08ICJIQ9867K8Z0", label: "TextileZone",    flagged: true,  total_volume_inr: 4200000 },
     { id: "29BCGFH1234S1ZP", label: "FabricWorld",    flagged: true,  total_volume_inr: 3800000 },
     { id: "29XYZAB5678T1ZQ", label: "ThreadMasters",  flagged: true,  total_volume_inr: 3600000 },
     { id: "29AAACL9900M1ZT", label: "Loomex Pvt Ltd", flagged: false, total_volume_inr: 520000  },
@@ -175,10 +175,10 @@ export const MOCK_GLOBAL_GRAPH = {
     { id: "07XYZHI2345J1ZU", label: "PrintZone Delhi",flagged: true,  total_volume_inr: 870000  },
   ],
   edges: [
-    { source: "07VZZRS5221W3Z5", target: "29BCGFH1234S1ZP", tx_count: 24, total_amount_inr: 1800000 },
+    { source: "08ICJIQ9867K8Z0", target: "29BCGFH1234S1ZP", tx_count: 24, total_amount_inr: 1800000 },
     { source: "29BCGFH1234S1ZP", target: "29XYZAB5678T1ZQ", tx_count: 22, total_amount_inr: 1650000 },
-    { source: "29XYZAB5678T1ZQ", target: "07VZZRS5221W3Z5", tx_count: 23, total_amount_inr: 1740000 },
-    { source: "07VZZRS5221W3Z5", target: "29AAACL9900M1ZT", tx_count: 4,  total_amount_inr: 160000  },
+    { source: "29XYZAB5678T1ZQ", target: "08ICJIQ9867K8Z0", tx_count: 23, total_amount_inr: 1740000 },
+    { source: "08ICJIQ9867K8Z0", target: "29AAACL9900M1ZT", tx_count: 4,  total_amount_inr: 160000  },
     { source: "07AABCP4321F1ZR", target: "07BCEFG8765H1ZS", tx_count: 18, total_amount_inr: 720000  },
     { source: "07BCEFG8765H1ZS", target: "07XYZHI2345J1ZU", tx_count: 17, total_amount_inr: 680000  },
     { source: "07XYZHI2345J1ZU", target: "07AABCP4321F1ZR", tx_count: 16, total_amount_inr: 640000  },
@@ -224,7 +224,7 @@ export const MOCK_NOTIFICATIONS: Record<string, any[]> = {
     { id: "notif_010", type: "permission_granted",title: "Data access approved",                  body: "The MSME owner has approved your data access request for loan #lr_001.",                  read: false, created_at: "2026-03-30T14:05:00+05:30", action_url: "/bank/msme/lr_001"  },
   ],
   usr_005: [
-    { id: "notif_011", type: "dispute_update",    title: "New dispute in queue",                  body: "GSTIN 07VZZRS5221W3Z5 has raised a fraud flag dispute.",                                 read: false, created_at: "2026-04-02T08:05:00+05:30", action_url: "/analyst/dispute-queue" },
+    { id: "notif_011", type: "dispute_update",    title: "New dispute in queue",                  body: "GSTIN 08ICJIQ9867K8Z0 has raised a fraud flag dispute.",                                 read: false, created_at: "2026-04-02T08:05:00+05:30", action_url: "/analyst/dispute-queue" },
   ],
   usr_006: [],
   usr_007: [],
@@ -232,7 +232,7 @@ export const MOCK_NOTIFICATIONS: Record<string, any[]> = {
 
 // ---- FRAUD ALERTS ----
 export const MOCK_FRAUD_ALERTS = [
-  { gstin: "07VZZRS5221W3Z5", msme_name: "TextileZone",   fraud_details: { cycle_members: ["07VZZRS5221W3Z5","29BCGFH1234S1ZP","29XYZAB5678T1ZQ"], confidence: 0.91 }, flagged_at: "2026-04-01T11:00:00+05:30", dispute_count: 1, dispute_status: "under_review" },
+  { gstin: "08ICJIQ9867K8Z0", msme_name: "TextileZone",   fraud_details: { cycle_members: ["08ICJIQ9867K8Z0","29BCGFH1234S1ZP","29XYZAB5678T1ZQ"], confidence: 0.91 }, flagged_at: "2026-04-01T11:00:00+05:30", dispute_count: 1, dispute_status: "under_review" },
   { gstin: "07AABCP4321F1ZR", msme_name: "PaperTrade Co", fraud_details: { cycle_members: ["07AABCP4321F1ZR","07BCEFG8765H1ZS","07XYZHI2345J1ZU"], confidence: 0.74 }, flagged_at: "2026-03-15T14:00:00+05:30", dispute_count: 0, dispute_status: null           },
 ];
 
@@ -287,7 +287,7 @@ export const MOCK_HEALTH_OK = {
 
 // ---- AUDIT LOG ----
 export const MOCK_AUDIT_LOG = [
-  { id: "aud_001", user_id: "usr_005", user_name: "Vikram Nair",    role: "credit_analyst", action: "dispute_assigned",   target_type: "dispute",         target_id: "disp_001", metadata: { gstin: "07VZZRS5221W3Z5" },                                           timestamp: "2026-04-02T11:00:00+05:30" },
+  { id: "aud_001", user_id: "usr_005", user_name: "Vikram Nair",    role: "credit_analyst", action: "dispute_assigned",   target_type: "dispute",         target_id: "disp_001", metadata: { gstin: "08ICJIQ9867K8Z0" },                                           timestamp: "2026-04-02T11:00:00+05:30" },
   { id: "aud_002", user_id: "usr_004", user_name: "Anjali Mehta",   role: "loan_officer",   action: "permission_requested",target_type: "permission",      target_id: "perm_002", metadata: { bank_id: "bank_001", gstin_masked: "09****05D6Z0" },                 timestamp: "2026-04-01T15:30:00+05:30" },
   { id: "aud_003", user_id: "usr_001", user_name: "Priya Sharma",   role: "msme",           action: "permission_granted", target_type: "permission",      target_id: "perm_001", metadata: { bank_id: "bank_001" },                                                timestamp: "2026-03-30T14:00:00+05:30" },
   { id: "aud_004", user_id: "usr_004", user_name: "Anjali Mehta",   role: "loan_officer",   action: "loan_denied",        target_type: "loan_request",    target_id: "lr_004",   metadata: { amount: 1500000, denial_reason: "Score below threshold" },             timestamp: "2026-02-28T16:00:00+05:30" },

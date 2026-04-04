@@ -10,15 +10,15 @@
     "profile_type": "GENUINE_STRUGGLING"
   },
   "imran": {
-    "gstin": "07VZZRS5221W3Z5",
+    "gstin": "08ICJIQ9867K8Z0",
     "name": "Imran Circular Enterprises",
-    "profile_type": "GENUINE_STRUGGLING",
+    "profile_type": "SHELL_CIRCULAR",
     "ring_id": "ring_unknown",
     "ring_members": []
   },
   "cohort_medians": {
     "filing_compliance_rate": 0.675,
     "upi_30d_inbound_count": 11,
-    "fraud_confidence": 1.0
+    "fraud_confidence": 0.8
   }
 }

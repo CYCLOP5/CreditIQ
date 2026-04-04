@@ -171,7 +171,7 @@ export default function SignalTrendsPage() {
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="text-xs text-muted-foreground">Try:</span>
-            {["19HLPRM4249Z3Z1", "09EXVAF9205D6Z0", "07VZZRS5221W3Z5"].map((g) => (
+            {["19HLPRM4249Z3Z1", "09EXVAF9205D6Z0", "08ICJIQ9867K8Z0"].map((g) => (
               <button
                 key={g}
                 className="text-xs font-mono text-primary underline underline-offset-2 hover:no-underline"

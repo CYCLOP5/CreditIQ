@@ -65,6 +65,9 @@ A blended 0-1 score indicating the probability that a GSTIN is participating in 
 $$C_f(g) = \min\!\left(1.0,\; \frac{v_{max}}{\theta_v} \cdot 0.5 + \min\!\left(\frac{r_{max}}{\theta_r},\, 1.0\right) \cdot 0.5\right)$$
 *(where $\theta_v$ and $\theta_r$ are the velocity and recurrence thresholds respectively)*
 
+If a temporal simple cycle is deterministically detected (i.e. $\text{participating\_cycles} > 0$), the fraud flag is irreversibly set to True, and the final reported confidence is boosted:
+$$\text{Final } C_f(g) = \max(0.8, C_f(g))$$
+
 ## 3. Credit Scoring Model
 
 ### Risk Probability to CIBIL-Aligned Score

@@ -68,6 +68,20 @@ creditiq does exactly that.
 | **admin** | manages system configuration and user access |
 | **msme owner** | views own business credit score and report |
 
+#### System Persona Accounts
+To demonstrate the platform, the frontend contains the following pre-configured mock users (password: `demo`):
+
+**MSME Flow**
+- `usr_001` (**Priya Sharma**): A genuine MSME (Young Manufacturer, "GOOD"). Has fresh credit history, shows positive compliance, and is assigned a high score.
+- `usr_002` (**Rahul Desai**): A struggling MSME (Inactive Shell, "MEDIUM"). Shows dormancy and high debit failures, reflecting medium risk.
+- `usr_003` (**Imran Shaikh**): A fraudulent MSME (Circular Shell, "FRAUD"). Caught in a circular hub-and-spoke sequence with a high pagerank score, showing synthetic activity.
+
+**Bank / Lender Flow**
+- `usr_004` (**Anjali Mehta**): Loan Officer
+- `usr_005` (**Vikram Nair**): Credit Analyst
+- `usr_006` (**Deepa Krishnan**): Risk Manager (Views Imran's circular fraud topology dashboard)
+- `usr_007` (**Arjun Kapoor**): Admin
+
 ### high-level pipeline summary
 
 ```
