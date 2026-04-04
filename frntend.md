@@ -1,6 +1,6 @@
 # frontend architecture deep dive
 
-full operational documentation of the next.js frontend layer for creditiq. this file explains routing, auth, data flow, visualisation components, role-based experiences, and how ui calls map to backend endpoints.
+full operational documentation of the next.js frontend layer for creditiq. this file explains every route, demo login accounts, role-based access, chatbot and voice assistant flows, notification mechanics, ui system patterns, and frontend-backend contracts.
 
 ---
 
@@ -20,7 +20,32 @@ instead of separate apps per role, creditiq uses a **single app-router shell** w
 
 ---
 
-## 2. technology stack
+## 2. demo login accounts
+
+the login page ships with pre-configured demo identities. these are visible directly in the quick-login list on `/login`.
+
+### core 6 workflow users
+
+| user id | name | role | email | default redirect |
+|---|---|---|---|---|
+| `usr_001` | priya sharma | msme | `priya@bakerycraft.in` | `/msme/dashboard` |
+| `usr_002` | rahul desai | msme | `rahul@boltautomotive.in` | `/msme/dashboard` |
+| `usr_003` | imran shaikh | msme | `imran@textilezone.in` | `/msme/dashboard` |
+| `usr_004` | anjali mehta | loan_officer | `anjali@sbiloans.co.in` | `/bank/loan-queue` |
+| `usr_005` | vikram nair | credit_analyst | `vikram@analyst.platform.in` | `/analyst/shap-explorer` |
+| `usr_006` | deepa krishnan | risk_manager | `deepa@risk.platform.in` | `/risk/fraud-queue` |
+
+### platform admin user
+
+| user id | name | role | email | default redirect |
+|---|---|---|---|---|
+| `usr_007` | arjun kapoor | admin | `arjun@admin.platform.in` | `/admin/overview` |
+
+all demo users use the shared demo password configured in backend mock auth.
+
+---
+
+## 3. technology stack
 
 | layer | technology | where used |
 |---|---|---|
@@ -35,7 +60,7 @@ instead of separate apps per role, creditiq uses a **single app-router shell** w
 
 ---
 
-## 3. app router structure
+## 4. app router structure
 
 ### top-level routes
 
@@ -50,7 +75,7 @@ instead of separate apps per role, creditiq uses a **single app-router shell** w
 | group | routes |
 |---|---|
 | `/msme/*` | `dashboard`, `score-report`, `loans`, `disputes`, `reminders`, `guide` |
-| `/bank/*` | `loan-queue`, `decisions` |
+| `/bank/*` | `loan-queue`, `decisions`, `msme/[loan_request_id]` |
 | `/analyst/*` | `shap-explorer`, `data-explorer`, `signal-trends`, `dispute-queue` |
 | `/risk/*` | `fraud-queue`, `fraud-topology`, `thresholds` |
 | `/admin/*` | `overview`, `api-keys`, `users`, `banks`, `audit-log` |
@@ -63,7 +88,7 @@ instead of separate apps per role, creditiq uses a **single app-router shell** w
 
 ---
 
-## 4. layout and provider pipeline
+## 5. layout and provider pipeline
 
 root composition in `frontend/app/layout.tsx` + `frontend/components/Providers.tsx`:
 
@@ -79,7 +104,7 @@ this means all authenticated pages get a consistent shell, while login and unaut
 
 ---
 
-## 5. authentication model
+## 6. authentication model
 
 auth lives in `frontend/dib/authContext.tsx` and is intentionally simple for demo speed:
 
@@ -100,7 +125,7 @@ example behavior:
 
 ---
 
-## 6. api client architecture
+## 7. api client architecture
 
 all backend calls go through `frontend/dib/api.ts`.
 
@@ -131,7 +156,28 @@ this keeps page components focused on ui logic while transport/auth concerns sta
 
 ---
 
-## 7. async score flow (msme report)
+## 8. notifications and shell interactions
+
+notifications are managed globally through auth context + app shell.
+
+### notification lifecycle
+
+1. after login, `notifApi.list(false)` fetches notification state.
+2. unread count is derived in context and displayed in shell.
+3. individual read: `notifApi.markRead(id)`.
+4. mark all read: `notifApi.markAllRead()`.
+
+### shell ui behavior
+
+- floating glassmorphism header with responsive collapse.
+- role-mapped sidebar/menu entries.
+- gsap-based notification panel open/close transitions.
+- route transition fade/slide animation.
+- mobile sheet navigation for small viewports.
+
+---
+
+## 9. async score flow (msme report)
 
 `frontend/hooks/useScore.ts` implements the scoring saga polling from the ui side.
 
@@ -147,7 +193,103 @@ this gives resilient refresh behavior: if the page reloads, polling resumes from
 
 ---
 
-## 8. page-level ux behavior
+## 10. chat, voice assistant, and video features
+
+### a. score report contextual chat (`/msme/score-report`)
+
+- chat panel sends user message + current score payload context to `/api/chat`.
+- response is streamed token-by-token into the ui.
+- this acts as a contextual "explain my report" assistant tied to live score data.
+
+### b. guide page multilingual chatbot (`/msme/guide`)
+
+- built-in assistant panel with selectable language:
+  - english, hindi, marathi, tamil, telugu, kannada
+- user prompts stream through `/api/chat`.
+- optional topic context (`selectedTopic`) is included in prompt payload.
+- fallback message shows when backend/chat is unavailable.
+
+### c. voice ai assistant embed (`/msme/guide`)
+
+- page includes an interactive live avatar iframe:
+  - `https://embed.liveavatar.com/v1/c82bf1c5-4229-4588-831c-746488888418`
+- iframe requests microphone permission (`allow="microphone"`).
+- this provides a speak-and-listen assistant experience in addition to text chat.
+
+### d. video learning library (`/msme/guide`)
+
+- curated module list with durations and youtube video ids.
+- default modules include:
+  - understanding your score
+  - how to improve your score
+  - applying for a loan
+  - what is cgtmse
+  - what is mudra
+  - how to raise a dispute
+- selected lesson loads youtube embed player with autoplay.
+- guide topics can also be fetched dynamically using `msmeApi.getGuideTopics()`.
+
+---
+
+## 11. detailed page breakdown
+
+### a. public and auth pages
+
+| route | role | what the page contains |
+|---|---|---|
+| `/` | public | entry landing route |
+| `/login` | public | demo quick-login cards, email/password auth form, role-based redirect |
+| `/unauthorized` | any | guard fallback screen for blocked role access |
+
+### b. msme pages
+
+| route | primary data calls | key ui/features |
+|---|---|---|
+| `/msme/dashboard` | `loanApi.list` | personal overview cards, recent loan context |
+| `/msme/score-report` | `useScore` via `scoreApi.submit/get` | score gauge, risk band, eligibility blocks, shap reasons, contextual streaming chat |
+| `/msme/loans` | `loanApi.list/create`, `permApi.list/update`, `bankApi.list` | loan request creation, approval permission workflow, bank selection |
+| `/msme/disputes` | `disputeApi.list/create` | raise and track fraud disputes |
+| `/msme/reminders` | `reminderApi.list/complete` | compliance/repayment reminder timeline and completion toggles |
+| `/msme/guide` | `msmeApi.getGuideTopics` + `/api/chat` | multilingual chatbot, youtube learning modules, interactive voice avatar |
+
+### c. bank pages
+
+| route | primary data calls | key ui/features |
+|---|---|---|
+| `/bank/loan-queue` | `loanApi.list`, `permApi.list/create` | active request triage and permission workflow |
+| `/bank/decisions` | `loanApi.list` | approved/denied history and decision audit visibility |
+| `/bank/msme/[loan_request_id]` | `loanApi.get`, `loanApi.getScore`, `loanApi.decide`, `permApi.list` | deep borrower profile, scoring context, final approve/deny action panel |
+
+### d. credit analyst pages
+
+| route | primary data calls | key ui/features |
+|---|---|---|
+| `/analyst/shap-explorer` | `scoreApi.submit/get`, `analyticsApi.getCohortMedian`, `adminApi.getEwbDistribution/getReceivablesGap` | full shap explorer, smurfing histogram, gst-vs-upi receivables gap chart |
+| `/analyst/data-explorer` | `adminApi.getExplorerGstins/getExplorerDetails` | raw entity 360 data explorer for generated records |
+| `/analyst/signal-trends` | `adminApi.getScoreHistory/getRiskThresholds` | historical trend lines with threshold and amnesty overlays |
+| `/analyst/dispute-queue` | `disputeApi.list/assign/resolve`, `adminApi.getGstinGraph` | dispute operations, evidence graph lookup, resolution actions |
+
+### e. risk manager pages
+
+| route | primary data calls | key ui/features |
+|---|---|---|
+| `/risk/fraud-queue` | `adminApi.getFraudAlerts/getFraudAlert` | prioritized fraud alert review and detail drill-down |
+| `/risk/fraud-topology` | `adminApi.getGlobalGraph/getFraudAlerts` | interactive 3d transaction graph, confidence filtering, node selection, pagerank ranking chart |
+| `/risk/thresholds` | `adminApi.getRiskThresholds/updateRiskThresholds` | risk band controls and amnesty settings management |
+
+### f. admin pages
+
+| route | primary data calls | key ui/features |
+|---|---|---|
+| `/admin/overview` | `scoreApi.health`, `adminApi.getUsers/getAuditLog`, `bankApi.list` | system health and governance summary dashboard |
+| `/admin/api-keys` | `adminApi.getApiKeys/createApiKey/revokeApiKey/rotateApiKey/getApiKeyUsage`, `bankApi.list` | api key lifecycle and usage visibility |
+| `/admin/users` | `adminApi.getUsers/updateUser/resetUserPassword`, `bankApi.list` | user state changes, role-level account governance |
+| `/admin/banks` | `bankApi.list/create/update` | bank registry and institution status control |
+| `/admin/audit-log` | `adminApi.getAuditLog/getUsers/replayAudit` | immutable activity view and audit replay actions |
+
+---
+
+## 12. visualisation components
 
 ### login experience (`/login`)
 
@@ -217,7 +359,19 @@ this gives risk teams a live topology view rather than static fraud tables.
 
 ---
 
-## 11. frontend-backend contract notes
+## 13. ui system notes
+
+- component primitives come from `components/ui` (radix + shadcn pattern).
+- shared semantic widgets (`PageHeader`, `RiskBadge`, `StatusBadge`, `ScoreGauge`) keep cross-role pages visually consistent.
+- charts combine explanatory badges, legends, and conditional callouts for analyst readability.
+- motion is intentional rather than decorative:
+  - shell transitions
+  - notification panel reveal/hide
+  - graph camera fly-to interaction
+
+---
+
+## 14. frontend-backend contract notes
 
 - frontend expects async score contract: `pending/processing/complete/failed`.
 - most role pages call backend directly through typed wrappers in `dib/api.ts`.
@@ -226,7 +380,7 @@ this gives risk teams a live topology view rather than static fraud tables.
 
 ---
 
-## 12. run and verification
+## 15. run and verification
 
 from repository root:
 
@@ -242,13 +396,17 @@ recommended smoke checks:
 
 1. login as each demo persona and confirm route redirection.
 2. trigger score lookup and observe pending -> complete transition.
-3. open risk topology and verify 3d graph loads.
-4. open analyst shap explorer and verify chart panels render.
-5. open admin pages and ensure crud operations call backend without auth header issues.
+3. open notifications panel and verify unread/read behavior.
+4. open msme guide and verify text chatbot response streaming.
+5. verify voice assistant iframe loads and microphone permission prompt appears.
+6. play at least one youtube lesson from guide modules.
+7. open risk topology and verify 3d graph loads.
+8. open analyst shap explorer and verify chart panels render.
+9. open admin pages and ensure crud operations call backend without auth header issues.
 
 ---
 
-## 13. frontend folder map
+## 16. frontend folder map
 
 ```text
 frontend/
