@@ -19,6 +19,7 @@
 | database & redis schemas | [schema.md](schema.md) |
 | system bootstrapping | [bootstrap.md](bootstrap.md) |
 | api service architecture | [api.md](api.md) |
+| frontend architecture deep dive | [frntend.md](frntend.md) |
 | core msme behaviors | [theorymsme.md](theoryMSME.md) |
 
 ---
@@ -36,6 +37,7 @@
 9. [api design](#9-api-design)
 10. [some criteria](#10-some-criteria)
 11. [running the system](#11-running-the-system)
+12. [frontend architecture deep dive](frntend.md)
 
 ---
 
@@ -137,7 +139,7 @@ flowchart td
     d -->|46-dim feature vector| e[networkx fraud detector]
     e -->|clean vector or fraud flag| f[xgboost scoring model]
     f -->|raw score + feature vector| g[shap treeexplainer]
-    g -->|top 5 shap vectors| h[MiniMax-01 via OpenRouter API]
+        g -->|top 5 shap vectors| h[Gemma via OpenRouter Cloud API]
     h -->|plain language reasons| i[redis state store]
     i -->|result payload| j[fastapi rest endpoint]
     j -->|json response| k[react + next.js app router]
@@ -198,7 +200,7 @@ a comprehensive breakdown of every library used, why it was chosen, and what alt
 | shap | treeexplainer for feature attributions | [`src/scoring/explainer.py`](src/scoring/explainer.py) |
 | networkx | directed multigraph fraud detection | [`src/fraud/graph_builder.py`](src/fraud/graph_builder.py) |
 | faker | synthetic pii and structural data | [`src/ingestion/generator.py`](src/ingestion/generator.py) |
-| OpenRouter API | local OpenRouter LLM inference (cpu-only) | [`src/llm/translator.py`](src/llm/translator.py) |
+| OpenRouter API | cloud LLM inference for gemma translation | [`src/llm/translator.py`](src/llm/translator.py) |
 | pydantic v2 | schema validation across all layers | [`src/features/schemas.py`](src/features/schemas.py) |
 | numpy + scipy | numerical computation + sparse matrices | [`src/scoring/trainer.py`](src/scoring/trainer.py) |
 | pyarrow | parquet i/o backend for polars | [`pyproject.toml`](pyproject.toml) |
@@ -661,7 +663,7 @@ if any saga step fails, the worker writes `status=failed` + error message and `x
 |---|---|
 | **three-signal fusion** | first system to fuse gst + upi + e-way bill for msme scoring |
 | **graph-based circular fraud** | scc + bounded cycle enumeration on directed multigraphs |
-| **llm-powered explanations** | OpenRouter gemma API translates shap vectors to plain language |
+| **llm-powered explanations** | OpenRouter cloud gemma API translates shap vectors to plain language |
 | **cibil-aligned scoring** | 300–900 scale with rbi-compliant cgtmse/mudra eligibility |
 | **real-time dashboard** | custom svg  for shap waterfall and fraud topology |
 
@@ -684,7 +686,7 @@ if any saga step fails, the worker writes `status=failed` + error message and `x
 | shap explainability |  works |
 | rest api with async scoring |  works |
 | react dashboard completely wired to live backend via `frontend/dib/api.ts` |  works |
-| llm translation |  works (requires gguf download) |
+| llm translation |  works (OpenRouter cloud; graceful fallback without key) |
 
 ### ease of use
 
@@ -777,14 +779,12 @@ pip install -e .
 cd frontend && pnpm install && cd ..
 ```
 
-### optional: download OpenRouter LLM
+### optional: configure OpenRouter API key
 
-for llm-powered plain-language explanations (not required — system falls back gracefully):
+for llm-powered plain-language explanations (not required — system falls back gracefully), add this to your repository `.env`:
 
 ```bash
-# download OpenRouter MiniMax API-mini gguf to data/models/
-mkdir -p data/models
-# place openrouter openrouter_api_key in .env in data/models/
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
 ### one-command offline run
@@ -834,7 +834,7 @@ all configurable via `.env` file or environment variables ([`config/settings.py`
 | `models_path` | `data/models` | model artifacts directory |
 | `graphs_path` | `data/graphs` | graph edge parquets |
 | `xgb_model_path` | `data/models/xgb_credit.ubj` | xgboost model file |
-| `openrouter_api_key` | `data/models/openrouter openrouter_api_key in .env` | openrouter api key |
+| `openrouter_api_key` | `(not set)` | openrouter api key used for cloud gemma inference |
 | `uvicorn_workers` | `2` | api server worker count |
 | `stream_maxlen` | `10000` | redis stream max length |
 | `consumer_group` | `cg_feature_engine` | consumer group name |

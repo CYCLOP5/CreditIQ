@@ -193,25 +193,16 @@ dashboard available at http://localhost:3000
 
 ---
 
-## MiniMax-01 via API model download (optional, required for llm explanations)
+## OpenRouter cloud setup (optional, enables llm explanations)
 
-download the MiniMax-01 via API gguf model manually to data/models/
-
-```bash
-# using huggingface-cli
-pip install huggingface-hub
-huggingface-cli download microsoft/MiniMax-01 via API-mini-128k-instruct-gguf \
-  MiniMax-01 via API-mini-128k-instruct-cloud endpoint.gguf \
-  --local-dir data/models/
-```
+configure an openrouter api key (no local model download required):
 
 ```bash
-# rename to match expected filename
-mv data/models/MiniMax-01 via API-mini-128k-instruct-cloud endpoint.gguf \
-   data/models/MiniMax-01 via API-mini-128k-instruct-cloud endpoint.gguf
+# .env at repository root
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
-if the gguf file is absent the worker uses feature names as fallback explanations. no crash occurs.
+if the api key is absent, the worker uses feature names as fallback explanations. no crash occurs.
 
 ---
 
