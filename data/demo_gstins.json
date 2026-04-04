@@ -10,11 +10,24 @@
     "profile_type": "GENUINE_STRUGGLING"
   },
   "imran": {
-    "gstin": "08ICJIQ9867K8Z0",
+    "gstin": "33QEFVT7885F2Z4",
     "name": "Imran Circular Enterprises",
     "profile_type": "SHELL_CIRCULAR",
-    "ring_id": "ring_unknown",
-    "ring_members": []
+    "ring_id": "ring_011",
+    "ring_members": [
+      {
+        "gstin": "07NZBLV3793Y6Z0",
+        "name": "Thaman-Sandhu"
+      },
+      {
+        "gstin": "22AWEFU3872A9Z3",
+        "name": "Zacharia PLC"
+      },
+      {
+        "gstin": "24SQTIC0332E2Z2",
+        "name": "Lad-Kota"
+      }
+    ]
   },
   "cohort_medians": {
     "filing_compliance_rate": 0.675,

@@ -3,7 +3,7 @@
  * Token is read from sessionStorage on every request (set by authContext).
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;

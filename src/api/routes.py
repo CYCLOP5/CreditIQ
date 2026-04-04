@@ -198,7 +198,8 @@ Fraud Details: {data.get('fraud_details', 'null')}
 Answer concisely based only on this context. 
 If the user's question goes beyond this data, gently bring it back."""
 
-    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    from config.settings import settings
+    api_key = settings.openrouter_api_key
 
     async def stream_generator():
         async with httpx.AsyncClient() as client:
@@ -211,7 +212,7 @@ If the user's question goes beyond this data, gently bring it back."""
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "qwen/qwen-2.5-72b-instruct:free",
+                        "model": "qwen/qwen3.6-plus:free",
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": body.query}

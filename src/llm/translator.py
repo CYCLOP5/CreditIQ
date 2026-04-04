@@ -34,8 +34,9 @@ class ShapTranslator:
         n_ctx: int = 2048,
         n_threads: int = 4,
     ) -> None:
-        self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
-        self.model = "qwen/qwen-2.5-72b-instruct:free" # Use actual fallback if 3.6 typo
+        from config.settings import settings
+        self.api_key = settings.openrouter_api_key
+        self.model = "qwen/qwen3.6-plus:free"
         print("Using OpenRouter exclusively")
 
     def translate(
@@ -52,8 +53,7 @@ class ShapTranslator:
         
         # Try primary model requested by user
         models_to_try = [
-            "qwen/qwen-2.5-72b-instruct:free",
-            "google/gemini-2.0-pro-exp-02-05:free"
+            "qwen/qwen3.6-plus:free"
         ]
         
         for model in models_to_try:
@@ -115,7 +115,7 @@ class ShapTranslator:
                     "Content-Type": "application/json"
                 },
                 data=json.dumps({
-                    "model": "qwen/qwen-2.5-72b-instruct:free",
+                    "model": "qwen/qwen3.6-plus:free",
                     "response_format": { "type": "json_object" },
                     "messages": [
                         {"role": "system", "content": "You are a fraud analyst outputting formal JSON Suspicious Activity Reports. Output ONLY valid JSON, adhering to: {\"gstin\": \"string\", \"risk_level\": \"string\", \"structural_summary\": \"string\", \"immediate_action\": \"string\"}"},
