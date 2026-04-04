@@ -7,7 +7,7 @@
  │  creditiq  e-way bill fraud detection & msme credit scoring pipeline      │
  │                                                                              │
  │  faker → redis streams → polars features → networkx fraud → xgboost score   │
- │  → shap explain → phi-3 llm → fastapi → react dashboard                    │
+ │  → shap explain → OpenRouter LLM → fastapi → react dashboard                    │
  └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,7 +83,7 @@ xgboost scoring (probability → 300–900 scale)
         ↓
 shap explainability (top 6 feature attributions)
         ↓
-phi-3 mini llm (plain-language reasons + path to prime action)
+Qwen LLM (plain-language reasons + path to prime action)
         ↓
 fastapi rest api (async saga worker pattern)
         ↓
@@ -130,7 +130,7 @@ flowchart td
     d -->|46-dim feature vector| e[networkx fraud detector]
     e -->|clean vector or fraud flag| f[xgboost scoring model]
     f -->|raw score + feature vector| g[shap treeexplainer]
-    g -->|top 5 shap vectors| h[phi-3-mini int4 via llama.cpp cpu-only]
+    g -->|top 5 shap vectors| h[Qwen 72B via OpenRouter API]
     h -->|plain language reasons| i[redis state store]
     i -->|result payload| j[fastapi rest endpoint]
     j -->|json response| k[react + next.js app router]
@@ -147,7 +147,7 @@ flowchart td
 | **3. feature engineering** | 46 engineered features across 6 sub-vectors | polars lazy evaluation | [`src/features/engine.py`](src/features/engine.py) |
 | **4. fraud detection** | scc decomposition + bounded cycle enumeration | networkx | [`src/fraud/cycle_detector.py`](src/fraud/cycle_detector.py) |
 | **5. ml scoring** | gradient boosted trees, 300–900 scale | xgboost hist | [`src/scoring/model.py`](src/scoring/model.py) |
-| **6. explainability** | shap treeexplainer + llm translation | shap + llama-cpp-python | [`src/scoring/explainer.py`](src/scoring/explainer.py) |
+| **6. explainability** | shap treeexplainer + llm translation | shap + OpenRouter API | [`src/scoring/explainer.py`](src/scoring/explainer.py) |
 | **7. api** | async rest with saga pattern | fastapi + uvicorn | [`src/api/main.py`](src/api/main.py) |
 | **8. dashboard** | next.js app router interactive portals | react 18 + next 14 | [`frontend/app/layout.tsx`](frontend/app/layout.tsx) |
 
@@ -191,7 +191,7 @@ a comprehensive breakdown of every library used, why it was chosen, and what alt
 | shap | treeexplainer for feature attributions | [`src/scoring/explainer.py`](src/scoring/explainer.py) |
 | networkx | directed multigraph fraud detection | [`src/fraud/graph_builder.py`](src/fraud/graph_builder.py) |
 | faker | synthetic pii and structural data | [`src/ingestion/generator.py`](src/ingestion/generator.py) |
-| llama-cpp-python | local phi-3 llm inference (cpu-only) | [`src/llm/translator.py`](src/llm/translator.py) |
+| OpenRouter API | local OpenRouter LLM inference (cpu-only) | [`src/llm/translator.py`](src/llm/translator.py) |
 | pydantic v2 | schema validation across all layers | [`src/features/schemas.py`](src/features/schemas.py) |
 | numpy + scipy | numerical computation + sparse matrices | [`src/scoring/trainer.py`](src/scoring/trainer.py) |
 | pyarrow | parquet i/o backend for polars | [`pyproject.toml`](pyproject.toml) |
@@ -448,7 +448,7 @@ only strongly connected components with **≥ 3 nodes** are candidates. uses `ne
 **step 2 — bounded cycle enumeration** ([`_detect_cycles_in_scc()`](src/fraud/cycle_detector.py:78)):
 
 ```python
-nx.simple_cycles(scc_graph, length_bound=5)
+nx.simple_cycles(scc_graph, length >= 3)
 ```
 
 this uses the gupta-suzumura bounded algorithm with complexity proportional to $d^k$ (where $d$ = average degree, $k$ = length bound) rather than the exponential johnson algorithm.
@@ -545,12 +545,12 @@ $$s = \text{clip}(900 - 600 \times p_{default},\; 300,\; 900)$$
 
 ### llm translation
 
-[`shaptranslator`](src/llm/translator.py) uses **phi-3-mini-128k-instruct** (q4_k_m quantization) via llama-cpp-python for cpu-only inference:
+[`shaptranslator`](src/llm/translator.py) uses **qwen-2.5-72b-instruct:free** via OpenRouter API for high-speed cloud inference:
 
-- prompt template: [`src/llm/prompts.py`](src/llm/prompts.py) using phi-3 `<|system|>...<|end|><|user|>...<|end|><|assistant|>` chat format
+- prompt template: [`src/llm/prompts.py`](src/llm/prompts.py) using standard system/user JSON chat format
 - output: 6 plain-language items (5 explanation bullets + 1 "path to prime" prescriptive action)
-- throughput: ~2–4 tokens/second on cpu
-- fallback when gguf absent: raw feature names + direction labels
+- throughput: fast streaming over HTTP
+- fallback when API down: raw feature names + direction labels
 
 ---
 
@@ -614,7 +614,7 @@ returns [`healthresponse`](src/api/schemas.py:73): `{status, redis_connected, mo
                                                  └────┬────┘
                                                       │
                                                  ┌────▼────┐
-                                                 │ phi-3   │
+                                                 │ OpenRouter Qwen API   │
                                                  │ llm     │
                                                  └────┬────┘
                                                       │
@@ -710,7 +710,7 @@ all throw on non-ok responses for consistent error handling.
 |---|---|
 | **three-signal fusion** | first system to fuse gst + upi + e-way bill for msme scoring |
 | **graph-based circular fraud** | scc + bounded cycle enumeration on directed multigraphs |
-| **llm-powered explanations** | local phi-3-mini translates shap vectors to plain language — no cloud api |
+| **llm-powered explanations** | local OpenRouter Qwen API-mini translates shap vectors to plain language — no cloud api |
 | **cibil-aligned scoring** | 300–900 scale with rbi-compliant cgtmse/mudra eligibility |
 | **real-time dashboard** | custom svg visualizations for shap waterfall and fraud topology |
 
@@ -757,7 +757,7 @@ src/
 ├── features/           # phase 3: polars feature engineering
 ├── fraud/              # phase 4: networkx graph fraud detection
 ├── scoring/            # phase 4: xgboost training + inference
-├── llm/                # phase 6: phi-3 llm translation
+├── llm/                # phase 6: OpenRouter LLM translation
 ├── api/                # phase 6: fastapi server + saga worker
 └── dashboard/          # (streamlit stubs — replaced by react)
 
@@ -827,14 +827,14 @@ pip install -e .
 cd frontend && pnpm install && cd ..
 ```
 
-### optional: download phi-3 llm
+### optional: download OpenRouter LLM
 
 for llm-powered plain-language explanations (not required — system falls back gracefully):
 
 ```bash
-# download phi-3-mini gguf to data/models/
+# download OpenRouter Qwen API-mini gguf to data/models/
 mkdir -p data/models
-# place phi-3.1-mini-128k-instruct-q4_k_m.gguf in data/models/
+# place openrouter openrouter_api_key in .env in data/models/
 ```
 
 ### one-command offline run
@@ -884,7 +884,7 @@ all configurable via `.env` file or environment variables ([`config/settings.py`
 | `models_path` | `data/models` | model artifacts directory |
 | `graphs_path` | `data/graphs` | graph edge parquets |
 | `xgb_model_path` | `data/models/xgb_credit.ubj` | xgboost model file |
-| `phi3_model_path` | `data/models/phi-3.1-mini-128k-instruct-q4_k_m.gguf` | phi-3 gguf path |
+| `openrouter_api_key` | `data/models/openrouter openrouter_api_key in .env` | openrouter api key |
 | `uvicorn_workers` | `2` | api server worker count |
 | `stream_maxlen` | `10000` | redis stream max length |
 | `consumer_group` | `cg_feature_engine` | consumer group name |

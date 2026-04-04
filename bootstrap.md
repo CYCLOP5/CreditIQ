@@ -193,22 +193,22 @@ dashboard available at http://localhost:3000
 
 ---
 
-## phi-3 model download (optional, required for llm explanations)
+## Qwen 72B via API model download (optional, required for llm explanations)
 
-download the phi-3 gguf model manually to data/models/
+download the Qwen 72B via API gguf model manually to data/models/
 
 ```bash
 # using huggingface-cli
 pip install huggingface-hub
-huggingface-cli download microsoft/Phi-3-mini-128k-instruct-gguf \
-  Phi-3-mini-128k-instruct-Q4_K_M.gguf \
+huggingface-cli download microsoft/Qwen 72B via API-mini-128k-instruct-gguf \
+  Qwen 72B via API-mini-128k-instruct-cloud endpoint.gguf \
   --local-dir data/models/
 ```
 
 ```bash
 # rename to match expected filename
-mv data/models/Phi-3-mini-128k-instruct-Q4_K_M.gguf \
-   data/models/phi-3-mini-128k-instruct-q4_k_m.gguf
+mv data/models/Qwen 72B via API-mini-128k-instruct-cloud endpoint.gguf \
+   data/models/Qwen 72B via API-mini-128k-instruct-cloud endpoint.gguf
 ```
 
 if the gguf file is absent the worker uses feature names as fallback explanations. no crash occurs.
@@ -269,5 +269,5 @@ cd frontend && pnpm install && pnpm run dev
 | no data found exiting | feature engine produced zero partitions | check data/raw/ has parquets, re-run phase 3 |
 | BUSYGROUP consumer group name already exists | worker restarted after crash | safe to ignore — consumer group creation is idempotent |
 | xgboost ValueError: feature names | special chars in feature column names | sanitize_feature_name() in trainer.py strips angle brackets |
-| llm inference very slow (under 1 token/sec) | cpu thermal throttle or single core | check cpu temp, verify llama-cpp-python cpu build is correct |
+| llm inference very slow (under 1 token/sec) | cpu thermal throttle or single core | check cpu temp, verify OpenRouter API limits and internet connection |
 | ECONNREFUSED at localhost:8000 | api server not started | run python -m src.api.main in terminal 1 |

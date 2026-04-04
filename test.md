@@ -174,7 +174,7 @@ tests the `FeatureEngine` class directly using synthetic polars DataFrames. help
 
 ## tests/test_fraud.py — fraud graph detection tests
 
-tests the `CycleDetector`, `FraudGraphBuilder`, and associated graph algorithms. uses networkx `MultiDiGraph` structures.
+tests the `CycleDetector`, `FraudGraphBuilder`, and associated graph algorithms. uses networkx `DiGraph` structures.
 
 ### test_cycle_detection_finds_simple_ring
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FEATURE_LABELS } from "@/dib/mockData";
 
 // Known demo GSTINs — mirrors mock_db.py user list. Used only as UI quick-links.
-const DEMO_GSTINS = ["19HLPRM4249Z3Z1", "09EXVAF9205D6Z0", "07AFDYP4721H7Z9"];
+const DEMO_GSTINS = ["19HLPRM4249Z3Z1", "09EXVAF9205D6Z0", "07VZZRS5221W3Z5"];
 import { scoreApi, analyticsApi, adminApi } from "@/dib/api";
 import { PageHeader, RiskBadge, ScoreGauge } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

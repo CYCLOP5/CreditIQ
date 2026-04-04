@@ -13,7 +13,7 @@ If an MSME has ₹50L in GST invoices but only ₹5L in inbound UPI, they have a
 We upgraded basic cycle loops (A→B→C→A) to compute topological **Eigenvector Centrality (`nx.pagerank`)** over the multi-directed UPI array. If massive cash is trapped by a high-centrality node (`pagerank_score > 0.1`) that possesses zero real-world business footprint (`months_active_gst == 0`), the engine immediately flags it as a **Bipartite Shell Mule** hub and locks `fraud_confidence` to `0.95`.
 
 ## "Path to Prime" Counterfactual Explanations
-Our local, CPU-based Phi-3 LLM uses SHAP inference not only to explain "why" a score is low, but outputs prescriptive "Path to Prime" actions derived from the hardest-hitting negative attribute, telling the MSME exactly how to improve.
+Our local, CPU-based OpenRouter LLM uses SHAP inference not only to explain "why" a score is low, but outputs prescriptive "Path to Prime" actions derived from the hardest-hitting negative attribute, telling the MSME exactly how to improve.
 
 ## Regulatory-Constrained Expected Loss
 We built an Expected Loss engine (`PD * LGD * Exposure`) to dynamically calculate exact exposure capacity to meet the bank's risk appetite limit. But we also built a policy-gating layer that automatically clamps the algorithmic limit to strictly comply with RBI/CGTMSE regulatory thresholds.

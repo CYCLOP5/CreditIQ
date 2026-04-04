@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     stream_score_requests: str = "stream:score_requests"
     consumer_group: str = "cg_feature_engine"
     stream_maxlen: int = 10000
+    openrouter_api_key: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

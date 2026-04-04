@@ -85,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem("msme_user");
     sessionStorage.removeItem("msme_token");
     setNotifications([]);
+    window.location.href = "/login";
   };
 
   const markRead = (id: string) => {
