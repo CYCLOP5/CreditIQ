@@ -559,7 +559,7 @@ $$s = \text{clip}(900 - 600 \times p_{default},\; 300,\; 900)$$
 
 ### llm translation
 
-[`shaptranslator`](src/llm/translator.py) uses **minimax/minimax-01** via OpenRouter API for high-speed cloud inference:
+[`shaptranslator`](src/llm/translator.py) uses **google/gemma-3-4b-it:free** via OpenRouter API for high-speed cloud inference:
 
 - prompt template: [`src/llm/prompts.py`](src/llm/prompts.py) using standard system/user JSON chat format
 - output: 6 plain-language items (5 explanation bullets + 1 "path to prime" prescriptive action)

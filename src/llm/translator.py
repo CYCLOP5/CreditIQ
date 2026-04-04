@@ -36,7 +36,7 @@ class ShapTranslator:
     ) -> None:
         from config.settings import settings
         self.api_key = settings.openrouter_api_key
-        self.model = "minimax/minimax-01"
+        self.model = "google/gemma-3-4b-it:free"
         print("Using OpenRouter exclusively")
 
     def translate(
@@ -53,7 +53,7 @@ class ShapTranslator:
         
         # Try primary model requested by user
         models_to_try = [
-            "minimax/minimax-01"
+            "google/gemma-3-4b-it:free"
         ]
         
         for model in models_to_try:
@@ -115,7 +115,7 @@ class ShapTranslator:
                     "Content-Type": "application/json"
                 },
                 data=json.dumps({
-                    "model": "minimax/minimax-01",
+                    "model": "google/gemma-3-4b-it:free",
                     "response_format": { "type": "json_object" },
                     "messages": [
                         {"role": "system", "content": "You are a fraud analyst outputting formal JSON Suspicious Activity Reports. Output ONLY valid JSON, adhering to: {\"gstin\": \"string\", \"risk_level\": \"string\", \"structural_summary\": \"string\", \"immediate_action\": \"string\"}"},

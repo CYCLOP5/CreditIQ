@@ -212,7 +212,7 @@ If the user's question goes beyond this data, gently bring it back."""
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "minimax/minimax-01",
+                        "model": "google/gemma-3-4b-it:free",
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": body.query}

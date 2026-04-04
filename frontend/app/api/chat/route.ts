@@ -22,7 +22,7 @@ Please answer concisely and accurately.`;
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "minimax/minimax-01",
+        model: "google/gemma-3-4b-it:free",
         messages: allMessages,
         stream: true
       })

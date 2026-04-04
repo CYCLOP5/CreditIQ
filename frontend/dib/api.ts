@@ -21,7 +21,13 @@ async function apiFetch<T = unknown>(
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const fetchOptions: RequestInit = {
+    cache: "no-store",
+    ...options,
+    headers,
+  };
+
+  const res = await fetch(`${API_BASE}${path}`, fetchOptions);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error((err as Record<string, string>).detail ?? "Request failed");

@@ -63,7 +63,7 @@
       "loan_type": "Working Capital",
       "amount_requested": 5000000,
       "purpose": "Expand warehouse inventory",
-      "status": "data_permission_requested",
+      "status": "bank_reviewing",
       "created_at": "2026-04-03T10:00:00Z",
       "updated_at": "2026-04-03T10:00:00Z"
     }
@@ -75,7 +75,7 @@
       "gstin": "07TQGWA2808D4Z3",
       "bank_id": "bank_001",
       "bank_name": "State Bank of India",
-      "status": "pending",
+      "status": "granted",
       "requested_at": "2026-04-04T06:23:58.061340+00:00",
       "expires_at": null
     }
