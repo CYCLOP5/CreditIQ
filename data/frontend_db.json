@@ -13,7 +13,7 @@
       "name": "Rahul Desai",
       "email": "rahul@boltautomotive.in",
       "role": "msme",
-      "gstin": "07TQGWA2808D4Z3",
+      "gstin": "36ITDJE8781O1Z6",
       "status": "active"
     },
     {
@@ -21,7 +21,7 @@
       "name": "Imran Shaikh",
       "email": "imran@textilezone.in",
       "role": "msme",
-      "gstin": "07QYJFY4493W9Z7",
+      "gstin": "33QEFVT7885F2Z4",
       "status": "active"
     },
     {
@@ -57,29 +57,18 @@
   "loan_requests": [
     {
       "id": "loan_req_001",
-      "gstin": "07TQGWA2808D4Z3",
+      "gstin": "36ITDJE8781O1Z6",
       "bank_id": "bank_001",
       "bank_name": "State Bank of India",
       "loan_type": "Working Capital",
       "amount_requested": 5000000,
       "purpose": "Expand warehouse inventory",
-      "status": "bank_reviewing",
+      "status": "submitted",
       "created_at": "2026-04-03T10:00:00Z",
       "updated_at": "2026-04-03T10:00:00Z"
     }
   ],
-  "permissions": [
-    {
-      "id": "129ab319-f636-415d-8a29-e1fecf0ed6ae",
-      "loan_request_id": "loan_req_001",
-      "gstin": "07TQGWA2808D4Z3",
-      "bank_id": "bank_001",
-      "bank_name": "State Bank of India",
-      "status": "granted",
-      "requested_at": "2026-04-04T06:23:58.061340+00:00",
-      "expires_at": null
-    }
-  ],
+  "permissions": [],
   "disputes": [],
   "reminders": [],
   "notifications": [],

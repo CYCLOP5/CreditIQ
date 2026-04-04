@@ -5,27 +5,27 @@
     "profile_type": "NEW_TO_CREDIT"
   },
   "rahul": {
-    "gstin": "07TQGWA2808D4Z3",
+    "gstin": "36ITDJE8781O1Z6",
     "name": "Rahul Inactive Traders",
     "profile_type": "GENUINE_STRUGGLING"
   },
   "imran": {
-    "gstin": "07QYJFY4493W9Z7",
+    "gstin": "33QEFVT7885F2Z4",
     "name": "Imran Circular Enterprises",
     "profile_type": "SHELL_CIRCULAR",
-    "ring_id": "ring_004",
+    "ring_id": "ring_011",
     "ring_members": [
       {
-        "gstin": "36YSOPS8686I1Z5",
-        "name": "Chaudhari, Bedi and Zachariah"
+        "gstin": "07NZBLV3793Y6Z0",
+        "name": "Thaman-Sandhu"
       },
       {
-        "gstin": "33PTYYO1253N5Z6",
-        "name": "Mandal, Chaudhry and Hari"
+        "gstin": "22AWEFU3872A9Z3",
+        "name": "Zacharia PLC"
       },
       {
-        "gstin": "27MRCOE8342O5Z3",
-        "name": "Krishnamurthy-Kashyap"
+        "gstin": "24SQTIC0332E2Z2",
+        "name": "Lad-Kota"
       }
     ]
   },

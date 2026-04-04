@@ -214,8 +214,7 @@ If the user's question goes beyond this data, gently bring it back."""
                     json={
                         "model": "google/gemma-3-4b-it:free",
                         "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": body.query}
+                            {"role": "user", "content": f"SYSTEM INSTRUCTION: {system_prompt}\n\nUSER PROMPT: {body.query}"}
                         ],
                         "stream": True
                     },

@@ -10,10 +10,12 @@ ${context ? JSON.stringify(context, null, 2) : "No context provided."}
 
 Please answer concisely and accurately.`;
 
-    const allMessages = [
-      { role: "system", content: systemPrompt },
-      ...messages
-    ];
+    const mappedMessages = [...messages];
+    if (mappedMessages.length > 0 && mappedMessages[0].role === "user") {
+      mappedMessages[0].content = `[SYSTEM INSTRUCTION]\n${systemPrompt}\n\n[USER]\n${mappedMessages[0].content}`;
+    } else {
+      mappedMessages.unshift({ role: "user", content: `[SYSTEM INSTRUCTION]\n${systemPrompt}` });
+    }
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -23,7 +25,7 @@ Please answer concisely and accurately.`;
       },
       body: JSON.stringify({
         model: "google/gemma-3-4b-it:free",
-        messages: allMessages,
+        messages: mappedMessages,
         stream: true
       })
     });
