@@ -20,6 +20,7 @@ API_PID=$!
 echo "api pid $API_PID"
 
 echo "injecting real GSTINs into frontend"
-python "$SCRIPTS/inject_real_gstins.py"
+PYTHON=/home/cyclops/miniforge3/envs/credit-scoring/bin/python
+$PYTHON "$SCRIPTS/inject_real_gstins.py"
 
 bash "$SCRIPTS/phase7_frontend.sh"

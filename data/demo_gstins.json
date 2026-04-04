@@ -1,0 +1,41 @@
+{
+  "priya": {
+    "gstin": "22NRBQA4443O3Z6",
+    "name": "Cherian, Misra and Tripathi",
+    "profile_type": "GENUINE_HEALTHY"
+  },
+  "rahul": {
+    "gstin": "07VZZRS5221W3Z5",
+    "name": "Morar LLC",
+    "profile_type": "GENUINE_STRUGGLING"
+  },
+  "imran": {
+    "gstin": "33QEFVT7885F2Z4",
+    "name": "Walla, Date and Mahal",
+    "profile_type": "SHELL_CIRCULAR",
+    "ring_id": "ring_011",
+    "ring_members": [
+      {
+        "gstin": "33QEFVT7885F2Z4",
+        "name": "Walla, Date and Mahal"
+      },
+      {
+        "gstin": "07NZBLV3793Y6Z0",
+        "name": "Thaman-Sandhu"
+      },
+      {
+        "gstin": "22AWEFU3872A9Z3",
+        "name": "Zacharia PLC"
+      },
+      {
+        "gstin": "24SQTIC0332E2Z2",
+        "name": "Lad-Kota"
+      }
+    ]
+  },
+  "cohort_medians": {
+    "filing_compliance_rate": 0.675,
+    "upi_30d_inbound_count": 11,
+    "fraud_confidence": 0.01
+  }
+}

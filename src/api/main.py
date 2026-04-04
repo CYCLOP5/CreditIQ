@@ -75,6 +75,7 @@ from src.api.router_msme import router_msme
 from src.api.router_bank import router_bank
 from src.api.router_analyst import router_analyst
 from src.api.router_admin import router_admin
+from src.api.router_explorer import router_explorer
 
 app.include_router(router)
 app.include_router(auth_router)
@@ -82,6 +83,7 @@ app.include_router(router_msme)
 app.include_router(router_bank)
 app.include_router(router_analyst)
 app.include_router(router_admin)
+app.include_router(router_explorer)
 
 if __name__ == "__main__":
     uvicorn.run(

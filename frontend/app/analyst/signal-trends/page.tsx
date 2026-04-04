@@ -9,7 +9,6 @@ import { PageHeader, RiskBadge } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Search, AlertTriangle, RefreshCw } from "lucide-react";
 import {
   LineChart,
@@ -151,7 +150,7 @@ export default function SignalTrendsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 className="pl-9 font-mono text-sm"
-                placeholder="Enter GSTIN (e.g. 36CWGXT1223V5Z8)"
+                placeholder="Enter GSTIN (e.g. 07VZZRS5221W3Z5)"
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -172,7 +171,7 @@ export default function SignalTrendsPage() {
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="text-xs text-muted-foreground">Try:</span>
-            {["29MUSKV7503C9Z0", "36CWGXT1223V5Z8", "19DUTDZ1506O6Z3"].map((g) => (
+            {["22NRBQA4443O3Z6", "07VZZRS5221W3Z5", "33QEFVT7885F2Z4"].map((g) => (
               <button
                 key={g}
                 className="text-xs font-mono text-primary underline underline-offset-2 hover:no-underline"
