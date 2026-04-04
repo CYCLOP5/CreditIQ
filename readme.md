@@ -1,15 +1,10 @@
 # creditiq  msme credit scoring engine
 
-> real-time credit scoring for indian msmes using gst, upi, and e-way bill signals with graph-based fraud detection, xgboost ml scoring, shap explainability, and llm-powered plain-language explanations , all running on a single machine, zero cloud, zero gpu.
+> real-time credit scoring for indian msmes using gst, upi, and e-way bill signals with graph-based fraud detection, xgboost ml scoring, shap explainability, and llm-powered plain-language explanations.
 
-```
- ┌──────────────────────────────────────────────────────────────────────────────┐
- │  creditiq  e-way bill fraud detection & msme credit scoring pipeline      │
- │                                                                              │
- │  faker → redis streams → polars features → networkx fraud → xgboost score   │
- │  → shap explain → OpenRouter LLM → fastapi → react dashboard                    │
- └──────────────────────────────────────────────────────────────────────────────┘
-```
+![diagram-export-05-04-2026-02_23_13 (1)](https://github.com/user-attachments/assets/ca0efcdf-a7eb-4baf-be57-a095510a664e)
+
+
 
 > **domain knowledge architecture:** the core logic is explicitly split between regulatory and technical domains:
 > * [theorymsme.md](theoryMSME.md): defines strategic limits, bank of india msme guidelines, and cgtmse boundaries.
@@ -24,7 +19,6 @@
 | database & redis schemas | [schema.md](schema.md) |
 | system bootstrapping | [bootstrap.md](bootstrap.md) |
 | api service architecture | [api.md](api.md) |
-| frontend architecture & apps | [frontend.md](frontend.md) |
 | core msme behaviors | [theorymsme.md](theoryMSME.md) |
 
 ---
@@ -40,9 +34,8 @@
 7. [graph-based fraud detection](#7-graph-based-fraud-detection)
 8. [ml model](#8-ml-model)
 9. [api design](#9-api-design)
-10. [frontend dashboard](#10-frontend-dashboard)
-11. [judging criteria addressed](#11-judging-criteria-addressed)
-12. [running the system](#12-running-the-system)
+10. [some criteria](#10-some-criteria)
+11. [running the system](#11-running-the-system)
 
 ---
 
@@ -108,7 +101,7 @@ react + next.js ui dashboard (multiple interactive portals)
 
 
 
-### next-gen hackathon flex features
+### aura farm
 this platform implements advanced algorithmic features specifically engineered to dominate hackathon criteria (see [pitch.md](pitch.md)):
 
 * **deterministic grammar-constrained genai:** using gbnf grammars, the llm outputs strict json suspicious activity reports (sar) based on cycle metrics, fundamentally preventing text hallucination.
@@ -628,7 +621,7 @@ returns [`healthresponse`](src/api/schemas.py:73): `{status, redis_connected, mo
                                                  └────┬────┘
                                                       │
                                                  ┌────▼────┐
-                                                 │ OpenRouter MiniMax API   │
+                                                 │ OpenRouter Gemma API   │
                                                  │ llm     │
                                                  └────┬────┘
                                                       │
@@ -647,65 +640,9 @@ if any saga step fails, the worker writes `status=failed` + error message and `x
 
 ---
 
-## 10. frontend dashboard
 
-### technology stack
 
-| technology | version | purpose |
-|---|---|---|
-| react | 18.3 | ui component library |
-| vite | 5.4 | build tool and hmr dev server |
-| custom css | — | hand-crafted design system (no tailwind runtime) |
-
-the frontend uses **zero external ui component libraries**. all charts, data viz, and ui primitives are hand-built using svg and css.
-
-### application architecture ([`frontend/src/app.jsx`](frontend/src/App.jsx))
-
-the app uses **next.js app router**. the `app` directory drives which page renders. the dashboards are divided by intent (`/msme`, `/analyst`, `/admin`, `/risk`). all features operate via live api endpoints, with no critical data hardcoded on the client-side. see [frontend.md](frontend.md) for details.
-
-### pages
-
-#### 1. score report ([`frontend/app/msme/score-report/page.tsx`](frontend/app/msme/score-report/page.tsx))
-
-- live status polling via `get /score/{task_id}`
-- displays: credit score, risk band, msme category, data maturity, cgtmse/mudra eligibility badges
-- shap waterfall visualizing the top impactful features
-
-#### 2. fraud queue & topology ([`frontend/app/risk/fraud-queue/page.tsx`](frontend/app/risk/fraud-queue/page.tsx))
-
-- **circular svg graph layout** — nodes placed on a regular polygon inscribed in a circle
-- directed edges with arrowhead markers
-- fraudulent nodes colored red with  badge
-- falls back to single-node display when only the flagged gstin is available
-
-#### 4. system health ([`frontend/src/pages/systemhealth.jsx`](frontend/src/pages/SystemHealth.jsx))
-
-- auto-refreshes every 5 seconds via `get /health`
-- 4-card grid: api status, redis connection, model loaded, worker queue depth
-- ram usage progress bar with color thresholds (green < 65%, amber < 85%, red ≥ 85%)
-
-### workflow pages
-
-the app also includes a complete **loan officer workflow** with 10+ screens:
-- login → role selection → gstin submission → score report → score history → application queue → applicant detail → decision form → comparison → shap explainability → signal explorer → model performance → dashboard
-
-### api communication ([`frontend/src/lib/api.js`](frontend/src/lib/api.js))
-
-three fetch wrappers targeting `http://localhost:8000`:
-
-| function | method | endpoint |
-|---|---|---|
-| `scoreApi.submit(gstin)` | post | `/score` |
-| `scoreApi.get(taskid)` | get | `/score/{taskid}` |
-| `scoreApi.health()` | get | `/health` |
-
-detailed mappings for other portals are in `frontend/dib/api.ts` and documentated in [frontend.md](frontend.md).
-
-all throw on non-ok responses for consistent error handling.
-
----
-
-## 11. judging criteria addressed
+## 10. some criteria 
 
 ### scalability
 
@@ -788,7 +725,7 @@ tests/                  # pytest unit + integration tests
 
 clean separation: each module has its own `__init__.py`, schemas, and single-responsibility classes.
 
-### code quality
+### cqx
 
 | quality measure | implementation |
 |---|---|
@@ -796,7 +733,6 @@ clean separation: each module has its own `__init__.py`, schemas, and single-res
 | **pydantic v2 schemas** | validated schemas for all data types ([`src/features/schemas.py`](src/features/schemas.py), [`src/api/schemas.py`](src/api/schemas.py)) |
 | **async/await** | all redis operations and api handlers are async |
 | **test coverage** | 25+ tests across api, features, fraud, scoring, and llm parsing |
-| **docstrings** | every function has a docstring describing behaviour |
 | **no global mutable state** | all configuration via pydantic-settings ([`config/settings.py`](config/settings.py)) |
 
 ### maintainability
@@ -811,7 +747,7 @@ clean separation: each module has its own `__init__.py`, schemas, and single-res
 
 ---
 
-## 12. running the system
+## 11. running the system
 
 ### prerequisites
 
