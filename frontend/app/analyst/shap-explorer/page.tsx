@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FEATURE_LABELS } from "@/dib/mockData";
 
 // Known demo GSTINs — mirrors mock_db.py user list. Used only as UI quick-links.
-const DEMO_GSTINS = ["22NRBQA4443O3Z6", "07VZZRS5221W3Z5", "33QEFVT7885F2Z4"];
+const DEMO_GSTINS = ["19HLPRM4249Z3Z1", "09EXVAF9205D6Z0", "07AFDYP4721H7Z9"];
 import { scoreApi, analyticsApi, adminApi } from "@/dib/api";
 import { PageHeader, RiskBadge, ScoreGauge } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,7 +126,7 @@ export default function ShapExplorerPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   className="pl-9 font-mono text-sm"
-                  placeholder="Enter GSTIN (e.g. 22NRBQA4443O3Z6)"
+                  placeholder="Enter GSTIN (e.g. 19HLPRM4249Z3Z1)"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLookup()}

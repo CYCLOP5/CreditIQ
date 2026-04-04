@@ -1,37 +1,20 @@
 {
   "priya": {
-    "gstin": "22NRBQA4443O3Z6",
-    "name": "Cherian, Misra and Tripathi",
-    "profile_type": "GENUINE_HEALTHY"
+    "gstin": "19HLPRM4249Z3Z1",
+    "name": "Priya Manufacturing Co.",
+    "profile_type": "NEW_TO_CREDIT"
   },
   "rahul": {
-    "gstin": "07VZZRS5221W3Z5",
-    "name": "Morar LLC",
+    "gstin": "09EXVAF9205D6Z0",
+    "name": "Rahul Inactive Traders",
     "profile_type": "GENUINE_STRUGGLING"
   },
   "imran": {
-    "gstin": "33QEFVT7885F2Z4",
-    "name": "Walla, Date and Mahal",
+    "gstin": "07AFDYP4721H7Z9",
+    "name": "Imran Circular Enterprises",
     "profile_type": "SHELL_CIRCULAR",
-    "ring_id": "ring_011",
-    "ring_members": [
-      {
-        "gstin": "33QEFVT7885F2Z4",
-        "name": "Walla, Date and Mahal"
-      },
-      {
-        "gstin": "07NZBLV3793Y6Z0",
-        "name": "Thaman-Sandhu"
-      },
-      {
-        "gstin": "22AWEFU3872A9Z3",
-        "name": "Zacharia PLC"
-      },
-      {
-        "gstin": "24SQTIC0332E2Z2",
-        "name": "Lad-Kota"
-      }
-    ]
+    "ring_id": "ring_unknown",
+    "ring_members": []
   },
   "cohort_medians": {
     "filing_compliance_rate": 0.675,
