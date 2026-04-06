@@ -132,19 +132,19 @@ the risk thresholds page (`/risk/thresholds`) includes a **gst amnesty configura
 ### end-to-end pipeline diagram
 
 ```mermaid
-flowchart td
-    a[faker + numpy distributions] -->|synthetic gst, upi, ewb signals| b[redis streams]
-    b -->|consumer group pull| c[async saga worker]
-    c -->|raw events| d[polars lazy feature engine]
-    d -->|46-dim feature vector| e[networkx fraud detector]
-    e -->|clean vector or fraud flag| f[xgboost scoring model]
-    f -->|raw score + feature vector| g[shap treeexplainer]
-        g -->|top 5 shap vectors| h[Gemma via OpenRouter Cloud API]
-    h -->|plain language reasons| i[redis state store]
-    i -->|result payload| j[fastapi rest endpoint]
-    j -->|json response| k[react + next.js app router]
-    d -->|parquet spill| l[disk cache]
-    l -->|historical read| d
+flowchart TD
+    A["faker + numpy distributions"] -->|synthetic gst, upi, ewb signals| B["redis streams"]
+    B -->|consumer group pull| C["async saga worker"]
+    C -->|raw events| D["polars lazy feature engine"]
+    D -->|46-dim feature vector| E["networkx fraud detector"]
+    E -->|clean vector or fraud flag| F["xgboost scoring model"]
+    F -->|raw score + feature vector| G["shap treeexplainer"]
+    G -->|top 5 shap vectors| H["Gemma via OpenRouter Cloud API"]
+    H -->|plain language reasons| I["redis state store"]
+    I -->|result payload| J["fastapi rest endpoint"]
+    J -->|json response| K["react + next.js app router"]
+    D -->|parquet spill| L["disk cache"]
+    L -->|historical read| D
 ```
 
 ### layer summary
@@ -221,19 +221,19 @@ complete mathematical foundations with latex notation are in [**math.md**](math.
 
 **ema-weighted velocity** (e.g., gst 30-day value) — [`src/features/engine.py`](src/features/engine.py:67):
 
-$$v_{ema}^{gst}(g, 30) = \sum_{i : \text{gstin}_i = g} \text{taxable\_value}_i \cdot e^{-\frac{\ln 2}{30} \cdot (t_{now} - t_i)}$$
+$$v_{\text{ema}}^{\text{gst}}(g, 30) = \sum_{i : \text{gstin}_i = g} \text{taxable\_value}_i \cdot e^{-\frac{\ln 2}{30} \cdot (t_{\text{now}} - t_i)}$$
 
 **herfindahl-hirschman index** for upi counterparty concentration — [`src/features/engine.py`](src/features/engine.py:170):
 
-$$hhi_{30d}^{upi}(g) = \sum_{j=1}^{n} s_j^2 \quad \text{where } s_j = \frac{n_j}{\sum_k n_k}$$
+$$hhi_{\text{30d}}^{\text{upi}}(g) = \sum_{j=1}^{n} s_j^2 \quad \text{where } s_j = \frac{n_j}{\sum_k n_k}$$
 
 **shannon entropy** for hsn code diversity — [`src/features/engine.py`](src/features/engine.py:326):
 
-$$h_{90d}^{hsn}(g) = -\sum_{h=1}^{m} p_h \ln(p_h)$$
+$$h_{\text{90d}}^{\text{hsn}}(g) = -\sum_{h=1}^{m} p_h \ln(p_h)$$
 
 **fraud confidence score** — [`src/fraud/cycle_detector.py`](src/fraud/cycle_detector.py:140):
 
-$$c_f(g) = \min\!\left(1.0,\; \frac{v_{max}}{\theta_v} \cdot 0.5 + \min\!\left(\frac{r_{max}}{\theta_r},\, 1.0\right) \cdot 0.5\right)$$
+$$c_f(g) = \min\!\left(1.0,\; \frac{v_{\max}}{\theta_v} \cdot 0.5 + \min\!\left(\frac{r_{\max}}{\theta_r},\, 1.0\right) \cdot 0.5\right)$$
 
 **credit score mapping** — [`src/scoring/model.py`](src/scoring/model.py:62):
 
